@@ -300,7 +300,24 @@ impl Vault {
                                 if entries.is_empty() {
                                     container(text("No entries..."))
                                 } else {
-                                    container(text("Entries"))
+                                    let entries_content: Element<Message> = column(
+                                        entries
+                                            .iter()
+                                            .map(|e| {
+                                                container(row![
+                                                    text(&e.name).size(20.).width(Length::Fill),
+                                                    text(&e.totp).size(20.),
+                                                    button(text("C").center())
+                                                ])
+                                                .style(container::rounded_box)
+                                                .padding(10.)
+                                                .into()
+                                            })
+                                            .collect::<Vec<Element<Message>>>(),
+                                    )
+                                    .spacing(10.)
+                                    .into();
+                                    container(column![entries_content])
                                 }
                             } else {
                                 container(text("Error, getting vault entries..."))
@@ -364,7 +381,7 @@ impl Vault {
         .width(Length::Fill)
         .height(Length::Fill);
 
-        column![header, content].into()
+        column![header, content].spacing(10.).into()
     }
 
     fn config_modal_view(&self) -> Element<Message> {
