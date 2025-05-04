@@ -84,6 +84,8 @@ impl Modal {
 }
 
 impl Vault {
+    const APP_TITLE: &str = "Iced 2FA";
+
     pub fn new(vault: Result<crate::Vault, anywho::Error>) -> Self {
         if let Ok(vault) = vault {
             Self {
@@ -283,44 +285,60 @@ impl Vault {
                 new_password,
                 new_password_repeat,
             } => column![
-                text_input("New password", new_password)
-                    .secure(true)
-                    .on_submit_maybe(maybe_matching_passwords(
-                        new_password,
-                        new_password_repeat,
-                        Message::CreateVault
-                    ))
-                    .on_input(|s| Message::TextInputted(TextInputs::NewPassword, s)),
-                text_input("Repeat new password", new_password_repeat)
-                    .secure(true)
-                    .on_submit_maybe(maybe_matching_passwords(
-                        new_password,
-                        new_password_repeat,
-                        Message::CreateVault
-                    ))
-                    .on_input(|s| Message::TextInputted(TextInputs::NewPasswordRepeat, s)),
-                button("Create")
-                    .on_press_maybe(maybe_matching_passwords(
-                        new_password,
-                        new_password_repeat,
-                        Message::CreateVault
-                    ))
+                text(Self::APP_TITLE)
+                    .size(35.)
                     .width(Length::Fill)
-            ]
-            .spacing(5.),
+                    .align_x(Alignment::Center),
+                container(
+                    column![
+                        text_input("New password", new_password)
+                            .secure(true)
+                            .on_submit_maybe(maybe_matching_passwords(
+                                new_password,
+                                new_password_repeat,
+                                Message::CreateVault
+                            ))
+                            .on_input(|s| Message::TextInputted(TextInputs::NewPassword, s)),
+                        text_input("Repeat new password", new_password_repeat)
+                            .secure(true)
+                            .on_submit_maybe(maybe_matching_passwords(
+                                new_password,
+                                new_password_repeat,
+                                Message::CreateVault
+                            ))
+                            .on_input(|s| Message::TextInputted(TextInputs::NewPasswordRepeat, s)),
+                        button("Create")
+                            .on_press_maybe(maybe_matching_passwords(
+                                new_password,
+                                new_password_repeat,
+                                Message::CreateVault
+                            ))
+                            .width(Length::Fill)
+                    ]
+                    .spacing(5.)
+                )
+            ],
             State::Decryption { password } => column![
-                text_input("Enter Password", password)
-                    .secure(true)
-                    .on_submit(Message::UnlockVault)
-                    .on_input(|s| Message::TextInputted(TextInputs::Password, s)),
-                button("Unlock")
-                    .on_press(Message::UnlockVault)
+                text(Self::APP_TITLE)
+                    .size(35.)
                     .width(Length::Fill)
-            ]
-            .spacing(5.),
+                    .align_x(Alignment::Center),
+                container(
+                    column![
+                        text_input("Enter Password", password)
+                            .secure(true)
+                            .on_submit(Message::UnlockVault)
+                            .on_input(|s| Message::TextInputted(TextInputs::Password, s)),
+                        button("Unlock")
+                            .on_press(Message::UnlockVault)
+                            .width(Length::Fill)
+                    ]
+                    .spacing(5.)
+                )
+            ],
             State::List { modal } => {
                 let header = row![
-                    text("Iced 2FA").width(Length::Fill),
+                    text(Self::APP_TITLE).width(Length::Fill),
                     button("+").on_press(
                         self.determine_modal_button_function(Message::OpenModal(Modal::add()))
                     ),
