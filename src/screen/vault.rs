@@ -1,5 +1,5 @@
 use iced::time::Instant;
-use iced::widget::{button, column, container, row, text, text_input};
+use iced::widget::{button, column, container, float, row, text, text_input};
 use iced::{Alignment, Element, Length, Padding, Task};
 
 pub struct Vault {
@@ -16,6 +16,8 @@ pub enum Message {
 
     UnlockVault,
     UnlockedVault(Result<crate::Vault, anywho::Error>),
+
+    OpenModal(Modal),
 }
 
 pub enum State {
@@ -26,7 +28,9 @@ pub enum State {
     Decryption {
         password: String,
     },
-    List,
+    List {
+        modal: Modal,
+    },
 }
 
 pub enum Action {
@@ -39,6 +43,29 @@ pub enum TextInputs {
     NewPassword,
     NewPasswordRepeat,
     Password,
+}
+
+#[derive(Debug, Clone)]
+pub enum Modal {
+    None,
+    Add { entry_name: String },
+    Config,
+}
+
+impl Modal {
+    pub fn close() -> Modal {
+        Modal::None
+    }
+
+    pub fn add() -> Modal {
+        Modal::Add {
+            entry_name: String::new(),
+        }
+    }
+
+    pub fn config() -> Modal {
+        Modal::Config
+    }
 }
 
 impl Vault {
@@ -102,20 +129,20 @@ impl Vault {
                     Action::None
                 }
             }
-            Message::CreatedVault(res) => match res {
-                Ok(vault) => {
-                    self.state = State::Decryption {
-                        password: String::new(),
-                    };
-                    self.vault = Some(vault);
-
-                    Action::None
+            Message::CreatedVault(res) => {
+                match res {
+                    Ok(vault) => {
+                        self.state = State::Decryption {
+                            password: String::new(),
+                        };
+                        self.vault = Some(vault);
+                    }
+                    Err(err) => {
+                        eprintln!("{}", err);
+                    }
                 }
-                Err(err) => {
-                    eprintln!("{}", err);
-                    Action::None
-                }
-            },
+                Action::None
+            }
             Message::UnlockVault => {
                 if let Some(vault) = &self.vault {
                     if let State::Decryption { password, .. } = &mut self.state {
@@ -131,18 +158,24 @@ impl Vault {
                     Action::None
                 }
             }
-            Message::UnlockedVault(res) => match res {
-                Ok(vault) => {
-                    self.state = State::List;
-                    self.vault = Some(vault);
-
-                    Action::None
+            Message::UnlockedVault(res) => {
+                match res {
+                    Ok(vault) => {
+                        self.state = State::List { modal: Modal::None };
+                        self.vault = Some(vault);
+                    }
+                    Err(err) => {
+                        eprintln!("{}", err);
+                    }
                 }
-                Err(err) => {
-                    eprintln!("{}", err);
-                    Action::None
+                Action::None
+            }
+            Message::OpenModal(new_modal) => {
+                if let State::List { modal, .. } = &mut self.state {
+                    *modal = new_modal;
                 }
-            },
+                Action::None
+            }
         }
     }
 
@@ -187,27 +220,37 @@ impl Vault {
                     .width(Length::Fill)
             ]
             .spacing(5.),
-            State::List => {
+            State::List { modal } => {
                 let header = row![
                     text("Iced 2FA").width(Length::Fill),
-                    button("+"),
-                    button("C")
+                    button("+").on_press(
+                        self.determine_modal_button_function(Message::OpenModal(Modal::add()))
+                    ),
+                    button("C").on_press(
+                        self.determine_modal_button_function(Message::OpenModal(Modal::config()))
+                    )
                 ]
                 .spacing(5.)
                 .width(Length::Fill);
 
                 let content = if let Some(vault) = &self.vault {
-                    if let Some(entries) = vault.entries() {
-                        if entries.is_empty() {
-                            text("No entries...")
-                        } else {
-                            text("Entries")
+                    match modal {
+                        Modal::None => {
+                            if let Some(entries) = vault.entries() {
+                                if entries.is_empty() {
+                                    container(text("No entries..."))
+                                } else {
+                                    container(text("Entries"))
+                                }
+                            } else {
+                                container(text("Error, getting vault entries..."))
+                            }
                         }
-                    } else {
-                        text("Error, getting vault entries...")
+                        Modal::Add { entry_name } => container(custom_modal(self.add_modal_view())),
+                        Modal::Config => container(custom_modal(self.config_modal_view())),
                     }
                 } else {
-                    text("Error, no vault found...")
+                    container(text("Error, no vault found..."))
                 };
 
                 column![
@@ -217,6 +260,7 @@ impl Vault {
                         .width(Length::Fill)
                         .height(Length::Fill)
                 ]
+                .spacing(10.)
             }
         };
 
@@ -224,6 +268,40 @@ impl Vault {
             .center(Length::Fill)
             .padding(Padding::new(10.))
             .into()
+    }
+
+    fn add_modal_view(&self) -> Element<Message> {
+        let header = row![
+            text("Add").width(Length::Fill),
+            button("Close").on_press(Message::OpenModal(Modal::close()))
+        ];
+
+        let content = container(text("Testing")).height(Length::Fill);
+
+        column![header, content].into()
+    }
+
+    fn config_modal_view(&self) -> Element<Message> {
+        let header = row![
+            text("Config").width(Length::Fill),
+            button("Close").on_press(Message::OpenModal(Modal::close()))
+        ];
+
+        let content = container(text("Testing")).height(Length::Fill);
+
+        column![header, content].into()
+    }
+
+    fn determine_modal_button_function(&self, open: Message) -> Message {
+        if let State::List { modal, .. } = &self.state {
+            match modal {
+                Modal::None => open,
+                Modal::Add { entry_name: _ } => Message::OpenModal(Modal::close()),
+                Modal::Config => Message::OpenModal(Modal::close()),
+            }
+        } else {
+            open
+        }
     }
 }
 
@@ -237,4 +315,15 @@ fn maybe_matching_passwords(
     } else {
         None
     }
+}
+
+fn custom_modal(content: Element<Message>) -> Element<Message> {
+    float(
+        container(content)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .padding(10.)
+            .style(container::secondary),
+    )
+    .into()
 }
