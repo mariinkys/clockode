@@ -281,14 +281,6 @@ impl Vault {
         }
     }
 
-    /// Get a mutable reference to the [`Vault`]  entries if unlocked
-    pub fn entries_mut(&mut self) -> Option<&Vec<Entry>> {
-        match &mut self.state {
-            State::Unlocked { data, .. } => Some(&data.entries),
-            State::Locked => None,
-        }
-    }
-
     /// Tries to add an entry to the [`Vault`]
     pub fn add_entry(&mut self, entry: Entry) -> Result<(), anywho::Error> {
         // Check if the vault is unlocked
