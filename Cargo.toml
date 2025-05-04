@@ -1,0 +1,36 @@
+[package]
+name = "iced-twofa"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anywho = "0.1.2"
+iced = { git = "https://github.com/iced-rs/iced", default-features = false, features = [
+    "tokio",
+    "tiny-skia",
+    "image",
+    "debug",     # TODO: Remove this on release
+] }
+serde = { version = "1.0.219", features = ["derive"] }
+ron = "0.10.1"
+dirs = "6.0.0"
+tokio = { version = "1.44.2", features = ["fs"] }
+scrypt = "0.11.0"
+aes-gcm = "0.10.3"
+
+# Enable a small amount of optimization in the dev profile.
+[profile.dev]
+opt-level = 1
+
+# Enable a large amount of optimization in the dev profile for dependencies.
+[profile.dev.package."*"]
+opt-level = 3
+
+# Enable more optimization in the release profile at the cost of compile time.
+[profile.release]
+# Compile the entire crate as one unit.
+# Slows compile times, marginal improvements.
+codegen-units = 1
+# Do a second optimization pass over the entire program, including dependencies.
+# Slows compile times, marginal improvements.
+lto = "thin"
