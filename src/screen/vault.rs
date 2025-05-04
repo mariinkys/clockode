@@ -2,6 +2,8 @@ use iced::time::Instant;
 use iced::widget::{button, column, container, float, row, text, text_input};
 use iced::{Alignment, Element, Length, Padding, Task};
 
+use crate::core::entry::Entry;
+
 pub struct Vault {
     state: State,
     vault: Option<crate::Vault>,
@@ -16,8 +18,11 @@ pub enum Message {
 
     UnlockVault,
     UnlockedVault(Result<crate::Vault, anywho::Error>),
+    SavedVault(Result<(), anywho::Error>),
 
     OpenModal(Modal),
+
+    AddEntry(Entry),
 }
 
 pub enum State {
@@ -43,12 +48,18 @@ pub enum TextInputs {
     NewPassword,
     NewPasswordRepeat,
     Password,
+
+    EntryName,
+    EntrySecret,
 }
 
 #[derive(Debug, Clone)]
 pub enum Modal {
     None,
-    Add { entry_name: String },
+    Add {
+        entry_name: String,
+        entry_secret: String,
+    },
     Config,
 }
 
@@ -60,6 +71,7 @@ impl Modal {
     pub fn add() -> Modal {
         Modal::Add {
             entry_name: String::new(),
+            entry_secret: String::new(),
         }
     }
 
@@ -90,33 +102,48 @@ impl Vault {
 
     pub fn update(&mut self, message: Message, now: Instant) -> Action {
         match message {
-            Message::TextInputted(text_inputs, value) => match text_inputs {
-                TextInputs::NewPassword => {
-                    if let State::Creation { new_password, .. } = &mut self.state {
-                        *new_password = value;
+            Message::TextInputted(text_inputs, value) => {
+                match text_inputs {
+                    TextInputs::NewPassword => {
+                        if let State::Creation { new_password, .. } = &mut self.state {
+                            *new_password = value;
+                        }
                     }
-
-                    Action::None
-                }
-                TextInputs::NewPasswordRepeat => {
-                    if let State::Creation {
-                        new_password_repeat,
-                        ..
-                    } = &mut self.state
+                    TextInputs::NewPasswordRepeat => {
+                        if let State::Creation {
+                            new_password_repeat,
+                            ..
+                        } = &mut self.state
+                        {
+                            *new_password_repeat = value;
+                        }
+                    }
+                    TextInputs::Password => {
+                        if let State::Decryption { password, .. } = &mut self.state {
+                            *password = value;
+                        }
+                    }
+                    TextInputs::EntryName =>
                     {
-                        *new_password_repeat = value;
+                        #[allow(clippy::collapsible_match)]
+                        if let State::List { modal, .. } = &mut self.state {
+                            if let Modal::Add { entry_name, .. } = modal {
+                                *entry_name = value;
+                            }
+                        }
                     }
-
-                    Action::None
-                }
-                TextInputs::Password => {
-                    if let State::Decryption { password, .. } = &mut self.state {
-                        *password = value;
+                    TextInputs::EntrySecret =>
+                    {
+                        #[allow(clippy::collapsible_match)]
+                        if let State::List { modal, .. } = &mut self.state {
+                            if let Modal::Add { entry_secret, .. } = modal {
+                                *entry_secret = value;
+                            }
+                        }
                     }
-
-                    Action::None
                 }
-            },
+                Action::None
+            }
             Message::CreateVault => {
                 if let State::Creation { new_password, .. } = &mut self.state {
                     let password = std::mem::take(new_password);
@@ -148,7 +175,7 @@ impl Vault {
                     if let State::Decryption { password, .. } = &mut self.state {
                         let password = std::mem::take(password);
                         Action::Run(Task::perform(
-                            crate::Vault::decrypt(password, vault.clone()), //TODO: DO NOT Clone here
+                            crate::Vault::decrypt(password, vault.clone()), //TODO: DO NOT CLONE HERE
                             Message::UnlockedVault,
                         ))
                     } else {
@@ -170,10 +197,43 @@ impl Vault {
                 }
                 Action::None
             }
+            Message::SavedVault(res) => {
+                match res {
+                    Ok(_) => {
+                        if let State::List { modal, .. } = &mut self.state {
+                            *modal = Modal::close();
+                        }
+                    }
+                    Err(err) => {
+                        eprintln!("Error saving vault: {}", err);
+                    }
+                }
+                Action::None
+            }
             Message::OpenModal(new_modal) => {
                 if let State::List { modal, .. } = &mut self.state {
                     *modal = new_modal;
                 }
+                Action::None
+            }
+            Message::AddEntry(entry) => {
+                if let Some(vault) = &mut self.vault {
+                    let res = vault.add_entry(entry);
+                    match res {
+                        Ok(_) => {
+                            let cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                            return Action::Run(Task::perform(
+                                async move { cloned_vault.save().await },
+                                Message::SavedVault,
+                            ));
+                        }
+                        Err(err) => {
+                            eprintln!("{}", err);
+                            return Action::None;
+                        }
+                    }
+                }
+
                 Action::None
             }
         }
@@ -246,7 +306,10 @@ impl Vault {
                                 container(text("Error, getting vault entries..."))
                             }
                         }
-                        Modal::Add { entry_name } => container(custom_modal(self.add_modal_view())),
+                        Modal::Add {
+                            entry_name,
+                            entry_secret,
+                        } => container(custom_modal(self.add_modal_view(entry_name, entry_secret))),
                         Modal::Config => container(custom_modal(self.config_modal_view())),
                     }
                 } else {
@@ -270,13 +333,36 @@ impl Vault {
             .into()
     }
 
-    fn add_modal_view(&self) -> Element<Message> {
+    fn add_modal_view(&self, entry_name: &String, entry_secret: &String) -> Element<Message> {
         let header = row![
             text("Add").width(Length::Fill),
             button("Close").on_press(Message::OpenModal(Modal::close()))
         ];
 
-        let content = container(text("Testing")).height(Length::Fill);
+        let can_save: Option<Message> = if !entry_name.is_empty() && !entry_secret.is_empty() {
+            Some(Message::AddEntry(Entry {
+                name: entry_name.to_string(),
+                secret: entry_secret.to_string(),
+                totp: String::new(),
+            }))
+        } else {
+            None
+        };
+
+        let content = container(
+            column![
+                text_input("Name", entry_name)
+                    .on_input(|s| Message::TextInputted(TextInputs::EntryName, s))
+                    .width(Length::Fill),
+                text_input("Secret", entry_secret)
+                    .on_input(|s| Message::TextInputted(TextInputs::EntrySecret, s))
+                    .width(Length::Fill),
+                button("Save").width(Length::Fill).on_press_maybe(can_save)
+            ]
+            .spacing(5.),
+        )
+        .width(Length::Fill)
+        .height(Length::Fill);
 
         column![header, content].into()
     }
@@ -296,7 +382,7 @@ impl Vault {
         if let State::List { modal, .. } = &self.state {
             match modal {
                 Modal::None => open,
-                Modal::Add { entry_name: _ } => Message::OpenModal(Modal::close()),
+                Modal::Add { .. } => Message::OpenModal(Modal::close()),
                 Modal::Config => Message::OpenModal(Modal::close()),
             }
         } else {

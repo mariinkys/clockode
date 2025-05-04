@@ -288,4 +288,18 @@ impl Vault {
             State::Locked => None,
         }
     }
+
+    /// Tries to add an entry to the [`Vault`]
+    pub fn add_entry(&mut self, entry: Entry) -> Result<(), anywho::Error> {
+        // Check if the vault is unlocked
+        let data = match &mut self.state {
+            State::Unlocked { data, .. } => data,
+            State::Locked => return Err(anywho!("Cannot add entry to locked vault")),
+        };
+
+        // Insert the entry into the entries map
+        data.entries.push(entry);
+
+        Ok(())
+    }
 }
