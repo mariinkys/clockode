@@ -4,5 +4,6 @@ use serde::{Deserialize, Serialize};
 pub struct Entry {
     pub name: String,
     pub secret: String,
+    #[serde(skip_serializing, skip_deserializing)]
     pub totp: String,
 }
