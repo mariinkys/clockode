@@ -282,7 +282,32 @@ impl Vault {
     }
 
     /// Tries to add an entry to the [`Vault`]
-    pub fn add_entry(&mut self, entry: Entry) -> Result<(), anywho::Error> {
+    pub fn add_entry(&mut self, mut entry: Entry) -> Result<(), anywho::Error> {
+        // Check if the vault is unlocked
+        let data = match &mut self.state {
+            State::Unlocked { data, .. } => data,
+            State::Locked => return Err(anywho!("Cannot add entry to locked vault")),
+        };
+
+        // TODO: Still not sure if I want this here
+        use totp_rs::Secret;
+        let totp = totp_rs::TOTP::new(
+            totp_rs::Algorithm::SHA1,
+            6,
+            1,
+            30,
+            Secret::Raw(entry.secret.clone().as_bytes().to_vec()).to_bytes()?,
+        )?;
+        entry.totp = totp.generate_current().unwrap_or(String::from("Error"));
+
+        // Insert the entry into the entries map
+        data.entries.push(entry);
+
+        Ok(())
+    }
+
+    /// Substitute the entries of a [`Vault`] for antoher
+    pub fn substitute_entries(&mut self, entries: Vec<Entry>) -> Result<(), anywho::Error> {
         // Check if the vault is unlocked
         let data = match &mut self.state {
             State::Unlocked { data, .. } => data,
@@ -290,8 +315,42 @@ impl Vault {
         };
 
         // Insert the entry into the entries map
-        data.entries.push(entry);
+        data.entries = entries;
 
         Ok(())
+    }
+
+    /// Attempts to update the TOTP of all entries in the [`Vault`], returns the updated entries
+    pub async fn update_all_totp(&mut self) -> Result<Vec<Entry>, anywho::Error> {
+        use tokio::task;
+        use totp_rs::Secret;
+
+        // Get entries and handle the Option before spawning the task
+        let entries = self
+            .entries()
+            .cloned()
+            .ok_or_else(|| anywho!("Error getting entries"))?;
+
+        if entries.is_empty() {
+            return Err(anywho!("No entries to update"));
+        }
+
+        task::spawn_blocking(move || {
+            let mut updated_entries = entries;
+
+            for entry in updated_entries.iter_mut() {
+                let totp = totp_rs::TOTP::new(
+                    totp_rs::Algorithm::SHA1,
+                    6,
+                    1,
+                    30,
+                    Secret::Raw(entry.secret.clone().as_bytes().to_vec()).to_bytes()?,
+                )?;
+                entry.totp = totp.generate_current().unwrap_or(String::from("Error"));
+            }
+
+            Ok(updated_entries)
+        })
+        .await?
     }
 }

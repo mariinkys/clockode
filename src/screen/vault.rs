@@ -23,6 +23,9 @@ pub enum Message {
     OpenModal(Modal),
 
     AddEntry(Entry),
+
+    UpdateAllTOTP,
+    UpdatedAllTOTP(Result<Vec<Entry>, anywho::Error>),
 }
 
 pub enum State {
@@ -236,6 +239,41 @@ impl Vault {
 
                 Action::None
             }
+            Message::UpdateAllTOTP => {
+                if let Some(vault) = &self.vault {
+                    let mut cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                    return Action::Run(Task::perform(
+                        async move { cloned_vault.update_all_totp().await },
+                        Message::UpdatedAllTOTP,
+                    ));
+                }
+                Action::None
+            }
+            Message::UpdatedAllTOTP(res) => {
+                if let Some(vault) = &mut self.vault {
+                    match res {
+                        Ok(entries) => {
+                            let substituted_entries = vault.substitute_entries(entries);
+                            match substituted_entries {
+                                Ok(_) => {
+                                    let cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                                    return Action::Run(Task::perform(
+                                        async move { cloned_vault.save().await },
+                                        Message::SavedVault,
+                                    ));
+                                }
+                                Err(err) => {
+                                    eprintln!("Error substituting entries: {}", err);
+                                }
+                            }
+                        }
+                        Err(err) => {
+                            eprintln!("Error generating TOTPS: {}", err);
+                        }
+                    }
+                }
+                Action::None
+            }
         }
     }
 
@@ -288,7 +326,9 @@ impl Vault {
                     ),
                     button("C").on_press(
                         self.determine_modal_button_function(Message::OpenModal(Modal::config()))
-                    )
+                    ),
+                    //TODO: Remove this
+                    button("R").on_press(Message::UpdateAllTOTP)
                 ]
                 .spacing(5.)
                 .width(Length::Fill);
@@ -304,11 +344,14 @@ impl Vault {
                                         entries
                                             .iter()
                                             .map(|e| {
-                                                container(row![
-                                                    text(&e.name).size(20.).width(Length::Fill),
-                                                    text(&e.totp).size(20.),
-                                                    button(text("C").center())
-                                                ])
+                                                container(
+                                                    row![
+                                                        text(&e.name).size(20.).width(Length::Fill),
+                                                        text(&e.totp).size(20.),
+                                                        button(text("C").center())
+                                                    ]
+                                                    .spacing(5.),
+                                                )
                                                 .style(container::rounded_box)
                                                 .padding(10.)
                                                 .into()
