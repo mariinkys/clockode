@@ -90,7 +90,7 @@ impl Entry {
             }
             Algorithm::Sha256 => totp_lite::totp_custom::<Sha256>(
                 refresh_rate,
-                self.totp_config.digits.try_into().unwrap(),
+                self.totp_config.digits,
                 &fast32::base32::RFC4648_NOPAD
                     .decode(self.secret.trim().to_uppercase().as_bytes())
                     .unwrap(),
@@ -98,7 +98,7 @@ impl Entry {
             ),
             Algorithm::Sha512 => totp_lite::totp_custom::<Sha512>(
                 refresh_rate,
-                self.totp_config.digits.try_into().unwrap(),
+                self.totp_config.digits,
                 &fast32::base32::RFC4648_NOPAD
                     .decode(self.secret.trim().to_uppercase().as_bytes())
                     .unwrap(),
