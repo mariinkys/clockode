@@ -19,7 +19,7 @@ fn main() -> iced::Result {
     )
     .theme(Iced2FA::theme)
     .default_font(Font::MONOSPACE)
-    .window_size((500., 800.))
+    .window_size((400., 700.))
     .run()
 }
 
