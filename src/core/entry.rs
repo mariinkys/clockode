@@ -66,13 +66,16 @@ impl Entry {
         use std::time::SystemTime;
         use totp_lite::{Sha1, Sha256, Sha512};
 
-        // TODO: This is not right, the code can be already Base32?...
-        let length = self.secret.trim().len();
-        if length != 16 && length != 26 && length != 32 {
-            return Err(anywho!(
-                "Invalid TOTP secret, must be 16, 26 or 32 characters."
-            ));
-        }
+        let cleaned = self
+            .secret
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .collect::<String>()
+            .to_uppercase();
+
+        let secret = fast32::base32::RFC4648_NOPAD
+            .decode(cleaned.as_bytes())
+            .map_err(|e| anywho!("Base32 decode error: {:?}", e))?;
 
         let seconds: u64 = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
@@ -87,9 +90,7 @@ impl Entry {
                     // Calculate a 6 digit code.
                     self.totp_config.digits,
                     // Convert the secret into bytes using base32::decode().
-                    &fast32::base32::RFC4648_NOPAD
-                        .decode(self.secret.trim().to_uppercase().as_bytes())
-                        .unwrap(),
+                    &secret,
                     // Seconds since the Unix Epoch.
                     seconds,
                 )
