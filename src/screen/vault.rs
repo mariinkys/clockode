@@ -1,8 +1,9 @@
 use iced::time::Instant;
-use iced::widget::{button, column, container, float, row, text, text_input};
+use iced::widget::{button, column, container, float, pick_list, row, text, text_input};
 use iced::{Alignment, Element, Length, Padding, Subscription, Task};
+use totp_rs::Algorithm;
 
-use crate::core::entry::Entry;
+use crate::core::entry::{Entry, TOTPConfig};
 
 pub struct Vault {
     state: State,
@@ -23,6 +24,8 @@ pub enum Message {
     OpenModal(Modal),
 
     AddEntry(Entry),
+    UpdateSelectedAlgorithm(Algorithm),
+    ToggleAdvancedConfig,
 
     UpdateAllTOTP,
     UpdatedAllTOTP(Result<Vec<Entry>, anywho::Error>),
@@ -38,7 +41,7 @@ pub enum State {
         password: String,
     },
     List {
-        time_count: i32,
+        time_count: u64,
         modal: Modal,
     },
 }
@@ -56,6 +59,9 @@ pub enum TextInputs {
 
     EntryName,
     EntrySecret,
+
+    EntryConfigDigits,
+    EntryConfigSkew,
 }
 
 #[derive(Debug, Clone)]
@@ -64,6 +70,9 @@ pub enum Modal {
     Add {
         entry_name: String,
         entry_secret: String,
+        entry_config: TOTPConfig,
+        show_advanced: bool,
+        next_input_clean: bool,
     },
     Config,
 }
@@ -77,6 +86,9 @@ impl Modal {
         Modal::Add {
             entry_name: String::new(),
             entry_secret: String::new(),
+            entry_config: TOTPConfig::default(),
+            show_advanced: false,
+            next_input_clean: false,
         }
     }
 
@@ -87,7 +99,7 @@ impl Modal {
 
 impl Vault {
     const APP_TITLE: &str = "Iced 2FA";
-    const REFRESH_RATE: i32 = 30;
+    const REFRESH_RATE: u64 = 30;
 
     pub fn new(vault: Result<crate::Vault, anywho::Error>) -> Self {
         if let Ok(vault) = vault {
@@ -146,6 +158,52 @@ impl Vault {
                         if let State::List { modal, .. } = &mut self.state {
                             if let Modal::Add { entry_secret, .. } = modal {
                                 *entry_secret = value;
+                            }
+                        }
+                    }
+                    TextInputs::EntryConfigDigits => {
+                        #[allow(clippy::collapsible_match)]
+                        if let State::List { modal, .. } = &mut self.state {
+                            if let Modal::Add {
+                                entry_config,
+                                next_input_clean,
+                                ..
+                            } = modal
+                            {
+                                if value.is_empty() {
+                                    entry_config.digits = 0;
+                                    *next_input_clean = true;
+                                } else if *next_input_clean {
+                                    let new_value = value.replace("0", "");
+                                    let new_value = new_value.trim();
+                                    entry_config.digits = new_value.parse::<usize>().unwrap_or(6);
+                                    *next_input_clean = false;
+                                } else {
+                                    entry_config.digits = value.parse::<usize>().unwrap_or(6);
+                                }
+                            }
+                        }
+                    }
+                    TextInputs::EntryConfigSkew => {
+                        #[allow(clippy::collapsible_match)]
+                        if let State::List { modal, .. } = &mut self.state {
+                            if let Modal::Add {
+                                entry_config,
+                                next_input_clean,
+                                ..
+                            } = modal
+                            {
+                                if value.is_empty() {
+                                    entry_config.skew = 0;
+                                    *next_input_clean = true;
+                                } else if *next_input_clean {
+                                    let new_value = value.replace("0", "");
+                                    let new_value = new_value.trim();
+                                    entry_config.skew = new_value.parse::<u8>().unwrap_or(1);
+                                    *next_input_clean = false;
+                                } else {
+                                    entry_config.skew = value.parse::<u8>().unwrap_or(1);
+                                }
                             }
                         }
                     }
@@ -230,7 +288,7 @@ impl Vault {
             }
             Message::AddEntry(entry) => {
                 if let Some(vault) = &mut self.vault {
-                    let res = vault.add_entry(entry);
+                    let res = vault.add_entry(entry, Self::REFRESH_RATE);
                     match res {
                         Ok(_) => {
                             let cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
@@ -248,11 +306,29 @@ impl Vault {
 
                 Action::None
             }
+            Message::UpdateSelectedAlgorithm(algorithm) => {
+                #[allow(clippy::collapsible_match)]
+                if let State::List { modal, .. } = &mut self.state {
+                    if let Modal::Add { entry_config, .. } = modal {
+                        entry_config.algorithm = algorithm;
+                    }
+                }
+                Action::None
+            }
+            Message::ToggleAdvancedConfig => {
+                #[allow(clippy::collapsible_match)]
+                if let State::List { modal, .. } = &mut self.state {
+                    if let Modal::Add { show_advanced, .. } = modal {
+                        *show_advanced = !(*show_advanced);
+                    }
+                }
+                Action::None
+            }
             Message::UpdateAllTOTP => {
                 if let Some(vault) = &self.vault {
                     let mut cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
                     return Action::Run(Task::perform(
-                        async move { cloned_vault.update_all_totp().await },
+                        async move { cloned_vault.update_all_totp(Self::REFRESH_RATE).await },
                         Message::UpdatedAllTOTP,
                     ));
                 }
@@ -418,7 +494,15 @@ impl Vault {
                         Modal::Add {
                             entry_name,
                             entry_secret,
-                        } => container(custom_modal(self.add_modal_view(entry_name, entry_secret))),
+                            entry_config,
+                            show_advanced,
+                            next_input_clean: _,
+                        } => container(custom_modal(self.add_modal_view(
+                            entry_name,
+                            entry_secret,
+                            entry_config,
+                            show_advanced,
+                        ))),
                         Modal::Config => container(custom_modal(self.config_modal_view())),
                     }
                 } else {
@@ -442,38 +526,97 @@ impl Vault {
             .into()
     }
 
-    fn add_modal_view(&self, entry_name: &String, entry_secret: &String) -> Element<Message> {
+    fn add_modal_view(
+        &self,
+        entry_name: &String,
+        entry_secret: &String,
+        totp_config: &TOTPConfig,
+        show_advanced: &bool,
+    ) -> Element<Message> {
         let header = row![
             text("Add").width(Length::Fill),
-            button("Close").on_press(Message::OpenModal(Modal::close()))
-        ];
+            button("Close").on_press(Message::OpenModal(Modal::close())),
+            button("A").on_press(Message::ToggleAdvancedConfig)
+        ]
+        .spacing(5.);
 
-        let can_save: Option<Message> = if !entry_name.is_empty() && !entry_secret.is_empty() {
-            Some(Message::AddEntry(Entry {
-                name: entry_name.to_string(),
-                secret: entry_secret.to_string(),
-                totp: String::new(),
-            }))
+        let entry = Entry {
+            name: entry_name.to_string(),
+            secret: entry_secret.to_string(),
+            totp: String::new(),
+            totp_config: totp_config.clone(),
+        };
+
+        let can_save: Option<Message> = if entry.is_valid() {
+            Some(Message::AddEntry(entry))
         } else {
             None
         };
 
+        let algorithm_label = text("Algorithm").size(13.).width(Length::Fill);
+        let algorithm_selector = column![
+            algorithm_label,
+            pick_list(
+                TOTPConfig::get_all_algorithms(),
+                Some(totp_config.algorithm),
+                Message::UpdateSelectedAlgorithm,
+            )
+            .width(Length::Fill)
+        ]
+        .spacing(2.);
+
+        let advanced_content = container(
+            column![
+                text("Advanced"),
+                algorithm_selector,
+                column![
+                    text("Digits").size(13.).width(Length::Fill),
+                    text_input("Digits", &totp_config.digits.to_string())
+                        .on_input(|s| Message::TextInputted(TextInputs::EntryConfigDigits, s))
+                        .width(Length::Fill)
+                ]
+                .spacing(2.),
+                column![
+                    text("Skew").size(13.).width(Length::Fill),
+                    text_input("Skew", &totp_config.skew.to_string())
+                        .on_input(|s| Message::TextInputted(TextInputs::EntryConfigSkew, s))
+                        .width(Length::Fill)
+                ]
+                .spacing(2.),
+            ]
+            .spacing(6.),
+        )
+        .width(Length::Fill);
+
         let content = container(
             column![
-                text_input("Name", entry_name)
-                    .on_input(|s| Message::TextInputted(TextInputs::EntryName, s))
-                    .width(Length::Fill),
-                text_input("Secret", entry_secret)
-                    .on_input(|s| Message::TextInputted(TextInputs::EntrySecret, s))
-                    .width(Length::Fill),
+                column![
+                    text("Name").size(13.).width(Length::Fill),
+                    text_input("Name", entry_name)
+                        .on_input(|s| Message::TextInputted(TextInputs::EntryName, s))
+                        .width(Length::Fill)
+                ]
+                .spacing(2.),
+                column![
+                    text("Secret").size(13.).width(Length::Fill),
+                    text_input("Secret", entry_secret)
+                        .on_input(|s| Message::TextInputted(TextInputs::EntrySecret, s))
+                        .width(Length::Fill)
+                ]
+                .spacing(2.),
                 button("Save").width(Length::Fill).on_press_maybe(can_save)
             ]
-            .spacing(5.),
+            .spacing(6.),
         )
-        .width(Length::Fill)
-        .height(Length::Fill);
+        .width(Length::Fill);
 
-        column![header, content].spacing(10.).into()
+        if *show_advanced {
+            column![header, advanced_content, content]
+                .spacing(10.)
+                .into()
+        } else {
+            column![header, content].spacing(10.).into()
+        }
     }
 
     fn config_modal_view(&self) -> Element<Message> {

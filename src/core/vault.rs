@@ -282,7 +282,7 @@ impl Vault {
     }
 
     /// Tries to add an entry to the [`Vault`]
-    pub fn add_entry(&mut self, mut entry: Entry) -> Result<(), anywho::Error> {
+    pub fn add_entry(&mut self, mut entry: Entry, refresh_rate: u64) -> Result<(), anywho::Error> {
         // Check if the vault is unlocked
         let data = match &mut self.state {
             State::Unlocked { data, .. } => data,
@@ -292,10 +292,10 @@ impl Vault {
         // TODO: Still not sure if I want this here
         use totp_rs::Secret;
         let totp = totp_rs::TOTP::new(
-            totp_rs::Algorithm::SHA1,
-            6,
-            1,
-            30,
+            entry.totp_config.algorithm,
+            entry.totp_config.digits,
+            entry.totp_config.skew,
+            refresh_rate,
             Secret::Raw(entry.secret.clone().as_bytes().to_vec()).to_bytes()?,
         )?;
         entry.totp = totp.generate_current().unwrap_or(String::from("Error"));
@@ -321,7 +321,10 @@ impl Vault {
     }
 
     /// Attempts to update the TOTP of all entries in the [`Vault`], returns the updated entries
-    pub async fn update_all_totp(&mut self) -> Result<Vec<Entry>, anywho::Error> {
+    pub async fn update_all_totp(
+        &mut self,
+        refresh_rate: u64,
+    ) -> Result<Vec<Entry>, anywho::Error> {
         use tokio::task;
         use totp_rs::Secret;
 
@@ -340,10 +343,10 @@ impl Vault {
 
             for entry in updated_entries.iter_mut() {
                 let totp = totp_rs::TOTP::new(
-                    totp_rs::Algorithm::SHA1,
-                    6,
-                    1,
-                    30,
+                    entry.totp_config.algorithm,
+                    entry.totp_config.digits,
+                    entry.totp_config.skew,
+                    refresh_rate,
                     Secret::Raw(entry.secret.clone().as_bytes().to_vec()).to_bytes()?,
                 )?;
                 entry.totp = totp.generate_current().unwrap_or(String::from("Error"));
