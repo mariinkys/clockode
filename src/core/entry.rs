@@ -49,12 +49,14 @@ impl Default for TOTPConfig {
 }
 
 impl TOTPConfig {
+    /// Returns all supported [`Algorithm`]
     pub fn get_all_algorithms() -> Vec<Algorithm> {
         vec![Algorithm::Sha1, Algorithm::Sha256, Algorithm::Sha512]
     }
 }
 
 impl Entry {
+    /// Generates the TOTP Code of a given [`Entry`]
     pub fn generate_totp(&mut self, refresh_rate: u64) -> Result<(), anywho::Error> {
         use std::time::SystemTime;
         use totp_lite::{Sha1, Sha256, Sha512};
@@ -107,6 +109,7 @@ impl Entry {
         Ok(())
     }
 
+    /// Returns true if a [`Entry`] is valid to be submitted.
     pub fn is_valid(&self) -> bool {
         if self.name.is_empty() || self.secret.is_empty() {
             return false;
