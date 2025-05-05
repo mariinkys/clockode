@@ -47,6 +47,6 @@ impl Entry {
             return false;
         }
 
-        return true;
+        true
     }
 }
