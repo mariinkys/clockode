@@ -1,6 +1,6 @@
 use iced::time::Instant;
 use iced::widget::{button, column, container, float, row, text, text_input};
-use iced::{Alignment, Element, Length, Padding, Task};
+use iced::{Alignment, Element, Length, Padding, Subscription, Task};
 
 use crate::core::entry::Entry;
 
@@ -26,6 +26,7 @@ pub enum Message {
 
     UpdateAllTOTP,
     UpdatedAllTOTP(Result<Vec<Entry>, anywho::Error>),
+    UpdateTimeCount,
 }
 
 pub enum State {
@@ -37,6 +38,7 @@ pub enum State {
         password: String,
     },
     List {
+        time_count: i32,
         modal: Modal,
     },
 }
@@ -85,6 +87,7 @@ impl Modal {
 
 impl Vault {
     const APP_TITLE: &str = "Iced 2FA";
+    const REFRESH_RATE: i32 = 30;
 
     pub fn new(vault: Result<crate::Vault, anywho::Error>) -> Self {
         if let Ok(vault) = vault {
@@ -193,8 +196,12 @@ impl Vault {
             Message::UnlockedVault(res) => {
                 match res {
                     Ok(vault) => {
-                        self.state = State::List { modal: Modal::None };
+                        self.state = State::List {
+                            modal: Modal::None,
+                            time_count: Self::REFRESH_RATE,
+                        };
                         self.vault = Some(vault);
+                        return self.update(Message::UpdateAllTOTP, now);
                     }
                     Err(err) => {
                         eprintln!("{}", err);
@@ -272,6 +279,36 @@ impl Vault {
                 }
                 Action::None
             }
+            Message::UpdateTimeCount => {
+                if let State::List {
+                    modal: _,
+                    time_count,
+                } = &mut self.state
+                {
+                    if time_count > &mut 0 {
+                        *time_count -= 1;
+                    } else {
+                        *time_count = Self::REFRESH_RATE;
+                        return self.update(Message::UpdateAllTOTP, now);
+                    }
+                }
+                Action::None
+            }
+        }
+    }
+
+    pub fn subscription(&self, now: Instant) -> Subscription<Message> {
+        match &self.state {
+            State::Creation {
+                new_password: _,
+                new_password_repeat: _,
+            } => Subscription::none(),
+            State::Decryption { password: _ } => Subscription::none(),
+            State::List {
+                modal: _,
+                time_count: _,
+            } => iced::time::every(std::time::Duration::from_secs(1))
+                .map(|_| Message::UpdateTimeCount),
         }
     }
 
@@ -332,17 +369,15 @@ impl Vault {
                     .spacing(5.)
                 )
             ],
-            State::List { modal } => {
+            State::List { modal, time_count } => {
                 let header = row![
-                    text(Self::APP_TITLE).width(Length::Fill),
+                    text(format!("{} ({})", Self::APP_TITLE, time_count)).width(Length::Fill),
                     button("+").on_press(
                         self.determine_modal_button_function(Message::OpenModal(Modal::add()))
                     ),
                     button("C").on_press(
                         self.determine_modal_button_function(Message::OpenModal(Modal::config()))
-                    ),
-                    //TODO: Remove this
-                    button("R").on_press(Message::UpdateAllTOTP)
+                    )
                 ]
                 .spacing(5.)
                 .width(Length::Fill);

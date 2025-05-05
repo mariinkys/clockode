@@ -87,7 +87,13 @@ impl Iced2FA {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        Subscription::none()
+        let State::Ready { screen, .. } = &self.state else {
+            return Subscription::none();
+        };
+
+        match screen {
+            Screen::Vault(vault) => vault.subscription(self.now).map(Message::Vault),
+        }
     }
 
     fn theme(&self) -> Theme {
