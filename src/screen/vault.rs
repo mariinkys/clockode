@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use arboard::Clipboard;
 use iced::time::Instant;
 use iced::widget::{
     button, column, container, float, mouse_area, pick_list, row, text, text_input,
@@ -11,10 +12,12 @@ use crate::core::entry::{self, Algorithm, Entry, TOTPConfig};
 pub struct Vault {
     state: State,
     vault: Option<crate::Vault>,
+    clipboard: Option<Clipboard>,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    SetClipboardContent(String),
     TextInputted(TextInputs, String),
 
     CreateVault,
@@ -123,6 +126,7 @@ impl Vault {
                     password: String::new(),
                 },
                 vault: Some(vault),
+                clipboard: Clipboard::new().ok(),
             }
         } else {
             Self {
@@ -131,12 +135,22 @@ impl Vault {
                     new_password_repeat: String::new(),
                 },
                 vault: None,
+                clipboard: Clipboard::new().ok(),
             }
         }
     }
 
     pub fn update(&mut self, message: Message, now: Instant) -> Action {
         match message {
+            Message::SetClipboardContent(content) => {
+                if let Some(clipboard) = &mut self.clipboard {
+                    let res = &clipboard.set_text(content);
+                    if let Err(res) = res {
+                        eprintln!("{}", res);
+                    }
+                }
+                Action::None
+            }
             Message::TextInputted(text_inputs, value) => {
                 match text_inputs {
                     TextInputs::NewPassword => {
@@ -505,6 +519,9 @@ impl Vault {
                                                     .style(container::rounded_box)
                                                     .padding(10.),
                                                 )
+                                                .on_press(Message::SetClipboardContent(
+                                                    e.totp.clone(),
+                                                ))
                                                 .into()
                                             })
                                             .collect::<Vec<Element<Message>>>(),
