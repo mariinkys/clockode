@@ -26,6 +26,8 @@ pub enum Message {
     UnlockVault,
     UnlockedVault(Result<crate::Vault, anywho::Error>),
     SavedVault(Result<(), anywho::Error>),
+    ExportVault,
+    ExportedVault(Result<String, anywho::Error>),
 
     OpenModal(Modal),
 
@@ -305,6 +307,39 @@ impl Vault {
                     }
                     Err(err) => {
                         eprintln!("Error saving vault: {}", err);
+                    }
+                }
+                Action::None
+            }
+            Message::ExportVault => {
+                if let Some(vault) = &mut self.vault {
+                    match vault.entries() {
+                        Some(entries) => {
+                            if entries.is_empty() {
+                                return Action::None;
+                            }
+
+                            let cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                            return Action::Run(Task::perform(
+                                async move { cloned_vault.export().await },
+                                Message::ExportedVault,
+                            ));
+                        }
+                        None => {
+                            println!("Error getting vault entries");
+                        }
+                    }
+                }
+                Action::None
+            }
+            Message::ExportedVault(res) => {
+                // TODO: Toast
+                match res {
+                    Ok(path) => {
+                        println!("Vault exported sucessfully to: {}", path);
+                    }
+                    Err(err) => {
+                        eprintln!("{}", err);
                     }
                 }
                 Action::None
@@ -672,7 +707,8 @@ impl Vault {
             button("Close").on_press(Message::OpenModal(Modal::close()))
         ];
 
-        let content = container(text("Testing")).height(Length::Fill);
+        let content =
+            container(button("Export").on_press(Message::ExportVault)).height(Length::Fill);
 
         column![header, content].into()
     }

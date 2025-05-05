@@ -355,4 +355,37 @@ impl Vault {
         })
         .await?
     }
+
+    /// Attempts to export a [`Vault`], returns the export path
+    pub async fn export(&self) -> Result<String, anywho::Error> {
+        use dirs;
+        use std::path::PathBuf;
+        use tokio::{fs, task};
+
+        // only export if unlocked
+        let vault_data = match &self.state {
+            State::Unlocked { data, .. } => data,
+            State::Locked => return Err(anywho!("Cannot export locked vault")),
+        };
+
+        let export_path_result = task::spawn_blocking(move || {
+            let export_path = dirs::download_dir()
+                .ok_or_else(|| anywho!("Could not determine downloads directory"))?
+                .join("vault_export.ron");
+
+            Ok::<PathBuf, anywho::Error>(export_path)
+        })
+        .await??;
+
+        let serialized_data = ser::to_string(&vault_data)?.into_bytes();
+
+        fs::write(&export_path_result, serialized_data).await?;
+
+        let path_string = export_path_result
+            .to_str()
+            .ok_or_else(|| anywho!("Invalid path encoding"))?
+            .to_string();
+
+        Ok(path_string)
+    }
 }
