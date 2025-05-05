@@ -34,6 +34,21 @@ impl TOTPConfig {
 }
 
 impl Entry {
+    pub fn generate_totp(&mut self, refresh_rate: u64) -> Result<(), anywho::Error> {
+        use totp_rs::Secret;
+
+        let totp = totp_rs::TOTP::new(
+            self.totp_config.algorithm,
+            self.totp_config.digits,
+            self.totp_config.skew,
+            refresh_rate,
+            Secret::Raw(self.secret.clone().as_bytes().to_vec()).to_bytes()?,
+        )?;
+        self.totp = totp.generate_current().unwrap_or(String::from("Error"));
+
+        Ok(())
+    }
+
     pub fn is_valid(&self) -> bool {
         if self.name.is_empty() || self.secret.is_empty() {
             return false;

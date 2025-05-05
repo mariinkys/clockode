@@ -289,16 +289,7 @@ impl Vault {
             State::Locked => return Err(anywho!("Cannot add entry to locked vault")),
         };
 
-        // TODO: Still not sure if I want this here
-        use totp_rs::Secret;
-        let totp = totp_rs::TOTP::new(
-            entry.totp_config.algorithm,
-            entry.totp_config.digits,
-            entry.totp_config.skew,
-            refresh_rate,
-            Secret::Raw(entry.secret.clone().as_bytes().to_vec()).to_bytes()?,
-        )?;
-        entry.totp = totp.generate_current().unwrap_or(String::from("Error"));
+        entry.generate_totp(refresh_rate)?;
 
         // Insert the entry into the entries map
         data.entries.push(entry);
@@ -326,7 +317,6 @@ impl Vault {
         refresh_rate: u64,
     ) -> Result<Vec<Entry>, anywho::Error> {
         use tokio::task;
-        use totp_rs::Secret;
 
         // Get entries and handle the Option before spawning the task
         let entries = self
@@ -342,14 +332,7 @@ impl Vault {
             let mut updated_entries = entries;
 
             for entry in updated_entries.iter_mut() {
-                let totp = totp_rs::TOTP::new(
-                    entry.totp_config.algorithm,
-                    entry.totp_config.digits,
-                    entry.totp_config.skew,
-                    refresh_rate,
-                    Secret::Raw(entry.secret.clone().as_bytes().to_vec()).to_bytes()?,
-                )?;
-                entry.totp = totp.generate_current().unwrap_or(String::from("Error"));
+                entry.generate_totp(refresh_rate)?
             }
 
             Ok(updated_entries)
