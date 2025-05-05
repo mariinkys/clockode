@@ -9,7 +9,7 @@ iced = { git = "https://github.com/iced-rs/iced", default-features = false, feat
     "tokio",
     "tiny-skia",
     "image",
-    "debug",     # TODO: Remove this on release
+    "debug",
 ] }
 serde = { version = "1.0.219", features = ["derive"] }
 ron = "0.10.1"
@@ -17,7 +17,8 @@ dirs = "6.0.0"
 tokio = { version = "1.44.2", features = ["fs"] }
 scrypt = "0.11.0"
 aes-gcm = "0.10.3"
-totp-rs = { version = "5.7.0", features = ["serde_support"] }
+totp-lite = "2.0.1"
+fast32 = "1.0.3"
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]

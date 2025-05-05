@@ -1,9 +1,8 @@
 use iced::time::Instant;
 use iced::widget::{button, column, container, float, pick_list, row, text, text_input};
 use iced::{Alignment, Element, Length, Padding, Subscription, Task};
-use totp_rs::Algorithm;
 
-use crate::core::entry::{Entry, TOTPConfig};
+use crate::core::entry::{Algorithm, Entry, TOTPConfig};
 
 pub struct Vault {
     state: State,

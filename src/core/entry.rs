@@ -1,5 +1,7 @@
+use std::fmt::Display;
+
+use anywho::anywho;
 use serde::{Deserialize, Serialize};
-use totp_rs::Algorithm;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Entry {
@@ -17,6 +19,25 @@ pub struct TOTPConfig {
     pub skew: u8,
 }
 
+#[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum Algorithm {
+    #[default]
+    Sha1,
+    Sha256,
+    Sha512,
+}
+
+impl Display for Algorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Algorithm::Sha1 => "SHA1",
+            Algorithm::Sha256 => "SHA256",
+            Algorithm::Sha512 => "SHA512",
+        };
+        write!(f, "{}", s)
+    }
+}
+
 impl Default for TOTPConfig {
     fn default() -> Self {
         Self {
@@ -29,22 +50,59 @@ impl Default for TOTPConfig {
 
 impl TOTPConfig {
     pub fn get_all_algorithms() -> Vec<Algorithm> {
-        vec![Algorithm::SHA1, Algorithm::SHA256, Algorithm::SHA512]
+        vec![Algorithm::Sha1, Algorithm::Sha256, Algorithm::Sha512]
     }
 }
 
 impl Entry {
     pub fn generate_totp(&mut self, refresh_rate: u64) -> Result<(), anywho::Error> {
-        use totp_rs::Secret;
+        use std::time::SystemTime;
+        use totp_lite::{Sha1, Sha256, Sha512};
 
-        let totp = totp_rs::TOTP::new(
-            self.totp_config.algorithm,
-            self.totp_config.digits,
-            self.totp_config.skew,
-            refresh_rate,
-            Secret::Raw(self.secret.clone().as_bytes().to_vec()).to_bytes()?,
-        )?;
-        self.totp = totp.generate_current().unwrap_or(String::from("Error"));
+        let length = self.secret.trim().len();
+        if length != 16 && length != 26 && length != 32 {
+            return Err(anywho!(
+                "Invalid TOTP secret, must be 16, 26 or 32 characters."
+            ));
+        }
+
+        let seconds: u64 = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        self.totp = match self.totp_config.algorithm {
+            Algorithm::Sha1 => {
+                totp_lite::totp_custom::<Sha1>(
+                    // Calculate a new code every 30 seconds.
+                    refresh_rate,
+                    // Calculate a 6 digit code.
+                    self.totp_config.digits.try_into().unwrap(),
+                    // Convert the secret into bytes using base32::decode().
+                    &fast32::base32::RFC4648_NOPAD
+                        .decode(self.secret.trim().to_uppercase().as_bytes())
+                        .unwrap(),
+                    // Seconds since the Unix Epoch.
+                    seconds,
+                )
+            }
+            Algorithm::Sha256 => totp_lite::totp_custom::<Sha256>(
+                refresh_rate,
+                self.totp_config.digits.try_into().unwrap(),
+                &fast32::base32::RFC4648_NOPAD
+                    .decode(self.secret.trim().to_uppercase().as_bytes())
+                    .unwrap(),
+                seconds,
+            ),
+            Algorithm::Sha512 => totp_lite::totp_custom::<Sha512>(
+                refresh_rate,
+                self.totp_config.digits.try_into().unwrap(),
+                &fast32::base32::RFC4648_NOPAD
+                    .decode(self.secret.trim().to_uppercase().as_bytes())
+                    .unwrap(),
+                seconds,
+            ),
+        };
 
         Ok(())
     }
