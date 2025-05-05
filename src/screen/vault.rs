@@ -258,11 +258,7 @@ impl Vault {
                             let substituted_entries = vault.substitute_entries(entries);
                             match substituted_entries {
                                 Ok(_) => {
-                                    let cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
-                                    return Action::Run(Task::perform(
-                                        async move { cloned_vault.save().await },
-                                        Message::SavedVault,
-                                    ));
+                                    return Action::None;
                                 }
                                 Err(err) => {
                                     eprintln!("Error substituting entries: {}", err);
