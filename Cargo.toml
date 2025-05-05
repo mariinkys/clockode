@@ -3,6 +3,9 @@ name = "iced-twofa"
 version = "0.1.0"
 edition = "2024"
 
+[build-dependencies]
+iced_fontello = "0.13.2"
+
 [dependencies]
 anywho = "0.1.2"
 iced = { git = "https://github.com/iced-rs/iced", default-features = false, features = [

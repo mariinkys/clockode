@@ -1,0 +1,13 @@
+module = "icon"
+
+[glyphs]
+user = "fontawesome-user"
+edit = "fontawesome-pencil"
+add = "fontawesome-plus"
+trash = "fontawesome-trash"
+config = "fontawesome-cog"
+cancel = "fontawesome-cancel"
+export = "fontawesome-export"
+save = "fontawesome-floppy"
+unlock = "fontawesome-lock-open"
+expand = "fontawesome-book"

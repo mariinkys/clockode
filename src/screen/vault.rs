@@ -8,6 +8,7 @@ use iced::widget::{
 use iced::{Alignment, Element, Length, Padding, Subscription, Task};
 
 use crate::core::entry::{self, Algorithm, Entry, TOTPConfig};
+use crate::icon;
 
 pub struct Vault {
     state: State,
@@ -477,10 +478,12 @@ impl Vault {
             State::List { modal, time_count } => {
                 let header = row![
                     text(format!("{} ({})", Self::APP_TITLE, time_count)).width(Length::Fill),
-                    button("+").on_press(self.determine_modal_button_function(Message::OpenModal(
-                        Modal::add_edit(None)
-                    ))),
-                    button("C").on_press(
+                    button(icon::add().shaping(text::Shaping::Advanced).center()).on_press(
+                        self.determine_modal_button_function(Message::OpenModal(Modal::add_edit(
+                            None
+                        )))
+                    ),
+                    button(icon::config().shaping(text::Shaping::Advanced).center()).on_press(
                         self.determine_modal_button_function(Message::OpenModal(Modal::config()))
                     )
                 ]
@@ -505,13 +508,16 @@ impl Vault {
                                                                 .size(20.)
                                                                 .width(Length::Fill),
                                                             text(&e.totp).size(20.),
-                                                            button(text("E").center()).on_press(
-                                                                Message::OpenModal(
-                                                                    Modal::add_edit(Some(
-                                                                        e.clone()
-                                                                    ))
-                                                                )
+                                                            button(
+                                                                icon::edit()
+                                                                    .shaping(
+                                                                        text::Shaping::Advanced
+                                                                    )
+                                                                    .center()
                                                             )
+                                                            .on_press(Message::OpenModal(
+                                                                Modal::add_edit(Some(e.clone()))
+                                                            ))
                                                         ]
                                                         .align_y(Alignment::Center)
                                                         .spacing(10.),
@@ -581,8 +587,10 @@ impl Vault {
     ) -> Element<Message> {
         let header = row![
             text("Add").width(Length::Fill),
-            button("Close").on_press(Message::OpenModal(Modal::close())),
-            button("A").on_press(Message::ToggleAdvancedConfig)
+            button(icon::cancel().shaping(text::Shaping::Advanced).center())
+                .on_press(Message::OpenModal(Modal::close())),
+            button(icon::expand().shaping(text::Shaping::Advanced).center())
+                .on_press(Message::ToggleAdvancedConfig)
         ]
         .spacing(5.);
 
@@ -669,7 +677,8 @@ impl Vault {
     fn config_modal_view(&self) -> Element<Message> {
         let header = row![
             text("Config").width(Length::Fill),
-            button("Close").on_press(Message::OpenModal(Modal::close()))
+            button(icon::cancel().shaping(text::Shaping::Advanced).center())
+                .on_press(Message::OpenModal(Modal::close()))
         ];
 
         let content = container(text("Testing")).height(Length::Fill);

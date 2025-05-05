@@ -8,6 +8,7 @@ use iced::{
 use screen::{Screen, vault};
 
 mod core;
+mod icon;
 mod screen;
 
 fn main() -> iced::Result {
