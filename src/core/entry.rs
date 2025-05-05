@@ -1,3 +1,4 @@
+use anywho::anywho;
 use serde::{Deserialize, Serialize};
 use totp_rs::Algorithm;
 
@@ -35,16 +36,33 @@ impl TOTPConfig {
 
 impl Entry {
     pub fn generate_totp(&mut self, refresh_rate: u64) -> Result<(), anywho::Error> {
-        use totp_rs::Secret;
+        use std::time::SystemTime;
+        use totp_lite::Sha1;
 
-        let totp = totp_rs::TOTP::new(
-            self.totp_config.algorithm,
-            self.totp_config.digits,
-            self.totp_config.skew,
+        let length = self.secret.trim().len();
+        if length != 16 && length != 26 && length != 32 {
+            return Err(anywho!(
+                "Invalid TOTP secret, must be 16, 26 or 32 characters."
+            ));
+        }
+
+        let seconds: u64 = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        self.totp = totp_lite::totp_custom::<Sha1>(
+            // Calculate a new code every 30 seconds.
             refresh_rate,
-            Secret::Raw(self.secret.clone().as_bytes().to_vec()).to_bytes()?,
-        )?;
-        self.totp = totp.generate_current().unwrap_or(String::from("Error"));
+            // Calculate a 6 digit code.
+            self.totp_config.digits.try_into().unwrap(),
+            // Convert the secret into bytes using base32::decode().
+            &fast32::base32::RFC4648_NOPAD
+                .decode(self.secret.trim().to_uppercase().as_bytes())
+                .unwrap(),
+            // Seconds since the Unix Epoch.
+            seconds,
+        );
 
         Ok(())
     }
