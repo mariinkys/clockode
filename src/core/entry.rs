@@ -15,7 +15,7 @@ pub struct Entry {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TOTPConfig {
     pub algorithm: Algorithm,
-    pub digits: usize,
+    pub digits: u32,
     pub skew: u8,
 }
 
@@ -79,7 +79,7 @@ impl Entry {
                     // Calculate a new code every 30 seconds.
                     refresh_rate,
                     // Calculate a 6 digit code.
-                    self.totp_config.digits.try_into().unwrap(),
+                    self.totp_config.digits,
                     // Convert the secret into bytes using base32::decode().
                     &fast32::base32::RFC4648_NOPAD
                         .decode(self.secret.trim().to_uppercase().as_bytes())

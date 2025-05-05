@@ -175,10 +175,10 @@ impl Vault {
                                 } else if *next_input_clean {
                                     let new_value = value.replace("0", "");
                                     let new_value = new_value.trim();
-                                    entry_config.digits = new_value.parse::<usize>().unwrap_or(6);
+                                    entry_config.digits = new_value.parse::<u32>().unwrap_or(6);
                                     *next_input_clean = false;
                                 } else {
-                                    entry_config.digits = value.parse::<usize>().unwrap_or(6);
+                                    entry_config.digits = value.parse::<u32>().unwrap_or(6);
                                 }
                             }
                         }
