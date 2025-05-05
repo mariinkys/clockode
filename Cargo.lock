@@ -1297,6 +1297,7 @@ dependencies = [
  "serde",
  "tokio",
  "totp-lite",
+ "uuid",
 ]
 
 [[package]]
@@ -3404,6 +3405,16 @@ checksum = "fc1de2c688dc15305988b563c3854064043356019f97a4b46276fe734c4f07ea"
 dependencies = [
  "crypto-common",
  "subtle",
+]
+
+[[package]]
+name = "uuid"
+version = "1.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "458f7a779bf54acc9f347480ac654f68407d3aab21269a6e3c9f922acd9e2da9"
+dependencies = [
+ "getrandom 0.3.2",
+ "serde",
 ]
 
 [[package]]

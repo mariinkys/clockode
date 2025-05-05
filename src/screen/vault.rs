@@ -1,8 +1,12 @@
+use std::collections::HashMap;
+
 use iced::time::Instant;
-use iced::widget::{button, column, container, float, pick_list, row, text, text_input};
+use iced::widget::{
+    button, column, container, float, mouse_area, pick_list, row, text, text_input,
+};
 use iced::{Alignment, Element, Length, Padding, Subscription, Task};
 
-use crate::core::entry::{Algorithm, Entry, TOTPConfig};
+use crate::core::entry::{self, Algorithm, Entry, TOTPConfig};
 
 pub struct Vault {
     state: State,
@@ -22,12 +26,12 @@ pub enum Message {
 
     OpenModal(Modal),
 
-    AddEntry(Entry),
+    UpsertEntry(Entry),
     UpdateSelectedAlgorithm(Algorithm),
     ToggleAdvancedConfig,
 
     UpdateAllTOTP,
-    UpdatedAllTOTP(Result<Vec<Entry>, anywho::Error>),
+    UpdatedAllTOTP(Result<HashMap<entry::Id, Entry>, anywho::Error>),
     UpdateTimeCount,
 }
 
@@ -66,7 +70,8 @@ pub enum TextInputs {
 #[derive(Debug, Clone)]
 pub enum Modal {
     None,
-    Add {
+    AddEdit {
+        entry_id: Option<entry::Id>,
         entry_name: String,
         entry_secret: String,
         entry_config: TOTPConfig,
@@ -81,13 +86,24 @@ impl Modal {
         Modal::None
     }
 
-    pub fn add() -> Modal {
-        Modal::Add {
-            entry_name: String::new(),
-            entry_secret: String::new(),
-            entry_config: TOTPConfig::default(),
-            show_advanced: false,
-            next_input_clean: false,
+    pub fn add_edit(entry: Option<Entry>) -> Modal {
+        match entry {
+            Some(entry) => Modal::AddEdit {
+                entry_id: entry.id,
+                entry_name: entry.name,
+                entry_secret: entry.secret,
+                entry_config: entry.totp_config,
+                show_advanced: false,
+                next_input_clean: false,
+            },
+            None => Modal::AddEdit {
+                entry_id: None,
+                entry_name: String::new(),
+                entry_secret: String::new(),
+                entry_config: TOTPConfig::default(),
+                show_advanced: false,
+                next_input_clean: false,
+            },
         }
     }
 
@@ -146,7 +162,7 @@ impl Vault {
                     {
                         #[allow(clippy::collapsible_match)]
                         if let State::List { modal, .. } = &mut self.state {
-                            if let Modal::Add { entry_name, .. } = modal {
+                            if let Modal::AddEdit { entry_name, .. } = modal {
                                 *entry_name = value;
                             }
                         }
@@ -155,7 +171,7 @@ impl Vault {
                     {
                         #[allow(clippy::collapsible_match)]
                         if let State::List { modal, .. } = &mut self.state {
-                            if let Modal::Add { entry_secret, .. } = modal {
+                            if let Modal::AddEdit { entry_secret, .. } = modal {
                                 *entry_secret = value;
                             }
                         }
@@ -163,7 +179,7 @@ impl Vault {
                     TextInputs::EntryConfigDigits => {
                         #[allow(clippy::collapsible_match)]
                         if let State::List { modal, .. } = &mut self.state {
-                            if let Modal::Add {
+                            if let Modal::AddEdit {
                                 entry_config,
                                 next_input_clean,
                                 ..
@@ -186,7 +202,7 @@ impl Vault {
                     TextInputs::EntryConfigSkew => {
                         #[allow(clippy::collapsible_match)]
                         if let State::List { modal, .. } = &mut self.state {
-                            if let Modal::Add {
+                            if let Modal::AddEdit {
                                 entry_config,
                                 next_input_clean,
                                 ..
@@ -285,9 +301,9 @@ impl Vault {
                 }
                 Action::None
             }
-            Message::AddEntry(entry) => {
+            Message::UpsertEntry(entry) => {
                 if let Some(vault) = &mut self.vault {
-                    let res = vault.add_entry(entry, Self::REFRESH_RATE);
+                    let res = vault.upsert_entry(entry, Self::REFRESH_RATE);
                     match res {
                         Ok(_) => {
                             let cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
@@ -308,7 +324,7 @@ impl Vault {
             Message::UpdateSelectedAlgorithm(algorithm) => {
                 #[allow(clippy::collapsible_match)]
                 if let State::List { modal, .. } = &mut self.state {
-                    if let Modal::Add { entry_config, .. } = modal {
+                    if let Modal::AddEdit { entry_config, .. } = modal {
                         entry_config.algorithm = algorithm;
                     }
                 }
@@ -317,7 +333,7 @@ impl Vault {
             Message::ToggleAdvancedConfig => {
                 #[allow(clippy::collapsible_match)]
                 if let State::List { modal, .. } = &mut self.state {
-                    if let Modal::Add { show_advanced, .. } = modal {
+                    if let Modal::AddEdit { show_advanced, .. } = modal {
                         *show_advanced = !(*show_advanced);
                     }
                 }
@@ -447,9 +463,9 @@ impl Vault {
             State::List { modal, time_count } => {
                 let header = row![
                     text(format!("{} ({})", Self::APP_TITLE, time_count)).width(Length::Fill),
-                    button("+").on_press(
-                        self.determine_modal_button_function(Message::OpenModal(Modal::add()))
-                    ),
+                    button("+").on_press(self.determine_modal_button_function(Message::OpenModal(
+                        Modal::add_edit(None)
+                    ))),
                     button("C").on_press(
                         self.determine_modal_button_function(Message::OpenModal(Modal::config()))
                     )
@@ -467,17 +483,28 @@ impl Vault {
                                     let entries_content: Element<Message> = column(
                                         entries
                                             .iter()
-                                            .map(|e| {
-                                                container(
-                                                    row![
-                                                        text(&e.name).size(20.).width(Length::Fill),
-                                                        text(&e.totp).size(20.),
-                                                        button(text("C").center())
-                                                    ]
-                                                    .spacing(5.),
+                                            .map(|(_, e)| {
+                                                mouse_area(
+                                                    container(
+                                                        row![
+                                                            text(&e.name)
+                                                                .size(20.)
+                                                                .width(Length::Fill),
+                                                            text(&e.totp).size(20.),
+                                                            button(text("E").center()).on_press(
+                                                                Message::OpenModal(
+                                                                    Modal::add_edit(Some(
+                                                                        e.clone()
+                                                                    ))
+                                                                )
+                                                            )
+                                                        ]
+                                                        .align_y(Alignment::Center)
+                                                        .spacing(10.),
+                                                    )
+                                                    .style(container::rounded_box)
+                                                    .padding(10.),
                                                 )
-                                                .style(container::rounded_box)
-                                                .padding(10.)
                                                 .into()
                                             })
                                             .collect::<Vec<Element<Message>>>(),
@@ -490,13 +517,15 @@ impl Vault {
                                 container(text("Error, getting vault entries..."))
                             }
                         }
-                        Modal::Add {
+                        Modal::AddEdit {
+                            entry_id,
                             entry_name,
                             entry_secret,
                             entry_config,
                             show_advanced,
                             next_input_clean: _,
                         } => container(custom_modal(self.add_modal_view(
+                            entry_id,
                             entry_name,
                             entry_secret,
                             entry_config,
@@ -527,6 +556,7 @@ impl Vault {
 
     fn add_modal_view(
         &self,
+        entry_id: &Option<entry::Id>,
         entry_name: &String,
         entry_secret: &String,
         totp_config: &TOTPConfig,
@@ -540,6 +570,7 @@ impl Vault {
         .spacing(5.);
 
         let entry = Entry {
+            id: *entry_id,
             name: entry_name.to_string(),
             secret: entry_secret.to_string(),
             totp: String::new(),
@@ -547,7 +578,7 @@ impl Vault {
         };
 
         let can_save: Option<Message> = if entry.is_valid() {
-            Some(Message::AddEntry(entry))
+            Some(Message::UpsertEntry(entry))
         } else {
             None
         };
@@ -633,7 +664,7 @@ impl Vault {
         if let State::List { modal, .. } = &self.state {
             match modal {
                 Modal::None => open,
-                Modal::Add { .. } => Message::OpenModal(Modal::close()),
+                Modal::AddEdit { .. } => Message::OpenModal(Modal::close()),
                 Modal::Config => Message::OpenModal(Modal::close()),
             }
         } else {

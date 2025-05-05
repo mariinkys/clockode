@@ -3,7 +3,8 @@ use aes_gcm::aead::rand_core::RngCore;
 use anywho::anywho;
 use ron::{de, ser};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
+use uuid::Uuid;
 
 const APP_ID: &str = "dev.mariinkys.IcedTwoFA";
 
@@ -31,7 +32,7 @@ struct EncryptedVault {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct VaultData {
-    entries: Vec<Entry>,
+    entries: HashMap<super::entry::Id, Entry>,
 }
 
 impl Vault {
@@ -156,7 +157,7 @@ impl Vault {
 
         // create empty vault data
         let vault_data = VaultData {
-            entries: Vec::new(),
+            entries: HashMap::new(),
         };
 
         let serialized_data = ser::to_string(&vault_data)?.into_bytes();
@@ -274,15 +275,19 @@ impl Vault {
     }
 
     /// Get a reference to the [`Vault`]  entries if unlocked
-    pub fn entries(&self) -> Option<&Vec<Entry>> {
+    pub fn entries(&self) -> Option<&HashMap<super::entry::Id, Entry>> {
         match &self.state {
             State::Unlocked { data, .. } => Some(&data.entries),
             State::Locked => None,
         }
     }
 
-    /// Tries to add an entry to the [`Vault`]
-    pub fn add_entry(&mut self, mut entry: Entry, refresh_rate: u64) -> Result<(), anywho::Error> {
+    /// Tries to add or update an entry to the [`Vault`]
+    pub fn upsert_entry(
+        &mut self,
+        mut entry: Entry,
+        refresh_rate: u64,
+    ) -> Result<(), anywho::Error> {
         // Check if the vault is unlocked
         let data = match &mut self.state {
             State::Unlocked { data, .. } => data,
@@ -291,14 +296,25 @@ impl Vault {
 
         entry.generate_totp(refresh_rate)?;
 
-        // Insert the entry into the entries map
-        data.entries.push(entry);
+        if let Some(id) = entry.id {
+            if let Some(existing) = data.entries.get_mut(&id) {
+                *existing = entry;
+            }
+        } else {
+            // Insert the entry into the entries map
+            let e_id = super::entry::Id(Uuid::new_v4());
+            entry.id = Some(e_id);
+            data.entries.insert(e_id, entry);
+        }
 
         Ok(())
     }
 
     /// Substitute the entries of a [`Vault`] for antoher
-    pub fn substitute_entries(&mut self, entries: Vec<Entry>) -> Result<(), anywho::Error> {
+    pub fn substitute_entries(
+        &mut self,
+        entries: HashMap<super::entry::Id, Entry>,
+    ) -> Result<(), anywho::Error> {
         // Check if the vault is unlocked
         let data = match &mut self.state {
             State::Unlocked { data, .. } => data,
@@ -315,7 +331,7 @@ impl Vault {
     pub async fn update_all_totp(
         &mut self,
         refresh_rate: u64,
-    ) -> Result<Vec<Entry>, anywho::Error> {
+    ) -> Result<HashMap<super::entry::Id, Entry>, anywho::Error> {
         use tokio::task;
 
         // Get entries and handle the Option before spawning the task
@@ -331,7 +347,7 @@ impl Vault {
         task::spawn_blocking(move || {
             let mut updated_entries = entries;
 
-            for entry in updated_entries.iter_mut() {
+            for (_, entry) in updated_entries.iter_mut() {
                 entry.generate_totp(refresh_rate)?
             }
 

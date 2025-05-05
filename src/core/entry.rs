@@ -2,15 +2,20 @@ use std::fmt::Display;
 
 use anywho::anywho;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Entry {
+    pub id: Option<Id>,
     pub name: String,
     pub secret: String,
     #[serde(skip_serializing, skip_deserializing)]
     pub totp: String,
     pub totp_config: TOTPConfig,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash)]
+pub struct Id(pub(crate) Uuid);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TOTPConfig {
@@ -61,6 +66,7 @@ impl Entry {
         use std::time::SystemTime;
         use totp_lite::{Sha1, Sha256, Sha512};
 
+        // TODO: This is not right, the code can be already Base32?...
         let length = self.secret.trim().len();
         if length != 16 && length != 26 && length != 32 {
             return Err(anywho!(
