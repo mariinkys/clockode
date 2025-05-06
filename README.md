@@ -9,7 +9,7 @@
 
   <h3>Minimal TOTP client made with Iced</h3>
 
-  <img width="600" alt="Main Page" src="./screenshots/main.png"/>
+  <img width="500" alt="Main Page" src="./screenshots/main.png"/>
 </div>
 
 ## Notes
@@ -21,7 +21,7 @@
 <p></p>
 
 > [!WARNING]
-> This project is not ready for usage, very WIP
+> The app works right now however there are a few things that I want to address before release, such as improving the code regarding vault/vault data handling or creating a custom theme for the app.
 
 *Icon from [SVGRepo](https://www.svgrepo.com/svg/408420/lock-security-open) made by [Tolu Arowoselu](https://www.svgrepo.com/author/Tolu%20Arowoselu/) (colors modified by myself).
 
