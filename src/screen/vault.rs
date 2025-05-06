@@ -118,7 +118,7 @@ impl Modal {
 }
 
 impl Vault {
-    const APP_TITLE: &str = "Iced 2FA";
+    const APP_TITLE: &str = "Clockode";
     const REFRESH_RATE: u64 = 30;
 
     pub fn new(vault: Result<crate::Vault, anywho::Error>) -> Self {

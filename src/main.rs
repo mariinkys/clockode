@@ -12,18 +12,18 @@ mod screen;
 
 fn main() -> iced::Result {
     iced::application::timed(
-        Iced2FA::new,
-        Iced2FA::update,
-        Iced2FA::subscription,
-        Iced2FA::view,
+        Clockode::new,
+        Clockode::update,
+        Clockode::subscription,
+        Clockode::view,
     )
-    .theme(Iced2FA::theme)
+    .theme(Clockode::theme)
     .default_font(Font::MONOSPACE)
     .window_size((400., 700.))
     .run()
 }
 
-struct Iced2FA {
+struct Clockode {
     state: State,
     now: Instant,
 }
@@ -40,7 +40,7 @@ enum Message {
     Vault(vault::Message),
 }
 
-impl Iced2FA {
+impl Clockode {
     fn new() -> (Self, Task<Message>) {
         (
             Self {

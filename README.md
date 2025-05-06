@@ -1,10 +1,10 @@
 <div align="center">
   <br>
   <img src="./resources/icons/hicolor/scalable/apps/icon.svg" width="150" />
-  <h1>Iced TOTP (Name Pending)</h1>
+  <h1>Clockode</h1>
 
-  ![GitHub License](https://img.shields.io/github/license/mariinkys/iced-totp)
-  ![GitHub Repo stars](https://img.shields.io/github/stars/mariinkys/iced-totp)
+  ![GitHub License](https://img.shields.io/github/license/mariinkys/clockode)
+  ![GitHub Repo stars](https://img.shields.io/github/stars/mariinkys/clockode)
 
 
   <h3>Minimal TOTP client made with Iced</h3>

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::Path};
 use uuid::Uuid;
 
-const APP_ID: &str = "dev.mariinkys.IcedTwoFA";
+const APP_ID: &str = "dev.mariinkys.Clockode";
 
 #[derive(Debug, Clone)]
 pub struct Vault {
