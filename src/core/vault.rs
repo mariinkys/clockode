@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 use super::entry::Entry;
 use aes_gcm::aead::rand_core::RngCore;
 use anywho::anywho;
