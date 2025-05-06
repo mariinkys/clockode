@@ -310,6 +310,18 @@ impl Vault {
         Ok(())
     }
 
+    /// Tries to delete an entry from the [`Vault`]
+    pub fn delete_entry(&mut self, entry_id: super::entry::Id) -> Result<(), anywho::Error> {
+        // Check if the vault is unlocked
+        let data = match &mut self.state {
+            State::Unlocked { data, .. } => data,
+            State::Locked => return Err(anywho!("Cannot add entry to locked vault")),
+        };
+
+        data.entries.remove(&entry_id);
+        Ok(())
+    }
+
     /// Substitute the entries of a [`Vault`] for antoher
     pub fn substitute_entries(
         &mut self,

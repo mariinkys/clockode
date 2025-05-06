@@ -32,6 +32,7 @@ pub enum Message {
     OpenModal(Modal),
 
     UpsertEntry(Entry),
+    DeleteEntry(entry::Id),
     UpdateSelectedAlgorithm(Algorithm),
     ToggleAdvancedConfig,
 
@@ -370,6 +371,26 @@ impl Vault {
 
                 Action::None
             }
+            Message::DeleteEntry(entry_id) => {
+                if let Some(vault) = &mut self.vault {
+                    let res = vault.delete_entry(entry_id);
+                    match res {
+                        Ok(_) => {
+                            let cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                            return Action::Run(Task::perform(
+                                async move { cloned_vault.save().await },
+                                Message::SavedVault,
+                            ));
+                        }
+                        Err(err) => {
+                            eprintln!("{}", err);
+                            return Action::None;
+                        }
+                    }
+                }
+
+                Action::None
+            }
             Message::UpdateSelectedAlgorithm(algorithm) => {
                 #[allow(clippy::collapsible_match)]
                 if let State::List { modal, .. } = &mut self.state {
@@ -614,13 +635,6 @@ impl Vault {
         totp_config: &TOTPConfig,
         show_advanced: &bool,
     ) -> Element<Message> {
-        let header = row![
-            text("Add").width(Length::Fill),
-            button("Close").on_press(Message::OpenModal(Modal::close())),
-            button("A").on_press(Message::ToggleAdvancedConfig)
-        ]
-        .spacing(5.);
-
         let entry = Entry {
             id: *entry_id,
             name: entry_name.to_string(),
@@ -628,6 +642,16 @@ impl Vault {
             totp: String::new(),
             totp_config: totp_config.clone(),
         };
+
+        let header = row![
+            text("Add").width(Length::Fill),
+            button("Delete")
+                .on_press_maybe(entry.id.map(Message::DeleteEntry))
+                .style(button::danger),
+            button("Close").on_press(Message::OpenModal(Modal::close())),
+            button("A").on_press(Message::ToggleAdvancedConfig)
+        ]
+        .spacing(5.);
 
         let can_save: Option<Message> = if entry.is_valid() {
             Some(Message::UpsertEntry(entry))
