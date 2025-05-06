@@ -293,9 +293,8 @@ impl Vault {
             Message::UnlockVault => {
                 if let Some(vault) = &self.vault {
                     if let State::Decryption { password, .. } = &mut self.state {
-                        let password = std::mem::take(password);
                         Action::Run(Task::perform(
-                            crate::Vault::decrypt(password, vault.clone()), //TODO: DO NOT CLONE HERE
+                            crate::Vault::decrypt(password.to_string(), vault.clone()), // CLONE
                             Message::UnlockedVault,
                         ))
                     } else {
@@ -342,7 +341,7 @@ impl Vault {
                                 return Action::None;
                             }
 
-                            let cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                            let cloned_vault = vault.clone(); // CLONE
                             return Action::Run(Task::perform(
                                 async move { cloned_vault.export().await },
                                 Message::ExportedVault,
@@ -369,7 +368,7 @@ impl Vault {
             }
             Message::ImportVault(path_str) => {
                 if let Some(vault) = &mut self.vault {
-                    let mut cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                    let mut cloned_vault = vault.clone(); // CLONE
                     return Action::Run(Task::perform(
                         async move { cloned_vault.import(path_str).await },
                         Message::ImportedVault,
@@ -384,7 +383,7 @@ impl Vault {
                             let res = vault.add_entries(new_entries, Self::REFRESH_RATE);
                             match res {
                                 Ok(_) => {
-                                    let cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                                    let cloned_vault = vault.clone(); // CLONE
                                     return Action::Run(Task::perform(
                                         async move { cloned_vault.save().await },
                                         Message::SavedVault,
@@ -415,7 +414,7 @@ impl Vault {
                     let res = vault.upsert_entry(entry, Self::REFRESH_RATE);
                     match res {
                         Ok(_) => {
-                            let cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                            let cloned_vault = vault.clone(); // CLONE
                             return Action::Run(Task::perform(
                                 async move { cloned_vault.save().await },
                                 Message::SavedVault,
@@ -435,7 +434,7 @@ impl Vault {
                     let res = vault.delete_entry(entry_id);
                     match res {
                         Ok(_) => {
-                            let cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                            let cloned_vault = vault.clone(); // CLONE
                             return Action::Run(Task::perform(
                                 async move { cloned_vault.save().await },
                                 Message::SavedVault,
@@ -470,7 +469,7 @@ impl Vault {
             }
             Message::UpdateAllTOTP => {
                 if let Some(vault) = &self.vault {
-                    let mut cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                    let mut cloned_vault = vault.clone(); // CLONE
                     return Action::Run(Task::perform(
                         async move { cloned_vault.update_all_totp(Self::REFRESH_RATE).await },
                         Message::UpdatedAllTOTP,
