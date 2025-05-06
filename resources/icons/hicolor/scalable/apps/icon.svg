@@ -2,8 +2,8 @@
 <!-- Uploaded to: SVG Repo, www.svgrepo.com, Transformed by: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="-2.4 -2.4 28.80 28.80" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g id="SVGRepo_bgCarrier" stroke-width="0">
-<rect x="-2.4" y="-2.4" width="28.80" height="28.80" rx="14.4" fill="#c061cb" strokewidth="0"/>
+<rect x="-2.4" y="-2.4" width="28.80" height="28.80" rx="14.4" fill="#F4F4F5" strokewidth="0"/>
 </g>
 <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"/>
-<g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M7 7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V9C17 9.55228 16.5523 10 16 10H8C7.44772 10 7 9.55228 7 9V7ZM12 4C10.3431 4 9 5.34315 9 7V8H15V7C15 5.34315 13.6569 4 12 4Z" fill="#e5a50a"/> <path d="M9 8C6.23858 8 4 10.2386 4 13V17C4 19.7614 6.23858 22 9 22H15C17.7614 22 20 19.7614 20 17V13C20 10.2386 17.7614 8 15 8H9Z" fill="#f8e45c"/> <path d="M13 15.7324C13.5978 15.3866 14 14.7403 14 14C14 12.8954 13.1046 12 12 12C10.8954 12 10 12.8954 10 14C10 14.7403 10.4022 15.3866 11 15.7324V17C11 17.5523 11.4477 18 12 18C12.5523 18 13 17.5523 13 17V15.7324Z" fill="#e5a50a"/> </g>
+<g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M7 7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V9C17 9.55228 16.5523 10 16 10H8C7.44772 10 7 9.55228 7 9V7ZM12 4C10.3431 4 9 5.34315 9 7V8H15V7C15 5.34315 13.6569 4 12 4Z" fill="#F59E0B"/> <path d="M9 8C6.23858 8 4 10.2386 4 13V17C4 19.7614 6.23858 22 9 22H15C17.7614 22 20 19.7614 20 17V13C20 10.2386 17.7614 8 15 8H9Z" fill="#2E2E2E"/> <path d="M13 15.7324C13.5978 15.3866 14 14.7403 14 14C14 12.8954 13.1046 12 12 12C10.8954 12 10 12.8954 10 14C10 14.7403 10.4022 15.3866 11 15.7324V17C11 17.5523 11.4477 18 12 18C12.5523 18 13 17.5523 13 17V15.7324Z" fill="#F59E0B"/> </g>
 </svg>
