@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use arboard::Clipboard;
 use iced::time::Instant;
 use iced::widget::{
-    button, column, container, float, mouse_area, pick_list, row, text, text_input,
+    Space, button, column, container, float, mouse_area, pick_list, row, text, text_input,
 };
 use iced::{Alignment, Element, Length, Padding, Subscription, Task};
 
@@ -28,6 +28,8 @@ pub enum Message {
     SavedVault(Result<(), anywho::Error>),
     ExportVault,
     ExportedVault(Result<String, anywho::Error>),
+    ImportVault(String),
+    ImportedVault(Result<HashMap<entry::Id, Entry>, anywho::Error>),
 
     OpenModal(Modal),
 
@@ -71,6 +73,8 @@ pub enum TextInputs {
 
     EntryConfigDigits,
     EntryConfigSkew,
+
+    ConfigVaultImportPath,
 }
 
 #[derive(Debug, Clone)]
@@ -84,7 +88,9 @@ pub enum Modal {
         show_advanced: bool,
         next_input_clean: bool,
     },
-    Config,
+    Config {
+        vault_import_path: String,
+    },
 }
 
 impl Modal {
@@ -114,7 +120,9 @@ impl Modal {
     }
 
     pub fn config() -> Modal {
-        Modal::Config
+        Modal::Config {
+            vault_import_path: String::new(),
+        }
     }
 }
 
@@ -143,6 +151,7 @@ impl Vault {
         }
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     pub fn update(&mut self, message: Message, now: Instant) -> Action {
         match message {
             Message::SetClipboardContent(content) => {
@@ -236,6 +245,17 @@ impl Vault {
                                 } else {
                                     entry_config.skew = value.parse::<u8>().unwrap_or(1);
                                 }
+                            }
+                        }
+                    }
+                    TextInputs::ConfigVaultImportPath => {
+                        #[allow(clippy::collapsible_match)]
+                        if let State::List { modal, .. } = &mut self.state {
+                            if let Modal::Config {
+                                vault_import_path, ..
+                            } = modal
+                            {
+                                *vault_import_path = value;
                             }
                         }
                     }
@@ -343,6 +363,43 @@ impl Vault {
                         eprintln!("{}", err);
                     }
                 }
+                Action::None
+            }
+            Message::ImportVault(path_str) => {
+                if let Some(vault) = &mut self.vault {
+                    let mut cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                    return Action::Run(Task::perform(
+                        async move { cloned_vault.import(path_str).await },
+                        Message::ImportedVault,
+                    ));
+                }
+                Action::None
+            }
+            Message::ImportedVault(new_entries) => {
+                match new_entries {
+                    Ok(new_entries) => {
+                        if let Some(vault) = &mut self.vault {
+                            let res = vault.add_entries(new_entries, Self::REFRESH_RATE);
+                            match res {
+                                Ok(_) => {
+                                    let cloned_vault = vault.clone(); // TODO: DO NOT CLONE HERE
+                                    return Action::Run(Task::perform(
+                                        async move { cloned_vault.save().await },
+                                        Message::SavedVault,
+                                    ));
+                                }
+                                Err(err) => {
+                                    eprintln!("{}", err);
+                                    return Action::None;
+                                }
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        eprintln!("{}", err);
+                    }
+                }
+
                 Action::None
             }
             Message::OpenModal(new_modal) => {
@@ -458,7 +515,7 @@ impl Vault {
         }
     }
 
-    pub fn subscription(&self, now: Instant) -> Subscription<Message> {
+    pub fn subscription(&self, _now: Instant) -> Subscription<Message> {
         match &self.state {
             State::Creation {
                 new_password: _,
@@ -473,7 +530,7 @@ impl Vault {
         }
     }
 
-    pub fn view(&self, now: Instant) -> Element<Message> {
+    pub fn view(&self, _now: Instant) -> Element<Message> {
         let content = match &self.state {
             State::Creation {
                 new_password,
@@ -604,7 +661,9 @@ impl Vault {
                             entry_config,
                             show_advanced,
                         ))),
-                        Modal::Config => container(custom_modal(self.config_modal_view())),
+                        Modal::Config { vault_import_path } => {
+                            container(custom_modal(self.config_modal_view(vault_import_path)))
+                        }
                     }
                 } else {
                     container(text("Error, no vault found..."))
@@ -651,6 +710,7 @@ impl Vault {
             button("Close").on_press(Message::OpenModal(Modal::close())),
             button("A").on_press(Message::ToggleAdvancedConfig)
         ]
+        .align_y(Alignment::Center)
         .spacing(5.);
 
         let can_save: Option<Message> = if entry.is_valid() {
@@ -724,16 +784,47 @@ impl Vault {
         }
     }
 
-    fn config_modal_view(&self) -> Element<Message> {
+    fn config_modal_view(&self, vault_import_path: &String) -> Element<Message> {
         let header = row![
-            text("Config").width(Length::Fill),
+            text("Configuration").width(Length::Fill),
             button("Close").on_press(Message::OpenModal(Modal::close()))
-        ];
+        ]
+        .align_y(Alignment::Center);
 
-        let content =
-            container(button("Export").on_press(Message::ExportVault)).height(Length::Fill);
+        let content = container(
+            column![
+                row![
+                    text("Export unencrypted vault"),
+                    Space::new(Length::Fill, Length::Shrink),
+                    button("Export").on_press(Message::ExportVault)
+                ]
+                .align_y(Alignment::Center)
+                .spacing(5.)
+                .width(Length::Fill),
+                column![
+                    text("Import unencrypted vault").size(15.),
+                    row![
+                        text_input("Unencrypted vault file path", vault_import_path)
+                            .on_input(|s| Message::TextInputted(
+                                TextInputs::ConfigVaultImportPath,
+                                s
+                            ))
+                            .width(Length::Fill),
+                        button("Import").on_press_maybe(if !vault_import_path.is_empty() {
+                            Some(Message::ImportVault(vault_import_path.to_string()))
+                        } else {
+                            None
+                        })
+                    ]
+                    .spacing(5.)
+                ]
+                .spacing(3.)
+            ]
+            .spacing(10.),
+        )
+        .height(Length::Fill);
 
-        column![header, content].into()
+        column![header, content].spacing(10.).into()
     }
 
     fn determine_modal_button_function(&self, open: Message) -> Message {
@@ -741,7 +832,7 @@ impl Vault {
             match modal {
                 Modal::None => open,
                 Modal::AddEdit { .. } => Message::OpenModal(Modal::close()),
-                Modal::Config => Message::OpenModal(Modal::close()),
+                Modal::Config { .. } => Message::OpenModal(Modal::close()),
             }
         } else {
             open

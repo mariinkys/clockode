@@ -310,6 +310,34 @@ impl Vault {
         Ok(())
     }
 
+    /// Tries to add  multiple entries to the [`Vault`]
+    pub fn add_entries(
+        &mut self,
+        entries: HashMap<super::entry::Id, Entry>,
+        refresh_rate: u64,
+    ) -> Result<(), anywho::Error> {
+        // Check if the vault is unlocked
+        let data = match &mut self.state {
+            State::Unlocked { data, .. } => data,
+            State::Locked => return Err(anywho!("Cannot add entry to locked vault")),
+        };
+
+        for (_, mut entry) in entries {
+            entry.generate_totp(refresh_rate)?;
+
+            if let Some(id) = entry.id {
+                data.entries.insert(id, entry);
+            } else {
+                // Insert the entry into the entries map
+                let e_id = super::entry::Id(Uuid::new_v4());
+                entry.id = Some(e_id);
+                data.entries.insert(e_id, entry);
+            }
+        }
+
+        Ok(())
+    }
+
     /// Tries to delete an entry from the [`Vault`]
     pub fn delete_entry(&mut self, entry_id: super::entry::Id) -> Result<(), anywho::Error> {
         // Check if the vault is unlocked
@@ -400,4 +428,58 @@ impl Vault {
 
         Ok(path_string)
     }
+
+    /// Imports the file of the given path and adds the deserialized entries to the [`Vault`]
+    pub async fn import(
+        &mut self,
+        file_path: String,
+    ) -> Result<HashMap<super::entry::Id, Entry>, anywho::Error> {
+        use std::fs;
+        use tokio::task;
+
+        // Check if the vault is unlocked
+        let data = match &mut self.state {
+            State::Unlocked { data, .. } => data,
+            State::Locked => return Err(anywho!("Cannot add entry to locked vault")),
+        };
+
+        if !is_valid_ron_file_path(&file_path) {
+            return Err(anywho!("File path does not contain a valid backup file"));
+        }
+
+        let entries_clone = data.entries.clone();
+
+        let imported_entries = task::spawn_blocking(
+            move || -> Result<HashMap<super::entry::Id, Entry>, anywho::Error> {
+                let file_content = fs::read(&file_path)
+                    .map_err(|e| anywho!("Failed to read import file: {}", e))?;
+
+                let imported_data: VaultData = de::from_bytes(&file_content)
+                    .map_err(|e| anywho!("Failed to deserialize import file: {}", e))?;
+
+                // filter entries that already exist
+                let mut new_entries = HashMap::new();
+                for (id, entry) in imported_data.entries {
+                    if !entries_clone.contains_key(&id) {
+                        new_entries.insert(id, entry);
+                    }
+                }
+
+                Ok(new_entries)
+            },
+        )
+        .await??;
+
+        Ok(imported_entries)
+    }
+}
+
+fn is_valid_ron_file_path(path_str: &str) -> bool {
+    let path = std::path::Path::new(path_str);
+
+    if path.extension().is_some_and(|ext| ext == "ron") && path.exists() && path.is_file() {
+        return true;
+    }
+
+    false
 }
