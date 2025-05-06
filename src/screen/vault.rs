@@ -673,7 +673,6 @@ impl Vault {
 
         let advanced_content = container(
             column![
-                text("Advanced"),
                 algorithm_selector,
                 column![
                     text("Digits").size(13.).width(Length::Fill),
