@@ -14,14 +14,15 @@
 
 ## Notes
 
+> [!WARNING]
+> The app works right now; however, there are a few things that I want to address before release, such as improving the code regarding vault/vault data handling or creating a custom theme for the app.
+
+<br/>
+
 <a href="https://github.com/iced-rs/iced">
   <img src="https://gist.githubusercontent.com/hecrj/ad7ecd38f6e47ff3688a38c79fd108f0/raw/74384875ecbad02ae2a926425e9bcafd0695bade/color.svg" width="130px">
 </a>
 
-<p></p>
-
-> [!WARNING]
-> The app works right now however there are a few things that I want to address before release, such as improving the code regarding vault/vault data handling or creating a custom theme for the app.
 
 *Icon from [SVGRepo](https://www.svgrepo.com/svg/408420/lock-security-open) made by [Tolu Arowoselu](https://www.svgrepo.com/author/Tolu%20Arowoselu/) (colors modified by myself).
 
