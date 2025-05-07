@@ -11,6 +11,7 @@ iced = { git = "https://github.com/iced-rs/iced", default-features = false, feat
     "image",
     "advanced",
     "debug",
+    "svg",
 ] }
 serde = { version = "1.0.219", features = ["derive"] }
 ron = "0.10.1"

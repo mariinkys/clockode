@@ -10,8 +10,8 @@ use iced::widget::{
 use iced::{Alignment, Element, Length, Padding, Subscription, Task};
 
 use crate::core::entry::{self, Algorithm, Entry, TOTPConfig};
-use crate::style::*;
 use crate::widgets::toast::Toast;
+use crate::{icons, style::*};
 
 pub struct Vault {
     state: State,
@@ -598,19 +598,22 @@ impl Vault {
                 )
             ],
             State::List { modal, time_count } => {
-                let header = row![
-                    text(format!("{} ({})", Self::APP_TITLE, time_count)).width(Length::Fill),
-                    button("+").style(rounded_primary_button).on_press(
-                        self.determine_modal_button_function(Message::OpenModal(Modal::add_edit(
-                            None
-                        )))
-                    ),
-                    button("C").style(rounded_primary_button).on_press(
-                        self.determine_modal_button_function(Message::OpenModal(Modal::config()))
-                    )
-                ]
-                .spacing(5.)
-                .width(Length::Fill);
+                let header =
+                    row![
+                        text(format!("{} ({})", Self::APP_TITLE, time_count)).width(Length::Fill),
+                        button(icons::get_icon("list-add-symbolic", 21))
+                            .style(rounded_primary_button)
+                            .on_press(self.determine_modal_button_function(Message::OpenModal(
+                                Modal::add_edit(None)
+                            ))),
+                        button(icons::get_icon("emblem-system-symbolic", 21))
+                            .style(rounded_primary_button)
+                            .on_press(self.determine_modal_button_function(Message::OpenModal(
+                                Modal::config()
+                            )))
+                    ]
+                    .spacing(5.)
+                    .width(Length::Fill);
 
                 let content = if let Some(vault) = &self.vault {
                     match modal {
@@ -630,13 +633,14 @@ impl Vault {
                                                                 .size(20.)
                                                                 .width(Length::Fill),
                                                             text(&e.totp).size(20.),
-                                                            button(text("E").center())
-                                                                .style(rounded_primary_button)
-                                                                .on_press(Message::OpenModal(
-                                                                    Modal::add_edit(Some(
-                                                                        e.clone()
-                                                                    ))
-                                                                ))
+                                                            button(icons::get_icon(
+                                                                "edit-symbolic",
+                                                                21
+                                                            ))
+                                                            .style(rounded_primary_button)
+                                                            .on_press(Message::OpenModal(
+                                                                Modal::add_edit(Some(e.clone()))
+                                                            ))
                                                         ]
                                                         .align_y(Alignment::Center)
                                                         .spacing(10.),
@@ -722,7 +726,7 @@ impl Vault {
             button("Close")
                 .style(rounded_primary_button)
                 .on_press(Message::OpenModal(Modal::close())),
-            button("A")
+            button(icons::get_icon("x-office-document-symbolic", 21))
                 .style(rounded_primary_button)
                 .on_press(Message::ToggleAdvancedConfig)
         ]

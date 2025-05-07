@@ -11,11 +11,15 @@ use screen::{Screen, vault};
 use widgets::toast::{self, Toast};
 
 mod core;
+mod icons;
 mod screen;
 mod style;
 mod widgets;
 
 fn main() -> iced::Result {
+    // Init the icon cache
+    icons::ICON_CACHE.get_or_init(|| std::sync::Mutex::new(icons::IconCache::new()));
+
     iced::application::timed(
         Clockode::new,
         Clockode::update,
