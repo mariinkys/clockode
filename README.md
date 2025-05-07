@@ -9,22 +9,22 @@
 
   <h3>Minimal TOTP client made with Iced</h3>
 
-  <img width="500" alt="Main Page" src="./screenshots/main.png"/>
+  <img width="350" alt="Main Page Light Mode" src="./screenshots/main-light.png"/>
+  <img width="350" alt="Main Page Dark Mode" src="./screenshots/main-dark.png"/>
 </div>
 
 ## Notes
 
 > [!WARNING]
-> The app works right now; however, there are a few things that I want to address before release, such as improving the code regarding vault/vault data handling or creating a custom theme for the app.
+> The app is currently functional; however, there are a few things that I want to address before release, such as improving the code regarding vault/vault data handling... Additionally, as with any app that manages important data, please ensure you back up your data offsite regularly.
 
-<br/>
+## Attributions
 
 <a href="https://github.com/iced-rs/iced">
   <img src="https://gist.githubusercontent.com/hecrj/ad7ecd38f6e47ff3688a38c79fd108f0/raw/74384875ecbad02ae2a926425e9bcafd0695bade/color.svg" width="130px">
 </a>
 
-
-## Attribution
+<br/>
 
 > "[Pop Icons](http://github.com/pop-os/icon-theme)" by [System76](http://system76.com/) is licensed under [CC-SA-4.0](http://creativecommons.org/licenses/by-sa/4.0/)
 
