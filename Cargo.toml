@@ -9,6 +9,7 @@ iced = { git = "https://github.com/iced-rs/iced", default-features = false, feat
     "tokio",
     "wgpu",
     "image",
+    "advanced",
     "debug",
 ] }
 serde = { version = "1.0.219", features = ["derive"] }

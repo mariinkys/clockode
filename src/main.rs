@@ -8,9 +8,11 @@ use iced::{
     widget::{center, text},
 };
 use screen::{Screen, vault};
+use widgets::toast::{self, Toast};
 
 mod core;
 mod screen;
+mod widgets;
 
 fn main() -> iced::Result {
     iced::application::timed(
@@ -26,6 +28,7 @@ fn main() -> iced::Result {
 }
 
 struct Clockode {
+    toasts: Vec<Toast>,
     state: State,
     now: Instant,
 }
@@ -40,12 +43,16 @@ enum Message {
     Loaded(Result<Vault, anywho::Error>),
 
     Vault(vault::Message),
+
+    AddToast(Toast),
+    CloseToast(usize),
 }
 
 impl Clockode {
     fn new() -> (Self, Task<Message>) {
         (
             Self {
+                toasts: Vec::new(),
                 state: State::Loading,
                 now: Instant::now(),
             },
@@ -74,18 +81,29 @@ impl Clockode {
                 match vault.update(message, self.now) {
                     vault::Action::None => Task::none(),
                     vault::Action::Run(task) => task.map(Message::Vault),
+                    vault::Action::AddToast(toast) => self.update(Message::AddToast(toast), now),
                 }
+            }
+            Message::AddToast(toast) => {
+                self.toasts.push(toast);
+                Task::none()
+            }
+            Message::CloseToast(index) => {
+                self.toasts.remove(index);
+                Task::none()
             }
         }
     }
 
     fn view(&self) -> Element<Message> {
-        match &self.state {
+        let content = match &self.state {
             State::Loading => center(text("Loading...")).into(),
             State::Ready { screen } => match screen {
                 Screen::Vault(vault) => vault.view(self.now).map(Message::Vault),
             },
-        }
+        };
+
+        toast::Manager::new(content, &self.toasts, Message::CloseToast).into()
     }
 
     fn subscription(&self) -> Subscription<Message> {

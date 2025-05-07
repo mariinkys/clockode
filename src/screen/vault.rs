@@ -11,6 +11,7 @@ use iced::widget::{
 use iced::{Alignment, Element, Length, Padding, Subscription, Task};
 
 use crate::core::entry::{self, Algorithm, Entry, TOTPConfig};
+use crate::widgets::toast::Toast;
 
 pub struct Vault {
     state: State,
@@ -63,6 +64,7 @@ pub enum State {
 pub enum Action {
     None,
     Run(Task<Message>),
+    AddToast(Toast),
 }
 
 #[derive(Debug, Clone)]
@@ -160,8 +162,13 @@ impl Vault {
             Message::SetClipboardContent(content) => {
                 if let Some(clipboard) = &mut self.clipboard {
                     let res = &clipboard.set_text(content);
-                    if let Err(res) = res {
-                        eprintln!("{}", res);
+                    match res {
+                        Ok(_) => {
+                            return Action::AddToast(Toast::success_toast("Copied to clipboard"));
+                        }
+                        Err(err) => {
+                            eprintln!("{}", err);
+                        }
                     }
                 }
                 Action::None
@@ -305,22 +312,20 @@ impl Vault {
                     Action::None
                 }
             }
-            Message::UnlockedVault(res) => {
-                match res {
-                    Ok(vault) => {
-                        self.state = State::List {
-                            modal: Modal::None,
-                            time_count: get_time_until_next_totp_refresh(Self::REFRESH_RATE),
-                        };
-                        self.vault = Some(vault);
-                        return self.update(Message::UpdateAllTOTP, now);
-                    }
-                    Err(err) => {
-                        eprintln!("{}", err);
-                    }
+            Message::UnlockedVault(res) => match res {
+                Ok(vault) => {
+                    self.state = State::List {
+                        modal: Modal::None,
+                        time_count: get_time_until_next_totp_refresh(Self::REFRESH_RATE),
+                    };
+                    self.vault = Some(vault);
+                    self.update(Message::UpdateAllTOTP, now)
                 }
-                Action::None
-            }
+                Err(err) => {
+                    eprintln!("{}", err);
+                    Action::AddToast(Toast::error_toast(format!("{}", err)))
+                }
+            },
             Message::SavedVault(res) => {
                 match res {
                     Ok(_) => {
@@ -356,10 +361,13 @@ impl Vault {
                 Action::None
             }
             Message::ExportedVault(res) => {
-                // TODO: Toast
                 match res {
                     Ok(path) => {
                         println!("Vault exported sucessfully to: {}", path);
+                        return Action::AddToast(Toast::success_toast(format!(
+                            "Vault exported sucessfully to: {}",
+                            path
+                        )));
                     }
                     Err(err) => {
                         eprintln!("{}", err);
