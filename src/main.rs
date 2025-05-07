@@ -12,6 +12,7 @@ use widgets::toast::{self, Toast};
 
 mod core;
 mod screen;
+mod style;
 mod widgets;
 
 fn main() -> iced::Result {

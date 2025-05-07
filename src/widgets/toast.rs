@@ -18,6 +18,7 @@ use iced::{
 use std::fmt;
 
 pub const DEFAULT_TIMEOUT: u64 = 3;
+pub const DEFAULT_BORDER_RADIUS: f32 = 12.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Status {
@@ -122,24 +123,51 @@ where
                         row![
                             text(toast.title.as_str()),
                             horizontal_space(),
-                            button(" X ").on_press((on_close)(index)).padding(3),
+                            button(" X ")
+                                .on_press((on_close)(index))
+                                .style(|t, s| {
+                                    let mut style = match toast.status {
+                                        Status::Primary => iced::widget::button::primary(t, s),
+                                        Status::Secondary => iced::widget::button::secondary(t, s),
+                                        Status::Success => iced::widget::button::success(t, s),
+                                        Status::Danger => iced::widget::button::danger(t, s),
+                                        Status::Warning => iced::widget::button::warning(t, s),
+                                    };
+
+                                    style.border.radius =
+                                        iced::border::radius(DEFAULT_BORDER_RADIUS);
+                                    style
+                                })
+                                .padding(3),
                         ]
                         .align_y(Center)
                     )
                     .width(Fill)
                     .padding(5)
-                    .style(match toast.status {
-                        Status::Primary => primary,
-                        Status::Secondary => secondary,
-                        Status::Success => success,
-                        Status::Danger => danger,
-                        Status::Warning => warning,
+                    .style(|t| {
+                        let mut style = match toast.status {
+                            Status::Primary => container::primary(t),
+                            Status::Secondary => container::secondary(t),
+                            Status::Success => container::success(t),
+                            Status::Danger => container::danger(t),
+                            Status::Warning => container::danger(t),
+                        };
+
+                        style.border.radius = iced::border::top(DEFAULT_BORDER_RADIUS);
+                        style
                     }),
                     horizontal_rule(1),
                     container(text(toast.body.as_str()))
                         .width(Fill)
                         .padding(5)
-                        .style(container::rounded_box),
+                        .style(|t: &Theme| {
+                            let palette = t.extended_palette();
+                            let mut style = container::rounded_box(t);
+
+                            style.border.radius = iced::border::bottom(DEFAULT_BORDER_RADIUS);
+                            style.background = Some(palette.background.strongest.color.into());
+                            style
+                        }),
                 ])
                 .max_width(200)
                 .into()
@@ -494,6 +522,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 fn styled(pair: theme::palette::Pair) -> container::Style {
     container::Style {
         background: Some(pair.color.into()),
@@ -502,30 +531,35 @@ fn styled(pair: theme::palette::Pair) -> container::Style {
     }
 }
 
+#[allow(dead_code)]
 fn primary(theme: &Theme) -> container::Style {
     let palette = theme.extended_palette();
 
     styled(palette.primary.weak)
 }
 
+#[allow(dead_code)]
 fn secondary(theme: &Theme) -> container::Style {
     let palette = theme.extended_palette();
 
     styled(palette.secondary.weak)
 }
 
+#[allow(dead_code)]
 fn success(theme: &Theme) -> container::Style {
     let palette = theme.extended_palette();
 
     styled(palette.success.weak)
 }
 
+#[allow(dead_code)]
 fn danger(theme: &Theme) -> container::Style {
     let palette = theme.extended_palette();
 
     styled(palette.danger.weak)
 }
 
+#[allow(dead_code)]
 fn warning(theme: &Theme) -> container::Style {
     let palette = theme.extended_palette();
 

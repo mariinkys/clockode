@@ -5,12 +5,12 @@ use std::collections::HashMap;
 use arboard::Clipboard;
 use iced::time::Instant;
 use iced::widget::{
-    Space, button, column, container, float, mouse_area, pick_list, row, scrollable, text,
-    text_input,
+    button, column, container, float, mouse_area, pick_list, row, scrollable, text, text_input,
 };
 use iced::{Alignment, Element, Length, Padding, Subscription, Task};
 
 use crate::core::entry::{self, Algorithm, Entry, TOTPConfig};
+use crate::style::*;
 use crate::widgets::toast::Toast;
 
 pub struct Vault {
@@ -600,10 +600,12 @@ impl Vault {
             State::List { modal, time_count } => {
                 let header = row![
                     text(format!("{} ({})", Self::APP_TITLE, time_count)).width(Length::Fill),
-                    button("+").on_press(self.determine_modal_button_function(Message::OpenModal(
-                        Modal::add_edit(None)
-                    ))),
-                    button("C").on_press(
+                    button("+").style(rounded_primary_button).on_press(
+                        self.determine_modal_button_function(Message::OpenModal(Modal::add_edit(
+                            None
+                        )))
+                    ),
+                    button("C").style(rounded_primary_button).on_press(
                         self.determine_modal_button_function(Message::OpenModal(Modal::config()))
                     )
                 ]
@@ -628,18 +630,18 @@ impl Vault {
                                                                 .size(20.)
                                                                 .width(Length::Fill),
                                                             text(&e.totp).size(20.),
-                                                            button(text("E").center()).on_press(
-                                                                Message::OpenModal(
+                                                            button(text("E").center())
+                                                                .style(rounded_primary_button)
+                                                                .on_press(Message::OpenModal(
                                                                     Modal::add_edit(Some(
                                                                         e.clone()
                                                                     ))
-                                                                )
-                                                            )
+                                                                ))
                                                         ]
                                                         .align_y(Alignment::Center)
                                                         .spacing(10.),
                                                     )
-                                                    .style(container::rounded_box)
+                                                    .style(rounded_container)
                                                     .padding(10.),
                                                 )
                                                 .on_press(Message::SetClipboardContent(
@@ -716,9 +718,13 @@ impl Vault {
             text("Add").width(Length::Fill),
             button("Delete")
                 .on_press_maybe(entry.id.map(Message::DeleteEntry))
-                .style(button::danger),
-            button("Close").on_press(Message::OpenModal(Modal::close())),
-            button("A").on_press(Message::ToggleAdvancedConfig)
+                .style(rounded_danger_button),
+            button("Close")
+                .style(rounded_primary_button)
+                .on_press(Message::OpenModal(Modal::close())),
+            button("A")
+                .style(rounded_primary_button)
+                .on_press(Message::ToggleAdvancedConfig)
         ]
         .align_y(Alignment::Center)
         .spacing(5.);
@@ -797,36 +803,29 @@ impl Vault {
     fn config_modal_view(&self, vault_import_path: &String) -> Element<Message> {
         let header = row![
             text("Configuration").width(Length::Fill),
-            button("Close").on_press(Message::OpenModal(Modal::close()))
+            button("Close")
+                .style(rounded_primary_button)
+                .on_press(Message::OpenModal(Modal::close()))
         ]
         .align_y(Alignment::Center);
 
         let content = container(
             column![
-                row![
+                column![
                     text("Export unencrypted vault"),
-                    Space::new(Length::Fill, Length::Shrink),
                     button("Export").on_press(Message::ExportVault)
                 ]
-                .align_y(Alignment::Center)
-                .spacing(5.)
-                .width(Length::Fill),
+                .spacing(3.),
                 column![
-                    text("Import unencrypted vault").size(15.),
-                    row![
-                        text_input("Unencrypted vault file path", vault_import_path)
-                            .on_input(|s| Message::TextInputted(
-                                TextInputs::ConfigVaultImportPath,
-                                s
-                            ))
-                            .width(Length::Fill),
-                        button("Import").on_press_maybe(if !vault_import_path.is_empty() {
-                            Some(Message::ImportVault(vault_import_path.to_string()))
-                        } else {
-                            None
-                        })
-                    ]
-                    .spacing(5.)
+                    text("Import unencrypted vault"),
+                    text_input("Unencrypted vault file path", vault_import_path)
+                        .on_input(|s| Message::TextInputted(TextInputs::ConfigVaultImportPath, s))
+                        .width(Length::Fill),
+                    button("Import").on_press_maybe(if !vault_import_path.is_empty() {
+                        Some(Message::ImportVault(vault_import_path.to_string()))
+                    } else {
+                        None
+                    })
                 ]
                 .spacing(3.)
             ]
