@@ -5,7 +5,8 @@ use std::collections::HashMap;
 use arboard::Clipboard;
 use iced::time::Instant;
 use iced::widget::{
-    Space, button, column, container, float, mouse_area, pick_list, row, text, text_input,
+    Space, button, column, container, float, mouse_area, pick_list, row, scrollable, text,
+    text_input,
 };
 use iced::{Alignment, Element, Length, Padding, Subscription, Task};
 
@@ -642,7 +643,7 @@ impl Vault {
                                     )
                                     .spacing(10.)
                                     .into();
-                                    container(column![entries_content])
+                                    container(scrollable(column![entries_content]).spacing(5.))
                                 }
                             } else {
                                 container(text("Error, getting vault entries..."))
