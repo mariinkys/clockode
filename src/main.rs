@@ -21,6 +21,11 @@ fn main() -> iced::Result {
     // Init the icon cache
     icons::ICON_CACHE.get_or_init(|| std::sync::Mutex::new(icons::IconCache::new()));
 
+    let app_icon = iced::window::icon::from_file_data(
+        include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg"),
+        None,
+    );
+
     iced::application::timed(
         Clockode::new,
         Clockode::update,
@@ -30,6 +35,18 @@ fn main() -> iced::Result {
     .theme(Clockode::theme)
     .default_font(Font::MONOSPACE)
     .window_size((400., 700.))
+    .window(iced::window::Settings {
+        size: iced::Size {
+            width: 400.,
+            height: 700.,
+        },
+        min_size: Some(iced::Size {
+            width: 300.,
+            height: 400.,
+        }),
+        icon: app_icon.ok(),
+        ..Default::default()
+    })
     .run()
 }
 
