@@ -2,7 +2,7 @@ name: Release
 
 on:
   release:
-    types: [created]
+    types: [published, released]
 
 jobs:
   build-mac:
@@ -86,5 +86,6 @@ jobs:
             dist/clockode-linux
             dist/clockode-windows.exe
             dist/clockode-mac
+          tag_name: ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
