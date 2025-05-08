@@ -15,8 +15,18 @@
 
 ## Notes
 
+Key features are:
+
+- Storage for all your 2FA and OTP tokens
+- Automatic TOTP code generation
+- Data is encrypted on your device
+- Cross-platform support
+- Backup and import functionality
+
+If you want to sync your vault you will have to do it yourself using tools like Syncthing...
+
 > [!WARNING]
-> The app is currently functional; however, there are a few things that I want to address before release, such as improving the code regarding vault/vault data handling... Additionally, as with any app that manages important data, please ensure you back up your data offsite regularly.
+> As with any app that manages important data, please ensure you back up your data offsite regularly.
 
 ## Installation
 ```
