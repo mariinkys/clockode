@@ -14,13 +14,6 @@
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>GPL-3.0-only</project_license>
 
-    <provides>
-        <id>dev.mariinkys.Clockode</id>
-        <binaries>
-            <binary>clockode</binary>
-        </binaries>
-    </provides>
-
     <description>
         <p>Clockode is a minimal, and offline-only TOTP code generator that stores your 
             authentication secrets in an encrypted local vault, keeping your two-factor codes private and 
