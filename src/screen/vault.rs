@@ -187,7 +187,10 @@ impl Vault {
                 }
                 Action::None
             }
-            Message::ChangedTheme(theme) => Action::ChangedTheme(theme),
+            Message::ChangedTheme(theme) => {
+                self.config.theme = theme.clone();
+                Action::ChangedTheme(theme)
+            }
             Message::TextInputted(text_inputs, value) => {
                 match text_inputs {
                     TextInputs::NewPassword => {
