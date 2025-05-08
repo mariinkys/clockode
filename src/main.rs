@@ -17,6 +17,8 @@ mod screen;
 mod style;
 mod widgets;
 
+const APP_ID: &str = "dev.mariinkys.Clockode";
+
 fn main() -> iced::Result {
     // Init the icon cache
     icons::ICON_CACHE.get_or_init(|| std::sync::Mutex::new(icons::IconCache::new()));
@@ -45,6 +47,10 @@ fn main() -> iced::Result {
             height: 400.,
         }),
         icon: app_icon.ok(),
+        platform_specific: iced::window::settings::PlatformSpecific {
+            application_id: String::from(APP_ID),
+            ..Default::default()
+        },
         ..Default::default()
     })
     .run()
