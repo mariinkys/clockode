@@ -1,7 +1,11 @@
 [package]
 name = "clockode"
+description = "Minimal TOTP client made with Iced"
+authors = ["Alex Marín <kysdev.owjga@aleeas.com>"]
 version = "0.1.0"
 edition = "2024"
+license = "GPL-3.0"
+repository = "https://github.com/mariinkys/clockode"
 
 [dependencies]
 anywho = "0.1.2"
