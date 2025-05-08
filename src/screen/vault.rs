@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::collections::HashMap;
-
 use arboard::Clipboard;
 use iced::time::Instant;
 use iced::widget::{
     button, column, container, float, mouse_area, pick_list, row, scrollable, text, text_input,
 };
-use iced::{Alignment, Element, Length, Padding, Subscription, Task};
+use iced::{Alignment, Element, Length, Padding, Subscription, Task, Theme};
+use std::collections::HashMap;
 
+use crate::config::{ColockodeTheme, Config};
 use crate::core::entry::{self, Algorithm, Entry, TOTPConfig};
 use crate::widgets::toast::Toast;
 use crate::{icons, style::*};
@@ -17,11 +17,13 @@ pub struct Vault {
     state: State,
     vault: Option<crate::Vault>,
     clipboard: Option<Clipboard>,
+    config: Config,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
     SetClipboardContent(String),
+    ChangedTheme(ColockodeTheme),
     TextInputted(TextInputs, String),
 
     CreateVault,
@@ -65,6 +67,7 @@ pub enum Action {
     None,
     Run(Task<Message>),
     AddToast(Toast),
+    ChangedTheme(ColockodeTheme),
 }
 
 #[derive(Debug, Clone)]
@@ -135,7 +138,7 @@ impl Vault {
     const APP_TITLE: &str = "Clockode";
     const REFRESH_RATE: u64 = 30;
 
-    pub fn new(vault: Result<crate::Vault, anywho::Error>) -> Self {
+    pub fn new(vault: Result<crate::Vault, anywho::Error>, config: Config) -> Self {
         let clipboard = Clipboard::new();
         if let Err(clip_err) = &clipboard {
             eprintln!("{}", clip_err);
@@ -148,6 +151,7 @@ impl Vault {
                 },
                 vault: Some(vault),
                 clipboard: clipboard.ok(),
+                config,
             }
         } else {
             Self {
@@ -157,8 +161,13 @@ impl Vault {
                 },
                 vault: None,
                 clipboard: clipboard.ok(),
+                config,
             }
         }
+    }
+
+    pub fn set_config(&mut self, config: Config) {
+        self.config = config;
     }
 
     #[allow(clippy::only_used_in_recursion)]
@@ -178,6 +187,7 @@ impl Vault {
                 }
                 Action::None
             }
+            Message::ChangedTheme(theme) => Action::ChangedTheme(theme),
             Message::TextInputted(text_inputs, value) => {
                 match text_inputs {
                     TextInputs::NewPassword => {
@@ -836,6 +846,18 @@ impl Vault {
                     } else {
                         None
                     })
+                ]
+                .spacing(3.),
+                column![
+                    text("Application theme"),
+                    pick_list(
+                        Theme::ALL,
+                        Some::<Theme>(self.config.theme.clone().into()),
+                        |t| {
+                            Message::ChangedTheme(ColockodeTheme::try_from(&t).unwrap_or_default())
+                        }
+                    )
+                    .width(Length::Fill)
                 ]
                 .spacing(3.)
             ]
