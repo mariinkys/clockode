@@ -630,6 +630,7 @@ impl Vault {
                                                     container(
                                                         row![
                                                             text(&e.name)
+                                                                .shaping(text::Shaping::Advanced)
                                                                 .size(20.)
                                                                 .width(Length::Fill),
                                                             text(&e.totp).size(20.),
