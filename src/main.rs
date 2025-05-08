@@ -30,6 +30,21 @@ fn main() -> iced::Result {
         None,
     );
 
+    let platform_settings = {
+        #[cfg(target_os = "linux")]
+        {
+            iced::window::settings::PlatformSpecific {
+                application_id: String::from(APP_ID),
+                ..Default::default()
+            }
+        }
+
+        #[cfg(not(target_os = "linux"))]
+        {
+            Default::default()
+        }
+    };
+
     iced::application::timed(
         Clockode::new,
         Clockode::update,
@@ -49,10 +64,7 @@ fn main() -> iced::Result {
             height: 400.,
         }),
         icon: app_icon.ok(),
-        platform_specific: iced::window::settings::PlatformSpecific {
-            application_id: String::from(APP_ID),
-            ..Default::default()
-        },
+        platform_specific: platform_settings,
         ..Default::default()
     })
     .run()
