@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Clockode
+Comment=Minimal TOTP client
+Exec=clockode %F
+Terminal=false
+Type=Application
+StartupNotify=true
+Icon=dev.mariinkys.Clockode
+Categories=Utility;
+Keywords=Tool;TOTP;Authenticator;2FA;OTP;Code;
