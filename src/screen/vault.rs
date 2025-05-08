@@ -136,13 +136,18 @@ impl Vault {
     const REFRESH_RATE: u64 = 30;
 
     pub fn new(vault: Result<crate::Vault, anywho::Error>) -> Self {
+        let clipboard = Clipboard::new();
+        if let Err(clip_err) = &clipboard {
+            eprintln!("{}", clip_err);
+        };
+
         if let Ok(vault) = vault {
             Self {
                 state: State::Decryption {
                     password: String::new(),
                 },
                 vault: Some(vault),
-                clipboard: Clipboard::new().ok(),
+                clipboard: clipboard.ok(),
             }
         } else {
             Self {
@@ -151,7 +156,7 @@ impl Vault {
                     new_password_repeat: String::new(),
                 },
                 vault: None,
-                clipboard: Clipboard::new().ok(),
+                clipboard: clipboard.ok(),
             }
         }
     }
