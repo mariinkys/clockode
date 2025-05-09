@@ -62,6 +62,12 @@
     </keywords>
 
     <releases>
+        <release version="0.1.1" date="2025-05-09">
+            <description>
+                <p>Add file-picker support on all supported platforms</p>
+                <p>Fixed bug that prevented vault from being exported on Flatpak</p>
+            </description>
+        </release>
         <release version="0.1.0" date="2025-05-08">
             <description>
                 <p>First stable release</p>
