@@ -11,6 +11,12 @@
 
   <img width="350" alt="Main Page Light Mode" src="./screenshots/main-light.png"/>
   <img width="350" alt="Main Page Dark Mode" src="./screenshots/main-dark.png"/>
+
+  <br><br>
+
+  <a href="https://flathub.org/apps/dev.mariinkys.Clockode">
+    <img width='240' alt='Download on Flathub' src='https://flathub.org/api/badge?locale=en'/>
+  </a>
 </div>
 
 ## Notes
@@ -29,12 +35,21 @@ If you want to sync your vault you will have to do it yourself using tools like 
 > As with any app that manages important data, please ensure you back up your data offsite regularly.
 
 ## Installation
+### Linux
+You can [download the Flatpak on Flathub](https://flathub.org/apps/dev.mariinkys.Clockode).
+
+Or you can use [just](https://github.com/casey/just) to install the package:
 ```
 git clone https://github.com/mariinkys/clockode.git
 cd clockode
 cargo build --release
 sudo just install
 ```
+### Windows
+Use the [provided binary on the latest release](https://github.com/mariinkys/clockode/releases). Note that this is not an installer, and you will have to download and update the binary icon yourself. You can also use cargo to compile the application yourself.
+
+### Mac
+Use the [provided binary on the latest release](https://github.com/mariinkys/clockode/releases). Note that this is not an installer, and you will have to download and update the binary icon yourself. You can also use cargo to compile the application yourself.
 
 ## Attributions
 
