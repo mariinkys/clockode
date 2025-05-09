@@ -3,6 +3,7 @@
   <img src="./resources/icons/hicolor/scalable/apps/icon.svg" width="150" />
   <h1>Clockode</h1>
 
+  ![Flathub Version](https://img.shields.io/flathub/v/dev.mariinkys.Clockode)
   ![GitHub License](https://img.shields.io/github/license/mariinkys/clockode)
   ![GitHub Repo stars](https://img.shields.io/github/stars/mariinkys/clockode)
 
