@@ -6,6 +6,7 @@ use iced::widget::{
     button, column, container, float, mouse_area, pick_list, row, scrollable, text, text_input,
 };
 use iced::{Alignment, Element, Length, Padding, Subscription, Task, Theme};
+use rfd::AsyncFileDialog;
 use std::collections::HashMap;
 
 use crate::config::{ColockodeTheme, Config};
@@ -32,9 +33,11 @@ pub enum Message {
     UnlockVault,
     UnlockedVault(Result<crate::Vault, anywho::Error>),
     SavedVault(Result<(), anywho::Error>),
-    ExportVault,
+    OpenExportVaultDialog,
+    ExportVault(Box<Option<rfd::FileHandle>>),
     ExportedVault(Result<String, anywho::Error>),
-    ImportVault(String),
+    OpenImportVaultDialog,
+    ImportVault(Box<Option<rfd::FileHandle>>),
     ImportedVault(Result<HashMap<entry::Id, Entry>, anywho::Error>),
 
     OpenModal(Modal),
@@ -81,8 +84,6 @@ pub enum TextInputs {
 
     EntryConfigDigits,
     EntryConfigSkew,
-
-    ConfigVaultImportPath,
 }
 
 #[derive(Debug, Clone)]
@@ -96,9 +97,7 @@ pub enum Modal {
         show_advanced: bool,
         next_input_clean: bool,
     },
-    Config {
-        vault_import_path: String,
-    },
+    Config,
 }
 
 impl Modal {
@@ -128,9 +127,7 @@ impl Modal {
     }
 
     pub fn config() -> Modal {
-        Modal::Config {
-            vault_import_path: String::new(),
-        }
+        Modal::Config
     }
 }
 
@@ -276,17 +273,6 @@ impl Vault {
                             }
                         }
                     }
-                    TextInputs::ConfigVaultImportPath => {
-                        #[allow(clippy::collapsible_match)]
-                        if let State::List { modal, .. } = &mut self.state {
-                            if let Modal::Config {
-                                vault_import_path, ..
-                            } = modal
-                            {
-                                *vault_import_path = value;
-                            }
-                        }
-                    }
                 }
                 Action::None
             }
@@ -357,22 +343,38 @@ impl Vault {
                 }
                 Action::None
             }
-            Message::ExportVault => {
-                if let Some(vault) = &mut self.vault {
-                    match vault.entries() {
-                        Some(entries) => {
-                            if entries.is_empty() {
-                                return Action::None;
-                            }
+            Message::OpenExportVaultDialog => Action::Run(Task::perform(
+                async move {
+                    let result = AsyncFileDialog::new()
+                        .set_file_name("vault_export.ron")
+                        .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                        .save_file()
+                        .await;
 
-                            let cloned_vault = vault.clone(); // CLONE
-                            return Action::Run(Task::perform(
-                                async move { cloned_vault.export().await },
-                                Message::ExportedVault,
-                            ));
-                        }
-                        None => {
-                            println!("Error getting vault entries");
+                    Box::new(result)
+                },
+                Message::ExportVault,
+            )),
+            Message::ExportVault(handle) => {
+                if let Some(file_handle) = *handle {
+                    if let Some(vault) = &mut self.vault {
+                        match vault.entries() {
+                            Some(entries) => {
+                                if entries.is_empty() {
+                                    return Action::None;
+                                }
+
+                                let cloned_vault = vault.clone(); // CLONE
+                                return Action::Run(Task::perform(
+                                    async move {
+                                        cloned_vault.export(file_handle.path().to_path_buf()).await
+                                    },
+                                    Message::ExportedVault,
+                                ));
+                            }
+                            None => {
+                                println!("Error getting vault entries");
+                            }
                         }
                     }
                 }
@@ -393,13 +395,27 @@ impl Vault {
                 }
                 Action::None
             }
-            Message::ImportVault(path_str) => {
-                if let Some(vault) = &mut self.vault {
-                    let mut cloned_vault = vault.clone(); // CLONE
-                    return Action::Run(Task::perform(
-                        async move { cloned_vault.import(path_str).await },
-                        Message::ImportedVault,
-                    ));
+            Message::OpenImportVaultDialog => Action::Run(Task::perform(
+                async move {
+                    let result = AsyncFileDialog::new()
+                        .add_filter("ron", &["ron"])
+                        .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                        .pick_file()
+                        .await;
+
+                    Box::new(result)
+                },
+                Message::ImportVault,
+            )),
+            Message::ImportVault(handle) => {
+                if let Some(file_handle) = *handle {
+                    if let Some(vault) = &mut self.vault {
+                        let mut cloned_vault = vault.clone(); // CLONE
+                        return Action::Run(Task::perform(
+                            async move { cloned_vault.import(file_handle.path().to_path_buf()).await },
+                            Message::ImportedVault,
+                        ));
+                    }
                 }
                 Action::None
             }
@@ -696,9 +712,7 @@ impl Vault {
                             entry_config,
                             show_advanced,
                         ))),
-                        Modal::Config { vault_import_path } => {
-                            container(custom_modal(self.config_modal_view(vault_import_path)))
-                        }
+                        Modal::Config => container(custom_modal(self.config_modal_view())),
                     }
                 } else {
                     container(text("Error, no vault found..."))
@@ -823,7 +837,7 @@ impl Vault {
         }
     }
 
-    fn config_modal_view(&self, vault_import_path: &String) -> Element<Message> {
+    fn config_modal_view(&self) -> Element<Message> {
         let header = row![
             text("Configuration").width(Length::Fill),
             button("Close")
@@ -836,19 +850,12 @@ impl Vault {
             column![
                 column![
                     text("Export unencrypted vault"),
-                    button("Export").on_press(Message::ExportVault)
+                    button("Export").on_press(Message::OpenExportVaultDialog)
                 ]
                 .spacing(3.),
                 column![
                     text("Import unencrypted vault"),
-                    text_input("Unencrypted vault file path", vault_import_path)
-                        .on_input(|s| Message::TextInputted(TextInputs::ConfigVaultImportPath, s))
-                        .width(Length::Fill),
-                    button("Import").on_press_maybe(if !vault_import_path.is_empty() {
-                        Some(Message::ImportVault(vault_import_path.to_string()))
-                    } else {
-                        None
-                    })
+                    button("Import").on_press(Message::OpenImportVaultDialog)
                 ]
                 .spacing(3.),
                 column![
@@ -876,7 +883,7 @@ impl Vault {
             match modal {
                 Modal::None => open,
                 Modal::AddEdit { .. } => Message::OpenModal(Modal::close()),
-                Modal::Config { .. } => Message::OpenModal(Modal::close()),
+                Modal::Config => Message::OpenModal(Modal::close()),
             }
         } else {
             open

@@ -5,7 +5,10 @@ use aes_gcm::aead::rand_core::RngCore;
 use anywho::anywho;
 use ron::{de, ser};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 use uuid::Uuid;
 
 const APP_ID: &str = "dev.mariinkys.Clockode";
@@ -399,10 +402,8 @@ impl Vault {
     }
 
     /// Attempts to export a [`Vault`], returns the export path
-    pub async fn export(&self) -> Result<String, anywho::Error> {
-        use dirs;
-        use std::path::PathBuf;
-        use tokio::{fs, task};
+    pub async fn export(&self, export_path: PathBuf) -> Result<String, anywho::Error> {
+        use tokio::fs;
 
         // only export if unlocked
         let vault_data = match &self.state {
@@ -410,20 +411,11 @@ impl Vault {
             State::Locked => return Err(anywho!("Cannot export locked vault")),
         };
 
-        let export_path_result = task::spawn_blocking(move || {
-            let export_path = dirs::download_dir()
-                .ok_or_else(|| anywho!("Could not determine downloads directory"))?
-                .join("vault_export.ron");
-
-            Ok::<PathBuf, anywho::Error>(export_path)
-        })
-        .await??;
-
         let serialized_data = ser::to_string(&vault_data)?.into_bytes();
 
-        fs::write(&export_path_result, serialized_data).await?;
+        fs::write(&export_path, serialized_data).await?;
 
-        let path_string = export_path_result
+        let path_string = export_path
             .to_str()
             .ok_or_else(|| anywho!("Invalid path encoding"))?
             .to_string();
@@ -434,7 +426,7 @@ impl Vault {
     /// Imports the file of the given path and adds the deserialized entries to the [`Vault`]
     pub async fn import(
         &mut self,
-        file_path: String,
+        file_path: PathBuf,
     ) -> Result<HashMap<super::entry::Id, Entry>, anywho::Error> {
         use std::fs;
         use tokio::task;
@@ -444,10 +436,6 @@ impl Vault {
             State::Unlocked { data, .. } => data,
             State::Locked => return Err(anywho!("Cannot add entry to locked vault")),
         };
-
-        if !is_valid_ron_file_path(&file_path) {
-            return Err(anywho!("File path does not contain a valid backup file"));
-        }
 
         let entries_clone = data.entries.clone();
 
@@ -474,14 +462,4 @@ impl Vault {
 
         Ok(imported_entries)
     }
-}
-
-fn is_valid_ron_file_path(path_str: &str) -> bool {
-    let path = std::path::Path::new(path_str);
-
-    if path.extension().is_some_and(|ext| ext == "ron") && path.exists() && path.is_file() {
-        return true;
-    }
-
-    false
 }
