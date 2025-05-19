@@ -175,7 +175,10 @@ impl Vault {
                     let res = &clipboard.set_text(content);
                     match res {
                         Ok(_) => {
-                            return Action::AddToast(Toast::success_toast("Copied to clipboard"));
+                            return Action::AddToast(Toast::success_toast(
+                                "Copied to clipboard",
+                                now,
+                            ));
                         }
                         Err(err) => {
                             eprintln!("{}", err);
@@ -327,7 +330,7 @@ impl Vault {
                 }
                 Err(err) => {
                     eprintln!("{}", err);
-                    Action::AddToast(Toast::error_toast(format!("{}", err)))
+                    Action::AddToast(Toast::error_toast(format!("{}", err), now))
                 }
             },
             Message::SavedVault(res) => {
@@ -384,10 +387,10 @@ impl Vault {
                 match res {
                     Ok(path) => {
                         println!("Vault exported sucessfully to: {}", path);
-                        return Action::AddToast(Toast::success_toast(format!(
-                            "Vault exported sucessfully to: {}",
-                            path
-                        )));
+                        return Action::AddToast(Toast::success_toast(
+                            format!("Vault exported sucessfully to: {}", path),
+                            now,
+                        ));
                     }
                     Err(err) => {
                         eprintln!("{}", err);

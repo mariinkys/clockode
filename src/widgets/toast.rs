@@ -6,15 +6,15 @@ use iced::advanced::overlay;
 use iced::advanced::renderer;
 use iced::advanced::widget::{self, Operation, Tree};
 use iced::advanced::{Clipboard, Shell, Widget};
-use iced::mouse;
-use iced::theme;
 use iced::time::{self, Duration, Instant};
 use iced::widget::{button, column, container, horizontal_rule, horizontal_space, row, text};
-use iced::window;
 use iced::{
     Alignment, Center, Element, Event, Fill, Length, Point, Rectangle, Renderer, Size, Theme,
     Vector,
 };
+use iced::{Animation, mouse};
+use iced::{animation, theme};
+use iced::{color, window};
 use std::fmt;
 
 pub const DEFAULT_TIMEOUT: u64 = 3;
@@ -53,16 +53,17 @@ impl fmt::Display for Status {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Toast {
     pub title: String,
     pub body: String,
     pub status: Status,
+    pub fade_in: Animation<bool>,
 }
 
 impl Toast {
     /// Returns a [`Toast`] with 'Success' as the title and a [`Status::Success`] with the provided content as it's body
-    pub fn success_toast<T>(body: T) -> Toast
+    pub fn success_toast<T>(body: T, now: Instant) -> Toast
     where
         T: ToString,
     {
@@ -70,11 +71,15 @@ impl Toast {
             title: String::from("Success"),
             body: body.to_string(),
             status: Status::Success,
+            fade_in: Animation::new(false)
+                .slow()
+                .easing(animation::Easing::EaseIn)
+                .go(true, now),
         }
     }
 
     /// Returns a [`Toast`] with 'Error' as the title and a [`Status::Danger`] with the provided content as it's body
-    pub fn error_toast<T>(body: T) -> Toast
+    pub fn error_toast<T>(body: T, now: Instant) -> Toast
     where
         T: ToString,
     {
@@ -82,11 +87,15 @@ impl Toast {
             title: String::from("Error"),
             body: body.to_string(),
             status: Status::Danger,
+            fade_in: Animation::new(false)
+                .slow()
+                .easing(animation::Easing::EaseIn)
+                .go(true, now),
         }
     }
 
     /// Returns a [`Toast`] with 'Warning' as the title and a [`Status::Warning`] with the provided content as it's body
-    pub fn warning_toast<T>(body: T) -> Toast
+    pub fn warning_toast<T>(body: T, now: Instant) -> Toast
     where
         T: ToString,
     {
@@ -94,7 +103,15 @@ impl Toast {
             title: String::from("Warning"),
             body: body.to_string(),
             status: Status::Warning,
+            fade_in: Animation::new(false)
+                .slow()
+                .easing(animation::Easing::EaseIn)
+                .go(true, now),
         }
+    }
+
+    pub fn is_animating(&self, now: Instant) -> bool {
+        self.fade_in.is_animating(now)
     }
 }
 
@@ -113,11 +130,14 @@ where
         content: impl Into<Element<'a, Message>>,
         toasts: &'a [Toast],
         on_close: impl Fn(usize) -> Message + 'a,
+        now: Instant,
     ) -> Self {
         let toasts = toasts
             .iter()
             .enumerate()
             .map(|(index, toast)| {
+                let opacity = toast.fade_in.interpolate(0.0, 0.8, now);
+
                 container(column![
                     container(
                         row![
@@ -169,6 +189,9 @@ where
                             style
                         }),
                 ])
+                .style(move |_theme| {
+                    container::Style::default().background(color!(0x000000, opacity))
+                })
                 .max_width(200)
                 .into()
             })

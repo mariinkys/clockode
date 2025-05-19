@@ -92,6 +92,7 @@ enum Message {
 
     AddToast(Toast),
     CloseToast(usize),
+    Animate,
 }
 
 impl Clockode {
@@ -171,6 +172,7 @@ impl Clockode {
                 self.toasts.remove(index);
                 Task::none()
             }
+            Message::Animate => Task::none(),
         }
     }
 
@@ -182,7 +184,7 @@ impl Clockode {
             },
         };
 
-        toast::Manager::new(content, &self.toasts, Message::CloseToast).into()
+        toast::Manager::new(content, &self.toasts, Message::CloseToast, self.now).into()
     }
 
     fn subscription(&self) -> Subscription<Message> {
@@ -190,9 +192,18 @@ impl Clockode {
             return Subscription::none();
         };
 
-        match screen {
+        let screen_subscription = match screen {
             Screen::Vault(vault) => vault.subscription(self.now).map(Message::Vault),
-        }
+        };
+
+        let is_animating = self.toasts.iter().any(|toast| toast.is_animating(self.now));
+        let animation_subscription = if is_animating {
+            iced::window::frames().map(|_| Message::Animate)
+        } else {
+            Subscription::none()
+        };
+
+        Subscription::batch([screen_subscription, animation_subscription])
     }
 
     fn theme(&self) -> Theme {
