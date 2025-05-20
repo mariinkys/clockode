@@ -66,19 +66,19 @@ impl Vault {
     }
 
     /// Attempts to decrypt a [`Vault`] given a password
-    pub async fn decrypt(password: String, mut vault: Self) -> Result<Self, anywho::Error> {
+    pub async fn decrypt(mut self, password: String) -> Result<Self, anywho::Error> {
         use aes_gcm::{
-            Aes256Gcm, Nonce,
             aead::{Aead, KeyInit, Payload},
+            Aes256Gcm, Nonce,
         };
         use scrypt::{
-            Scrypt,
             password_hash::{PasswordHash, PasswordHasher, SaltString},
+            Scrypt,
         };
         use tokio::fs;
 
         // read the encrypted vault file
-        let encrypted_data = fs::read(&vault.path).await?;
+        let encrypted_data = fs::read(&self.path).await?;
         let encrypted_vault: EncryptedVault = de::from_bytes(&encrypted_data)
             .map_err(|e| anywho!("Failed to deserialize encrypted vault: {}", e))?;
 
@@ -120,24 +120,24 @@ impl Vault {
         let vault_data: VaultData = de::from_bytes(&decrypted_data)
             .map_err(|e| anywho!("Failed to deserialize vault data: {}", e))?;
 
-        vault.state = State::Unlocked {
+        self.state = State::Unlocked {
             data: vault_data,
             encryption_key: key_bytes[0..32].to_vec(),
         };
 
-        Ok(vault)
+        Ok(self)
     }
 
     /// Attempts to create an encrypted [`Vault`] given a password
     pub async fn create(password: String) -> Result<Self, anywho::Error> {
         use aes_gcm::{
-            Aes256Gcm, Nonce,
             aead::{Aead, KeyInit, OsRng, Payload},
+            Aes256Gcm, Nonce,
         };
         use dirs;
         use scrypt::{
-            Scrypt,
             password_hash::{PasswordHash, PasswordHasher, SaltString},
+            Scrypt,
         };
         use tokio::fs;
 
@@ -218,8 +218,8 @@ impl Vault {
     /// Attempts to save the current [`Vault`] state
     pub async fn save(&self) -> Result<(), anywho::Error> {
         use aes_gcm::{
-            Aes256Gcm, Nonce,
             aead::{Aead, KeyInit, OsRng, Payload},
+            Aes256Gcm, Nonce,
         };
         use tokio::fs;
 
@@ -402,7 +402,7 @@ impl Vault {
     }
 
     /// Attempts to export a [`Vault`], returns the export path
-    pub async fn export(&self, export_path: PathBuf) -> Result<String, anywho::Error> {
+    pub async fn export(&self, export_path: impl AsRef<Path>) -> Result<String, anywho::Error> {
         use tokio::fs;
 
         // only export if unlocked
@@ -413,9 +413,10 @@ impl Vault {
 
         let serialized_data = ser::to_string(&vault_data)?.into_bytes();
 
-        fs::write(&export_path, serialized_data).await?;
+        fs::write(export_path.as_ref(), serialized_data).await?;
 
         let path_string = export_path
+            .as_ref()
             .to_str()
             .ok_or_else(|| anywho!("Invalid path encoding"))?
             .to_string();

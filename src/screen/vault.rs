@@ -303,18 +303,18 @@ impl Vault {
                 Action::None
             }
             Message::UnlockVault => {
-                if let Some(vault) = &self.vault {
+                if self.vault.is_some() {
+                    let vault = self.vault.take().unwrap();
+
                     if let State::Decryption { password, .. } = &mut self.state {
-                        Action::Run(Task::perform(
-                            crate::Vault::decrypt(password.to_string(), vault.clone()), // CLONE
+                        return Action::Run(Task::perform(
+                            vault.decrypt(password.to_string()),
                             Message::UnlockedVault,
-                        ))
-                    } else {
-                        Action::None
+                        ));
                     }
-                } else {
-                    Action::None
                 }
+
+                Action::None
             }
             Message::UnlockedVault(res) => match res {
                 Ok(vault) => {
@@ -357,7 +357,7 @@ impl Vault {
             )),
             Message::ExportVault(handle) => {
                 if let Some(file_handle) = *handle {
-                    if let Some(vault) = &mut self.vault {
+                    if let Some(vault) = &self.vault {
                         match vault.entries() {
                             Some(entries) => {
                                 if entries.is_empty() {
@@ -366,9 +366,7 @@ impl Vault {
 
                                 let cloned_vault = vault.clone(); // CLONE
                                 return Action::Run(Task::perform(
-                                    async move {
-                                        cloned_vault.export(file_handle.path().to_path_buf()).await
-                                    },
+                                    async move { cloned_vault.export(file_handle.path()).await },
                                     Message::ExportedVault,
                                 ));
                             }
