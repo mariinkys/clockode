@@ -31,7 +31,7 @@ pub enum Message {
     CreatedVault(Result<crate::Vault, anywho::Error>),
 
     UnlockVault,
-    UnlockedVault(Result<crate::Vault, anywho::Error>),
+    UnlockedVault((crate::Vault, Option<anywho::Error>)),
     SavedVault(Result<(), anywho::Error>),
     OpenExportVaultDialog,
     ExportVault(Box<Option<rfd::FileHandle>>),
@@ -316,8 +316,8 @@ impl Vault {
 
                 Action::None
             }
-            Message::UnlockedVault(res) => match res {
-                Ok(vault) => {
+            Message::UnlockedVault((vault, error)) => match error {
+                None => {
                     self.state = State::List {
                         modal: Modal::None,
                         time_count: get_time_until_next_totp_refresh(Self::REFRESH_RATE),
@@ -325,8 +325,9 @@ impl Vault {
                     self.vault = Some(vault);
                     self.update(Message::UpdateAllTOTP, now)
                 }
-                Err(err) => {
+                Some(err) => {
                     eprintln!("{}", err);
+                    self.vault = Some(vault);
                     Action::AddToast(Toast::error_toast(format!("{}", err)))
                 }
             },

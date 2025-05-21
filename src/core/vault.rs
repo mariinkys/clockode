@@ -66,7 +66,7 @@ impl Vault {
     }
 
     /// Attempts to decrypt a [`Vault`] given a password
-    pub async fn decrypt(mut self, password: String) -> Result<Self, anywho::Error> {
+    pub async fn decrypt(mut self, password: String) -> (Self, Option<anywho::Error>) {
         use aes_gcm::{
             aead::{Aead, KeyInit, Payload},
             Aes256Gcm, Nonce,
@@ -77,55 +77,63 @@ impl Vault {
         };
         use tokio::fs;
 
-        // read the encrypted vault file
-        let encrypted_data = fs::read(&self.path).await?;
-        let encrypted_vault: EncryptedVault = de::from_bytes(&encrypted_data)
-            .map_err(|e| anywho!("Failed to deserialize encrypted vault: {}", e))?;
+        let unlock_state = async || {
+            // read the encrypted vault file
+            let encrypted_data = fs::read(&self.path).await?;
+            let encrypted_vault: EncryptedVault = de::from_bytes(&encrypted_data)
+                .map_err(|e| anywho!("Failed to deserialize encrypted vault: {}", e))?;
 
-        // parse the salt
-        let salt = SaltString::from_b64(&encrypted_vault.salt)?;
+            // parse the salt
+            let salt = SaltString::from_b64(&encrypted_vault.salt)?;
 
-        // create a hash
-        let password_bytes = password.as_bytes();
-        let password_hash = Scrypt.hash_password(password_bytes, &salt)?.to_string();
+            // create a hash
+            let password_bytes = password.as_bytes();
+            let password_hash = Scrypt.hash_password(password_bytes, &salt)?.to_string();
 
-        // parse the hash to extract the key bytes
-        let parsed_hash = PasswordHash::new(&password_hash)?;
-        let hash_bytes = parsed_hash
-            .hash
-            .ok_or_else(|| anywho!("Failed to get hash bytes"))?;
+            // parse the hash to extract the key bytes
+            let parsed_hash = PasswordHash::new(&password_hash)?;
+            let hash_bytes = parsed_hash
+                .hash
+                .ok_or_else(|| anywho!("Failed to get hash bytes"))?;
 
-        // use the first 32 bytes of the hash as the AES-256 key
-        let key_bytes = hash_bytes.as_bytes();
-        if key_bytes.len() < 32 {
-            return Err(anywho!("Derived key too short"));
-        }
+            // use the first 32 bytes of the hash as the AES-256 key
+            let key_bytes = hash_bytes.as_bytes();
+            if key_bytes.len() < 32 {
+                return Err(anywho!("Derived key too short"));
+            }
 
-        // create cipher
-        let cipher = Aes256Gcm::new_from_slice(&key_bytes[0..32])
-            .map_err(|_| anywho!("Failed to create cipher"))?;
+            // create cipher
+            let cipher = Aes256Gcm::new_from_slice(&key_bytes[0..32])
+                .map_err(|_| anywho!("Failed to create cipher"))?;
 
-        // decrypt the data
-        let nonce = Nonce::from_slice(&encrypted_vault.nonce);
-        let decrypted_data = cipher
-            .decrypt(
-                nonce,
-                Payload {
-                    msg: &encrypted_vault.encrypted_data,
-                    aad: b"",
-                },
-            )
-            .map_err(|_| anywho!("Failed to decrypt: incorrect password or corrupted data"))?;
+            // decrypt the data
+            let nonce = Nonce::from_slice(&encrypted_vault.nonce);
+            let decrypted_data = cipher
+                .decrypt(
+                    nonce,
+                    Payload {
+                        msg: &encrypted_vault.encrypted_data,
+                        aad: b"",
+                    },
+                )
+                .map_err(|_| anywho!("Failed to decrypt: incorrect password or corrupted data"))?;
 
-        let vault_data: VaultData = de::from_bytes(&decrypted_data)
-            .map_err(|e| anywho!("Failed to deserialize vault data: {}", e))?;
+            let vault_data: VaultData = de::from_bytes(&decrypted_data)
+                .map_err(|e| anywho!("Failed to deserialize vault data: {}", e))?;
 
-        self.state = State::Unlocked {
-            data: vault_data,
-            encryption_key: key_bytes[0..32].to_vec(),
+            Ok(State::Unlocked {
+                data: vault_data,
+                encryption_key: key_bytes[0..32].to_vec(),
+            })
         };
 
-        Ok(self)
+        match unlock_state().await {
+            Ok(state) => {
+                self.state = state;
+                (self, None)
+            }
+            Err(error) => (self, Some(error)),
+        }
     }
 
     /// Attempts to create an encrypted [`Vault`] given a password
