@@ -66,78 +66,86 @@ impl Vault {
     }
 
     /// Attempts to decrypt a [`Vault`] given a password
-    pub async fn decrypt(password: String, mut vault: Self) -> Result<Self, anywho::Error> {
+    pub async fn decrypt(mut self, password: String) -> (Self, Option<anywho::Error>) {
         use aes_gcm::{
-            Aes256Gcm, Nonce,
             aead::{Aead, KeyInit, Payload},
+            Aes256Gcm, Nonce,
         };
         use scrypt::{
-            Scrypt,
             password_hash::{PasswordHash, PasswordHasher, SaltString},
+            Scrypt,
         };
         use tokio::fs;
 
-        // read the encrypted vault file
-        let encrypted_data = fs::read(&vault.path).await?;
-        let encrypted_vault: EncryptedVault = de::from_bytes(&encrypted_data)
-            .map_err(|e| anywho!("Failed to deserialize encrypted vault: {}", e))?;
+        let unlock_state = async || {
+            // read the encrypted vault file
+            let encrypted_data = fs::read(&self.path).await?;
+            let encrypted_vault: EncryptedVault = de::from_bytes(&encrypted_data)
+                .map_err(|e| anywho!("Failed to deserialize encrypted vault: {}", e))?;
 
-        // parse the salt
-        let salt = SaltString::from_b64(&encrypted_vault.salt)?;
+            // parse the salt
+            let salt = SaltString::from_b64(&encrypted_vault.salt)?;
 
-        // create a hash
-        let password_bytes = password.as_bytes();
-        let password_hash = Scrypt.hash_password(password_bytes, &salt)?.to_string();
+            // create a hash
+            let password_bytes = password.as_bytes();
+            let password_hash = Scrypt.hash_password(password_bytes, &salt)?.to_string();
 
-        // parse the hash to extract the key bytes
-        let parsed_hash = PasswordHash::new(&password_hash)?;
-        let hash_bytes = parsed_hash
-            .hash
-            .ok_or_else(|| anywho!("Failed to get hash bytes"))?;
+            // parse the hash to extract the key bytes
+            let parsed_hash = PasswordHash::new(&password_hash)?;
+            let hash_bytes = parsed_hash
+                .hash
+                .ok_or_else(|| anywho!("Failed to get hash bytes"))?;
 
-        // use the first 32 bytes of the hash as the AES-256 key
-        let key_bytes = hash_bytes.as_bytes();
-        if key_bytes.len() < 32 {
-            return Err(anywho!("Derived key too short"));
-        }
+            // use the first 32 bytes of the hash as the AES-256 key
+            let key_bytes = hash_bytes.as_bytes();
+            if key_bytes.len() < 32 {
+                return Err(anywho!("Derived key too short"));
+            }
 
-        // create cipher
-        let cipher = Aes256Gcm::new_from_slice(&key_bytes[0..32])
-            .map_err(|_| anywho!("Failed to create cipher"))?;
+            // create cipher
+            let cipher = Aes256Gcm::new_from_slice(&key_bytes[0..32])
+                .map_err(|_| anywho!("Failed to create cipher"))?;
 
-        // decrypt the data
-        let nonce = Nonce::from_slice(&encrypted_vault.nonce);
-        let decrypted_data = cipher
-            .decrypt(
-                nonce,
-                Payload {
-                    msg: &encrypted_vault.encrypted_data,
-                    aad: b"",
-                },
-            )
-            .map_err(|_| anywho!("Failed to decrypt: incorrect password or corrupted data"))?;
+            // decrypt the data
+            let nonce = Nonce::from_slice(&encrypted_vault.nonce);
+            let decrypted_data = cipher
+                .decrypt(
+                    nonce,
+                    Payload {
+                        msg: &encrypted_vault.encrypted_data,
+                        aad: b"",
+                    },
+                )
+                .map_err(|_| anywho!("Failed to decrypt: incorrect password or corrupted data"))?;
 
-        let vault_data: VaultData = de::from_bytes(&decrypted_data)
-            .map_err(|e| anywho!("Failed to deserialize vault data: {}", e))?;
+            let vault_data: VaultData = de::from_bytes(&decrypted_data)
+                .map_err(|e| anywho!("Failed to deserialize vault data: {}", e))?;
 
-        vault.state = State::Unlocked {
-            data: vault_data,
-            encryption_key: key_bytes[0..32].to_vec(),
+            Ok(State::Unlocked {
+                data: vault_data,
+                encryption_key: key_bytes[0..32].to_vec(),
+            })
         };
 
-        Ok(vault)
+        match unlock_state().await {
+            Ok(state) => {
+                self.state = state;
+                (self, None)
+            }
+            Err(error) => (self, Some(error)),
+        }
     }
 
     /// Attempts to create an encrypted [`Vault`] given a password
     pub async fn create(password: String) -> Result<Self, anywho::Error> {
         use aes_gcm::{
-            Aes256Gcm, Nonce,
             aead::{Aead, KeyInit, OsRng, Payload},
+            Aes256Gcm, Nonce,
         };
         use dirs;
         use scrypt::{
-            Scrypt,
             password_hash::{PasswordHash, PasswordHasher, SaltString},
+            Scrypt,
         };
         use tokio::fs;
 
@@ -218,8 +226,8 @@ impl Vault {
     /// Attempts to save the current [`Vault`] state
     pub async fn save(&self) -> Result<(), anywho::Error> {
         use aes_gcm::{
-            Aes256Gcm, Nonce,
             aead::{Aead, KeyInit, OsRng, Payload},
+            Aes256Gcm, Nonce,
         };
         use tokio::fs;
 
@@ -402,7 +410,7 @@ impl Vault {
     }
 
     /// Attempts to export a [`Vault`], returns the export path
-    pub async fn export(&self, export_path: PathBuf) -> Result<String, anywho::Error> {
+    pub async fn export(&self, export_path: impl AsRef<Path>) -> Result<String, anywho::Error> {
         use tokio::fs;
 
         // only export if unlocked
@@ -413,9 +421,10 @@ impl Vault {
 
         let serialized_data = ser::to_string(&vault_data)?.into_bytes();
 
-        fs::write(&export_path, serialized_data).await?;
+        fs::write(export_path.as_ref(), serialized_data).await?;
 
         let path_string = export_path
+            .as_ref()
             .to_str()
             .ok_or_else(|| anywho!("Invalid path encoding"))?
             .to_string();

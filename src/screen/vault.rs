@@ -31,7 +31,7 @@ pub enum Message {
     CreatedVault(Result<crate::Vault, anywho::Error>),
 
     UnlockVault,
-    UnlockedVault(Result<crate::Vault, anywho::Error>),
+    UnlockedVault((crate::Vault, Option<anywho::Error>)),
     SavedVault(Result<(), anywho::Error>),
     OpenExportVaultDialog,
     ExportVault(Box<Option<rfd::FileHandle>>),
@@ -303,21 +303,21 @@ impl Vault {
                 Action::None
             }
             Message::UnlockVault => {
-                if let Some(vault) = &self.vault {
+                if self.vault.is_some() {
+                    let vault = self.vault.take().unwrap();
+
                     if let State::Decryption { password, .. } = &mut self.state {
-                        Action::Run(Task::perform(
-                            crate::Vault::decrypt(password.to_string(), vault.clone()), // CLONE
+                        return Action::Run(Task::perform(
+                            vault.decrypt(password.to_string()),
                             Message::UnlockedVault,
-                        ))
-                    } else {
-                        Action::None
+                        ));
                     }
-                } else {
-                    Action::None
                 }
+
+                Action::None
             }
-            Message::UnlockedVault(res) => match res {
-                Ok(vault) => {
+            Message::UnlockedVault((vault, error)) => match error {
+                None => {
                     self.state = State::List {
                         modal: Modal::None,
                         time_count: get_time_until_next_totp_refresh(Self::REFRESH_RATE),
@@ -325,8 +325,9 @@ impl Vault {
                     self.vault = Some(vault);
                     self.update(Message::UpdateAllTOTP, now)
                 }
-                Err(err) => {
+                Some(err) => {
                     eprintln!("{}", err);
+                    self.vault = Some(vault);
                     Action::AddToast(Toast::error_toast(format!("{}", err)))
                 }
             },
@@ -357,7 +358,7 @@ impl Vault {
             )),
             Message::ExportVault(handle) => {
                 if let Some(file_handle) = *handle {
-                    if let Some(vault) = &mut self.vault {
+                    if let Some(vault) = &self.vault {
                         match vault.entries() {
                             Some(entries) => {
                                 if entries.is_empty() {
@@ -366,9 +367,7 @@ impl Vault {
 
                                 let cloned_vault = vault.clone(); // CLONE
                                 return Action::Run(Task::perform(
-                                    async move {
-                                        cloned_vault.export(file_handle.path().to_path_buf()).await
-                                    },
+                                    async move { cloned_vault.export(file_handle.path()).await },
                                     Message::ExportedVault,
                                 ));
                             }
