@@ -14,8 +14,8 @@
     {
         "type": "git",
         "url": "https://github.com/iced-rs/iced",
-        "commit": "7a97773f1796fa7889435c78305d287449dd05a4",
-        "dest": "flatpak-cargo/git/iced-7a97773"
+        "commit": "7afbb89ebfd49aa86453d45f7d9c13a7c48b58f2",
+        "dest": "flatpak-cargo/git/iced-7afbb89"
     },
     {
         "type": "archive",
@@ -111,14 +111,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/ahash/ahash-0.8.11.crate",
-        "sha256": "e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011",
-        "dest": "cargo/vendor/ahash-0.8.11"
+        "url": "https://static.crates.io/crates/ahash/ahash-0.8.12.crate",
+        "sha256": "5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75",
+        "dest": "cargo/vendor/ahash-0.8.12"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011\", \"files\": {}}",
-        "dest": "cargo/vendor/ahash-0.8.11",
+        "contents": "{\"package\": \"5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75\", \"files\": {}}",
+        "dest": "cargo/vendor/ahash-0.8.12",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -358,14 +358,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/async-io/async-io-2.4.0.crate",
-        "sha256": "43a2b323ccce0a1d90b449fd71f2a06ca7faa7c54c2751f06c9bd851fc061059",
-        "dest": "cargo/vendor/async-io-2.4.0"
+        "url": "https://static.crates.io/crates/async-io/async-io-2.4.1.crate",
+        "sha256": "1237c0ae75a0f3765f58910ff9cdd0a12eeb39ab2f4c7de23262f337f0aacbb3",
+        "dest": "cargo/vendor/async-io-2.4.1"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"43a2b323ccce0a1d90b449fd71f2a06ca7faa7c54c2751f06c9bd851fc061059\", \"files\": {}}",
-        "dest": "cargo/vendor/async-io-2.4.0",
+        "contents": "{\"package\": \"1237c0ae75a0f3765f58910ff9cdd0a12eeb39ab2f4c7de23262f337f0aacbb3\", \"files\": {}}",
+        "dest": "cargo/vendor/async-io-2.4.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -397,14 +397,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/async-process/async-process-2.3.0.crate",
-        "sha256": "63255f1dc2381611000436537bbedfe83183faa303a5a0edaf191edef06526bb",
-        "dest": "cargo/vendor/async-process-2.3.0"
+        "url": "https://static.crates.io/crates/async-process/async-process-2.3.1.crate",
+        "sha256": "cde3f4e40e6021d7acffc90095cbd6dc54cb593903d1de5832f435eb274b85dc",
+        "dest": "cargo/vendor/async-process-2.3.1"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"63255f1dc2381611000436537bbedfe83183faa303a5a0edaf191edef06526bb\", \"files\": {}}",
-        "dest": "cargo/vendor/async-process-2.3.0",
+        "contents": "{\"package\": \"cde3f4e40e6021d7acffc90095cbd6dc54cb593903d1de5832f435eb274b85dc\", \"files\": {}}",
+        "dest": "cargo/vendor/async-process-2.3.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -423,14 +423,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/async-signal/async-signal-0.2.10.crate",
-        "sha256": "637e00349800c0bdf8bfc21ebbc0b6524abea702b0da4168ac00d070d0c0b9f3",
-        "dest": "cargo/vendor/async-signal-0.2.10"
+        "url": "https://static.crates.io/crates/async-signal/async-signal-0.2.11.crate",
+        "sha256": "d7605a4e50d4b06df3898d5a70bf5fde51ed9059b0434b73105193bc27acce0d",
+        "dest": "cargo/vendor/async-signal-0.2.11"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"637e00349800c0bdf8bfc21ebbc0b6524abea702b0da4168ac00d070d0c0b9f3\", \"files\": {}}",
-        "dest": "cargo/vendor/async-signal-0.2.10",
+        "contents": "{\"package\": \"d7605a4e50d4b06df3898d5a70bf5fde51ed9059b0434b73105193bc27acce0d\", \"files\": {}}",
+        "dest": "cargo/vendor/async-signal-0.2.11",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -488,14 +488,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/av1-grain/av1-grain-0.2.3.crate",
-        "sha256": "6678909d8c5d46a42abcf571271e15fdbc0a225e3646cf23762cd415046c78bf",
-        "dest": "cargo/vendor/av1-grain-0.2.3"
+        "url": "https://static.crates.io/crates/av1-grain/av1-grain-0.2.4.crate",
+        "sha256": "4f3efb2ca85bc610acfa917b5aaa36f3fcbebed5b3182d7f877b02531c4b80c8",
+        "dest": "cargo/vendor/av1-grain-0.2.4"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"6678909d8c5d46a42abcf571271e15fdbc0a225e3646cf23762cd415046c78bf\", \"files\": {}}",
-        "dest": "cargo/vendor/av1-grain-0.2.3",
+        "contents": "{\"package\": \"4f3efb2ca85bc610acfa917b5aaa36f3fcbebed5b3182d7f877b02531c4b80c8\", \"files\": {}}",
+        "dest": "cargo/vendor/av1-grain-0.2.4",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -618,14 +618,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/bitflags/bitflags-2.9.0.crate",
-        "sha256": "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd",
-        "dest": "cargo/vendor/bitflags-2.9.0"
+        "url": "https://static.crates.io/crates/bitflags/bitflags-2.9.1.crate",
+        "sha256": "1b8e56985ec62d17e9c1001dc89c88ecd7dc08e47eba5ec7c29c7b5eeecde967",
+        "dest": "cargo/vendor/bitflags-2.9.1"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd\", \"files\": {}}",
-        "dest": "cargo/vendor/bitflags-2.9.0",
+        "contents": "{\"package\": \"1b8e56985ec62d17e9c1001dc89c88ecd7dc08e47eba5ec7c29c7b5eeecde967\", \"files\": {}}",
+        "dest": "cargo/vendor/bitflags-2.9.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -813,14 +813,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/cc/cc-1.2.21.crate",
-        "sha256": "8691782945451c1c383942c4874dbe63814f61cb57ef773cda2972682b7bb3c0",
-        "dest": "cargo/vendor/cc-1.2.21"
+        "url": "https://static.crates.io/crates/cc/cc-1.2.25.crate",
+        "sha256": "d0fc897dc1e865cc67c0e05a836d9d3f1df3cbe442aa4a9473b18e12624a4951",
+        "dest": "cargo/vendor/cc-1.2.25"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"8691782945451c1c383942c4874dbe63814f61cb57ef773cda2972682b7bb3c0\", \"files\": {}}",
-        "dest": "cargo/vendor/cc-1.2.21",
+        "contents": "{\"package\": \"d0fc897dc1e865cc67c0e05a836d9d3f1df3cbe442aa4a9473b18e12624a4951\", \"files\": {}}",
+        "dest": "cargo/vendor/cc-1.2.25",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -1008,14 +1008,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/core-foundation/core-foundation-0.10.0.crate",
-        "sha256": "b55271e5c8c478ad3f38ad24ef34923091e0548492a266d19b3c0b4d82574c63",
-        "dest": "cargo/vendor/core-foundation-0.10.0"
+        "url": "https://static.crates.io/crates/core-foundation/core-foundation-0.10.1.crate",
+        "sha256": "b2a6cd9ae233e7f62ba4e9353e81a88df7fc8a5987b8d445b4d90c879bd156f6",
+        "dest": "cargo/vendor/core-foundation-0.10.1"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"b55271e5c8c478ad3f38ad24ef34923091e0548492a266d19b3c0b4d82574c63\", \"files\": {}}",
-        "dest": "cargo/vendor/core-foundation-0.10.0",
+        "contents": "{\"package\": \"b2a6cd9ae233e7f62ba4e9353e81a88df7fc8a5987b8d445b4d90c879bd156f6\", \"files\": {}}",
+        "dest": "cargo/vendor/core-foundation-0.10.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -1234,14 +1234,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/cursor-icon/cursor-icon-1.1.0.crate",
-        "sha256": "96a6ac251f4a2aca6b3f91340350eab87ae57c3f127ffeb585e92bd336717991",
-        "dest": "cargo/vendor/cursor-icon-1.1.0"
+        "url": "https://static.crates.io/crates/cursor-icon/cursor-icon-1.2.0.crate",
+        "sha256": "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f",
+        "dest": "cargo/vendor/cursor-icon-1.2.0"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"96a6ac251f4a2aca6b3f91340350eab87ae57c3f127ffeb585e92bd336717991\", \"files\": {}}",
-        "dest": "cargo/vendor/cursor-icon-1.1.0",
+        "contents": "{\"package\": \"f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f\", \"files\": {}}",
+        "dest": "cargo/vendor/cursor-icon-1.2.0",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -1525,27 +1525,27 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/errno/errno-0.3.11.crate",
-        "sha256": "976dd42dc7e85965fe702eb8164f21f450704bdde31faefd6471dba214cb594e",
-        "dest": "cargo/vendor/errno-0.3.11"
+        "url": "https://static.crates.io/crates/errno/errno-0.3.12.crate",
+        "sha256": "cea14ef9355e3beab063703aa9dab15afd25f0667c341310c1e5274bb1d0da18",
+        "dest": "cargo/vendor/errno-0.3.12"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"976dd42dc7e85965fe702eb8164f21f450704bdde31faefd6471dba214cb594e\", \"files\": {}}",
-        "dest": "cargo/vendor/errno-0.3.11",
+        "contents": "{\"package\": \"cea14ef9355e3beab063703aa9dab15afd25f0667c341310c1e5274bb1d0da18\", \"files\": {}}",
+        "dest": "cargo/vendor/errno-0.3.12",
         "dest-filename": ".cargo-checksum.json"
     },
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/error-code/error-code-3.3.1.crate",
-        "sha256": "a5d9305ccc6942a704f4335694ecd3de2ea531b114ac2d51f5f843750787a92f",
-        "dest": "cargo/vendor/error-code-3.3.1"
+        "url": "https://static.crates.io/crates/error-code/error-code-3.3.2.crate",
+        "sha256": "dea2df4cf52843e0452895c455a1a2cfbb842a1e7329671acf418fdc53ed4c59",
+        "dest": "cargo/vendor/error-code-3.3.2"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"a5d9305ccc6942a704f4335694ecd3de2ea531b114ac2d51f5f843750787a92f\", \"files\": {}}",
-        "dest": "cargo/vendor/error-code-3.3.1",
+        "contents": "{\"package\": \"dea2df4cf52843e0452895c455a1a2cfbb842a1e7329671acf418fdc53ed4c59\", \"files\": {}}",
+        "dest": "cargo/vendor/error-code-3.3.2",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -1720,27 +1720,27 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/font-types/font-types-0.8.4.crate",
-        "sha256": "1fa6a5e5a77b5f3f7f9e32879f484aa5b3632ddfbe568a16266c904a6f32cdaf",
-        "dest": "cargo/vendor/font-types-0.8.4"
+        "url": "https://static.crates.io/crates/font-types/font-types-0.9.0.crate",
+        "sha256": "02a596f5713680923a2080d86de50fe472fb290693cf0f701187a1c8b36996b7",
+        "dest": "cargo/vendor/font-types-0.9.0"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"1fa6a5e5a77b5f3f7f9e32879f484aa5b3632ddfbe568a16266c904a6f32cdaf\", \"files\": {}}",
-        "dest": "cargo/vendor/font-types-0.8.4",
+        "contents": "{\"package\": \"02a596f5713680923a2080d86de50fe472fb290693cf0f701187a1c8b36996b7\", \"files\": {}}",
+        "dest": "cargo/vendor/font-types-0.9.0",
         "dest-filename": ".cargo-checksum.json"
     },
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/fontconfig-parser/fontconfig-parser-0.5.7.crate",
-        "sha256": "c1fcfcd44ca6e90c921fee9fa665d530b21ef1327a4c1a6c5250ea44b776ada7",
-        "dest": "cargo/vendor/fontconfig-parser-0.5.7"
+        "url": "https://static.crates.io/crates/fontconfig-parser/fontconfig-parser-0.5.8.crate",
+        "sha256": "bbc773e24e02d4ddd8395fd30dc147524273a83e54e0f312d986ea30de5f5646",
+        "dest": "cargo/vendor/fontconfig-parser-0.5.8"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"c1fcfcd44ca6e90c921fee9fa665d530b21ef1327a4c1a6c5250ea44b776ada7\", \"files\": {}}",
-        "dest": "cargo/vendor/fontconfig-parser-0.5.7",
+        "contents": "{\"package\": \"bbc773e24e02d4ddd8395fd30dc147524273a83e54e0f312d986ea30de5f5646\", \"files\": {}}",
+        "dest": "cargo/vendor/fontconfig-parser-0.5.8",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -1993,14 +1993,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/getrandom/getrandom-0.3.2.crate",
-        "sha256": "73fea8450eea4bac3940448fb7ae50d91f034f941199fcd9d909a5a07aa455f0",
-        "dest": "cargo/vendor/getrandom-0.3.2"
+        "url": "https://static.crates.io/crates/getrandom/getrandom-0.3.3.crate",
+        "sha256": "26145e563e54f2cadc477553f1ec5ee650b00862f0a58bcd12cbdc5f0ea2d2f4",
+        "dest": "cargo/vendor/getrandom-0.3.3"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"73fea8450eea4bac3940448fb7ae50d91f034f941199fcd9d909a5a07aa455f0\", \"files\": {}}",
-        "dest": "cargo/vendor/getrandom-0.3.2",
+        "contents": "{\"package\": \"26145e563e54f2cadc477553f1ec5ee650b00862f0a58bcd12cbdc5f0ea2d2f4\", \"files\": {}}",
+        "dest": "cargo/vendor/getrandom-0.3.3",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -2136,14 +2136,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/gpu-descriptor/gpu-descriptor-0.3.1.crate",
-        "sha256": "dcf29e94d6d243368b7a56caa16bc213e4f9f8ed38c4d9557069527b5d5281ca",
-        "dest": "cargo/vendor/gpu-descriptor-0.3.1"
+        "url": "https://static.crates.io/crates/gpu-descriptor/gpu-descriptor-0.3.2.crate",
+        "sha256": "b89c83349105e3732062a895becfc71a8f921bb71ecbbdd8ff99263e3b53a0ca",
+        "dest": "cargo/vendor/gpu-descriptor-0.3.2"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"dcf29e94d6d243368b7a56caa16bc213e4f9f8ed38c4d9557069527b5d5281ca\", \"files\": {}}",
-        "dest": "cargo/vendor/gpu-descriptor-0.3.1",
+        "contents": "{\"package\": \"b89c83349105e3732062a895becfc71a8f921bb71ecbbdd8ff99263e3b53a0ca\", \"files\": {}}",
+        "dest": "cargo/vendor/gpu-descriptor-0.3.2",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -2214,14 +2214,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/hermit-abi/hermit-abi-0.4.0.crate",
-        "sha256": "fbf6a919d6cf397374f7dfeeea91d974c7c0a7221d0d0f4f20d859d329e53fcc",
-        "dest": "cargo/vendor/hermit-abi-0.4.0"
+        "url": "https://static.crates.io/crates/hermit-abi/hermit-abi-0.5.1.crate",
+        "sha256": "f154ce46856750ed433c8649605bf7ed2de3bc35fd9d2a9f30cddd873c80cb08",
+        "dest": "cargo/vendor/hermit-abi-0.5.1"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"fbf6a919d6cf397374f7dfeeea91d974c7c0a7221d0d0f4f20d859d329e53fcc\", \"files\": {}}",
-        "dest": "cargo/vendor/hermit-abi-0.4.0",
+        "contents": "{\"package\": \"f154ce46856750ed433c8649605bf7ed2de3bc35fd9d2a9f30cddd873c80cb08\", \"files\": {}}",
+        "dest": "cargo/vendor/hermit-abi-0.5.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -2266,12 +2266,12 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/.\" \"cargo/vendor/iced\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/.\" \"cargo/vendor/iced\""
         ]
     },
     {
         "type": "inline",
-        "contents": "[[bench]]\nname = \"wgpu\"\nharness = false\nrequired-features = [ \"canvas\",]\n\n[package]\nname = \"iced\"\ndescription = \"A cross-platform GUI library inspired by Elm\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\nrust-version = \"1.85\"\n\n[features]\ndefault = [ \"wgpu\", \"tiny-skia\", \"web-colors\", \"auto-detect-theme\", \"thread-pool\",]\nwgpu = [ \"iced_renderer/wgpu\", \"iced_widget/wgpu\",]\ntiny-skia = [ \"iced_renderer/tiny-skia\",]\nimage = [ \"image-without-codecs\", \"image/default\",]\nimage-without-codecs = [ \"iced_widget/image\", \"dep:image\",]\nsvg = [ \"iced_widget/svg\",]\ncanvas = [ \"iced_widget/canvas\",]\nqr_code = [ \"iced_widget/qr_code\",]\nmarkdown = [ \"iced_widget/markdown\",]\nlazy = [ \"iced_widget/lazy\",]\ndebug = [ \"iced_winit/debug\", \"iced_devtools\",]\ntime-travel = [ \"debug\", \"iced_devtools/time-travel\",]\nthread-pool = [ \"iced_futures/thread-pool\",]\ntokio = [ \"iced_futures/tokio\",]\nsmol = [ \"iced_futures/smol\",]\nsystem = [ \"iced_winit/system\",]\nweb-colors = [ \"iced_renderer/web-colors\",]\nwebgl = [ \"iced_renderer/webgl\",]\nhighlighter = [ \"iced_highlighter\", \"iced_widget/highlighter\",]\nadvanced = [ \"iced_core/advanced\", \"iced_widget/advanced\",]\nfira-sans = [ \"iced_renderer/fira-sans\",]\nauto-detect-theme = [ \"iced_core/auto-detect-theme\",]\nstrict-assertions = [ \"iced_renderer/strict-assertions\",]\nunconditional-rendering = [ \"iced_winit/unconditional-rendering\",]\nsipper = [ \"iced_runtime/sipper\",]\n\n[dependencies]\nthiserror = \"1.0\"\n\n[dev-dependencies]\ncriterion = \"0.5\"\n\n[workspace]\nmembers = [ \"beacon\", \"core\", \"debug\", \"devtools\", \"futures\", \"graphics\", \"highlighter\", \"program\", \"renderer\", \"runtime\", \"test\", \"tiny_skia\", \"wgpu\", \"widget\", \"winit\", \"examples/*\",]\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[badges.maintenance]\nstatus = \"actively-developed\"\n\n[dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[dependencies.iced_core]\nversion = \"0.14.0-dev\"\npath = \"core\"\n\n[dependencies.iced_futures]\nversion = \"0.14.0-dev\"\npath = \"futures\"\n\n[dependencies.iced_renderer]\nversion = \"0.14.0-dev\"\npath = \"renderer\"\n\n[dependencies.iced_runtime]\nversion = \"0.14.0-dev\"\npath = \"runtime\"\n\n[dependencies.iced_widget]\nversion = \"0.14.0-dev\"\npath = \"widget\"\n\n[dependencies.iced_winit]\nfeatures = [ \"program\",]\nversion = \"0.14.0-dev\"\npath = \"winit\"\n\n[dependencies.iced_devtools]\noptional = true\nversion = \"0.14.0-dev\"\npath = \"devtools\"\n\n[dependencies.iced_highlighter]\noptional = true\nversion = \"0.14.0-dev\"\npath = \"highlighter\"\n\n[dependencies.image]\noptional = true\nversion = \"0.25\"\ndefault-features = false\n\n[dev-dependencies.iced_wgpu]\nversion = \"0.14.0-dev\"\npath = \"wgpu\"\n\n[profile.release-opt]\ninherits = \"release\"\ncodegen-units = 1\ndebug = false\nlto = true\nincremental = false\nopt-level = 3\noverflow-checks = false\nstrip = \"debuginfo\"\n\n[workspace.package]\nversion = \"0.14.0-dev\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nedition = \"2024\"\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\nrust-version = \"1.85\"\n\n[workspace.dependencies]\nbincode = \"1.3\"\nbitflags = \"2.0\"\nbytes = \"1.6\"\ncosmic-text = \"0.14\"\ndark-light = \"2.0\"\nglam = \"0.25\"\nguillotiere = \"0.6\"\nhalf = \"2.2\"\nkamadak-exif = \"0.5\"\nkurbo = \"0.10\"\nlilt = \"0.8\"\nlog = \"0.4\"\nlyon = \"1.0\"\nlyon_path = \"1.0\"\nnum-traits = \"0.2\"\nouroboros = \"0.18\"\npng = \"0.17\"\npulldown-cmark = \"0.12\"\nraw-window-handle = \"0.6\"\nresvg = \"0.42\"\nrustc-hash = \"2.0\"\nserde = \"1.0\"\nsemver = \"1.0\"\nsha2 = \"0.10\"\nsipper = \"0.1\"\nsmol = \"2\"\nsmol_str = \"0.2\"\nsoftbuffer = \"0.4\"\nsyntect = \"5.1\"\nsysinfo = \"0.33\"\nthiserror = \"1.0\"\ntiny-skia = \"0.11\"\ntokio = \"1.0\"\ntracing = \"0.1\"\nunicode-segmentation = \"1.0\"\nurl = \"2.5\"\nwasm-bindgen-futures = \"0.4\"\nwasmtimer = \"0.4.1\"\nweb-sys = \"0.3.69\"\nweb-time = \"1.1\"\nwgpu = \"24.0\"\nwindow_clipboard = \"0.4.1\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n\n[workspace.dependencies.iced]\nversion = \"0.14.0-dev\"\npath = \".\"\n\n[workspace.dependencies.iced_beacon]\nversion = \"0.14.0-dev\"\npath = \"beacon\"\n\n[workspace.dependencies.iced_core]\nversion = \"0.14.0-dev\"\npath = \"core\"\n\n[workspace.dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[workspace.dependencies.iced_devtools]\nversion = \"0.14.0-dev\"\npath = \"devtools\"\n\n[workspace.dependencies.iced_futures]\nversion = \"0.14.0-dev\"\npath = \"futures\"\n\n[workspace.dependencies.iced_graphics]\nversion = \"0.14.0-dev\"\npath = \"graphics\"\n\n[workspace.dependencies.iced_highlighter]\nversion = \"0.14.0-dev\"\npath = \"highlighter\"\n\n[workspace.dependencies.iced_program]\nversion = \"0.14.0-dev\"\npath = \"program\"\n\n[workspace.dependencies.iced_renderer]\nversion = \"0.14.0-dev\"\npath = \"renderer\"\n\n[workspace.dependencies.iced_runtime]\nversion = \"0.14.0-dev\"\npath = \"runtime\"\n\n[workspace.dependencies.iced_test]\nversion = \"0.14.0-dev\"\npath = \"test\"\n\n[workspace.dependencies.iced_tiny_skia]\nversion = \"0.14.0-dev\"\npath = \"tiny_skia\"\n\n[workspace.dependencies.iced_wgpu]\nversion = \"0.14.0-dev\"\npath = \"wgpu\"\n\n[workspace.dependencies.iced_widget]\nversion = \"0.14.0-dev\"\npath = \"widget\"\n\n[workspace.dependencies.iced_winit]\nversion = \"0.14.0-dev\"\npath = \"winit\"\n\n[workspace.dependencies.bytemuck]\nversion = \"1.0\"\nfeatures = [ \"derive\",]\n\n[workspace.dependencies.futures]\nversion = \"0.3\"\ndefault-features = false\n\n[workspace.dependencies.cryoglyph]\ngit = \"https://github.com/iced-rs/cryoglyph.git\"\nrev = \"a456d1c17bbcf33afcca41d9e5e299f9f1193819\"\n\n[workspace.dependencies.image]\nversion = \"0.25\"\ndefault-features = false\n\n[workspace.dependencies.qrcode]\nversion = \"0.13\"\ndefault-features = false\n\n[workspace.dependencies.winit]\ngit = \"https://github.com/iced-rs/winit.git\"\nrev = \"11414b6aa45699f038114e61b4ddf5102b2d3b4b\"\n\n[workspace.lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[workspace.lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[workspace.lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[package.metadata.docs.rs]\nrustdoc-args = [ \"--cfg\", \"docsrs\",]\nall-features = true\n\n[workspace.lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
+        "contents": "[[bench]]\nname = \"wgpu\"\nharness = false\nrequired-features = [ \"canvas\",]\n\n[package]\nname = \"iced\"\ndescription = \"A cross-platform GUI library inspired by Elm\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\nrust-version = \"1.85\"\n\n[features]\ndefault = [ \"wgpu\", \"tiny-skia\", \"web-colors\", \"auto-detect-theme\", \"thread-pool\",]\nwgpu = [ \"iced_renderer/wgpu\", \"iced_widget/wgpu\",]\ntiny-skia = [ \"iced_renderer/tiny-skia\",]\nimage = [ \"image-without-codecs\", \"image/default\",]\nimage-without-codecs = [ \"iced_widget/image\", \"dep:image\",]\nsvg = [ \"iced_widget/svg\",]\ncanvas = [ \"iced_widget/canvas\",]\nqr_code = [ \"iced_widget/qr_code\",]\nmarkdown = [ \"iced_widget/markdown\",]\nlazy = [ \"iced_widget/lazy\",]\ndebug = [ \"iced_winit/debug\", \"iced_devtools\",]\ntime-travel = [ \"debug\", \"iced_devtools/time-travel\",]\nthread-pool = [ \"iced_futures/thread-pool\",]\ntokio = [ \"iced_futures/tokio\",]\nsmol = [ \"iced_futures/smol\",]\nsystem = [ \"iced_winit/system\",]\nweb-colors = [ \"iced_renderer/web-colors\",]\ncrisp = [ \"iced_core/crisp\", \"iced_widget/crisp\",]\nwebgl = [ \"iced_renderer/webgl\",]\nhighlighter = [ \"iced_highlighter\", \"iced_widget/highlighter\",]\nadvanced = [ \"iced_core/advanced\", \"iced_widget/advanced\",]\nfira-sans = [ \"iced_renderer/fira-sans\",]\nauto-detect-theme = [ \"iced_core/auto-detect-theme\",]\nstrict-assertions = [ \"iced_renderer/strict-assertions\",]\nunconditional-rendering = [ \"iced_winit/unconditional-rendering\",]\nsipper = [ \"iced_runtime/sipper\",]\n\n[dependencies]\nthiserror = \"1.0\"\n\n[dev-dependencies]\ncriterion = \"0.5\"\n\n[workspace]\nmembers = [ \"beacon\", \"core\", \"debug\", \"devtools\", \"futures\", \"graphics\", \"highlighter\", \"program\", \"renderer\", \"runtime\", \"test\", \"tiny_skia\", \"wgpu\", \"widget\", \"winit\", \"examples/*\",]\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[badges.maintenance]\nstatus = \"actively-developed\"\n\n[dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[dependencies.iced_core]\nversion = \"0.14.0-dev\"\npath = \"core\"\n\n[dependencies.iced_futures]\nversion = \"0.14.0-dev\"\npath = \"futures\"\n\n[dependencies.iced_renderer]\nversion = \"0.14.0-dev\"\npath = \"renderer\"\n\n[dependencies.iced_runtime]\nversion = \"0.14.0-dev\"\npath = \"runtime\"\n\n[dependencies.iced_widget]\nversion = \"0.14.0-dev\"\npath = \"widget\"\n\n[dependencies.iced_winit]\nfeatures = [ \"program\",]\nversion = \"0.14.0-dev\"\npath = \"winit\"\n\n[dependencies.iced_devtools]\noptional = true\nversion = \"0.14.0-dev\"\npath = \"devtools\"\n\n[dependencies.iced_highlighter]\noptional = true\nversion = \"0.14.0-dev\"\npath = \"highlighter\"\n\n[dependencies.image]\noptional = true\nversion = \"0.25\"\ndefault-features = false\n\n[dev-dependencies.iced_wgpu]\nversion = \"0.14.0-dev\"\npath = \"wgpu\"\n\n[profile.release-opt]\ninherits = \"release\"\ncodegen-units = 1\ndebug = false\nlto = true\nincremental = false\nopt-level = 3\noverflow-checks = false\nstrip = \"debuginfo\"\n\n[workspace.package]\nversion = \"0.14.0-dev\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nedition = \"2024\"\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\nrust-version = \"1.85\"\n\n[workspace.dependencies]\nbincode = \"1.3\"\nbitflags = \"2.0\"\nbytes = \"1.6\"\ncosmic-text = \"0.14\"\ndark-light = \"2.0\"\nglam = \"0.25\"\nguillotiere = \"0.6\"\nhalf = \"2.2\"\nkamadak-exif = \"0.5\"\nkurbo = \"0.10\"\nlilt = \"0.8\"\nlog = \"0.4\"\nlyon = \"1.0\"\nlyon_path = \"1.0\"\nnum-traits = \"0.2\"\nouroboros = \"0.18\"\npng = \"0.17\"\npulldown-cmark = \"0.12\"\nraw-window-handle = \"0.6\"\nresvg = \"0.42\"\nrustc-hash = \"2.0\"\nserde = \"1.0\"\nsemver = \"1.0\"\nsha2 = \"0.10\"\nsipper = \"0.1\"\nsmol = \"2\"\nsmol_str = \"0.2\"\nsoftbuffer = \"0.4\"\nsyntect = \"5.1\"\nsysinfo = \"0.33\"\nthiserror = \"1.0\"\ntiny-skia = \"0.11\"\ntokio = \"1.0\"\ntracing = \"0.1\"\nunicode-segmentation = \"1.0\"\nurl = \"2.5\"\nwasm-bindgen-futures = \"0.4\"\nwasmtimer = \"0.4.1\"\nweb-sys = \"0.3.69\"\nweb-time = \"1.1\"\nwgpu = \"24.0\"\nwindow_clipboard = \"0.4.1\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n\n[workspace.dependencies.iced]\nversion = \"0.14.0-dev\"\npath = \".\"\n\n[workspace.dependencies.iced_beacon]\nversion = \"0.14.0-dev\"\npath = \"beacon\"\n\n[workspace.dependencies.iced_core]\nversion = \"0.14.0-dev\"\npath = \"core\"\n\n[workspace.dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[workspace.dependencies.iced_devtools]\nversion = \"0.14.0-dev\"\npath = \"devtools\"\n\n[workspace.dependencies.iced_futures]\nversion = \"0.14.0-dev\"\npath = \"futures\"\n\n[workspace.dependencies.iced_graphics]\nversion = \"0.14.0-dev\"\npath = \"graphics\"\n\n[workspace.dependencies.iced_highlighter]\nversion = \"0.14.0-dev\"\npath = \"highlighter\"\n\n[workspace.dependencies.iced_program]\nversion = \"0.14.0-dev\"\npath = \"program\"\n\n[workspace.dependencies.iced_renderer]\nversion = \"0.14.0-dev\"\npath = \"renderer\"\n\n[workspace.dependencies.iced_runtime]\nversion = \"0.14.0-dev\"\npath = \"runtime\"\n\n[workspace.dependencies.iced_test]\nversion = \"0.14.0-dev\"\npath = \"test\"\n\n[workspace.dependencies.iced_tiny_skia]\nversion = \"0.14.0-dev\"\npath = \"tiny_skia\"\n\n[workspace.dependencies.iced_wgpu]\nversion = \"0.14.0-dev\"\npath = \"wgpu\"\n\n[workspace.dependencies.iced_widget]\nversion = \"0.14.0-dev\"\npath = \"widget\"\n\n[workspace.dependencies.iced_winit]\nversion = \"0.14.0-dev\"\npath = \"winit\"\n\n[workspace.dependencies.bytemuck]\nversion = \"1.0\"\nfeatures = [ \"derive\",]\n\n[workspace.dependencies.futures]\nversion = \"0.3\"\ndefault-features = false\n\n[workspace.dependencies.cryoglyph]\ngit = \"https://github.com/iced-rs/cryoglyph.git\"\nrev = \"a456d1c17bbcf33afcca41d9e5e299f9f1193819\"\n\n[workspace.dependencies.image]\nversion = \"0.25\"\ndefault-features = false\n\n[workspace.dependencies.qrcode]\nversion = \"0.13\"\ndefault-features = false\n\n[workspace.dependencies.winit]\ngit = \"https://github.com/iced-rs/winit.git\"\nrev = \"11414b6aa45699f038114e61b4ddf5102b2d3b4b\"\n\n[workspace.lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[workspace.lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[workspace.lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[package.metadata.docs.rs]\nrustdoc-args = [ \"--cfg\", \"docsrs\",]\nall-features = true\n\n[workspace.lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
         "dest": "cargo/vendor/iced",
         "dest-filename": "Cargo.toml"
     },
@@ -2284,7 +2284,7 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/beacon\" \"cargo/vendor/iced_beacon\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/beacon\" \"cargo/vendor/iced_beacon\""
         ]
     },
     {
@@ -2302,12 +2302,12 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/core\" \"cargo/vendor/iced_core\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/core\" \"cargo/vendor/iced_core\""
         ]
     },
     {
         "type": "inline",
-        "contents": "[package]\nname = \"iced_core\"\ndescription = \"The essential ideas of iced\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\nauto-detect-theme = [ \"dep:dark-light\",]\nadvanced = []\n\n[dependencies]\nbitflags = \"2.0\"\nbytes = \"1.6\"\nglam = \"0.25\"\nlilt = \"0.8\"\nlog = \"0.4\"\nnum-traits = \"0.2\"\nrustc-hash = \"2.0\"\nsmol_str = \"0.2\"\nthiserror = \"1.0\"\nweb-time = \"1.1\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.dark-light]\noptional = true\nversion = \"2.0\"\n\n[dependencies.serde]\noptional = true\nfeatures = [ \"derive\",]\nversion = \"1.0\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
+        "contents": "[package]\nname = \"iced_core\"\ndescription = \"The essential ideas of iced\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\nauto-detect-theme = [ \"dep:dark-light\",]\nadvanced = []\ncrisp = []\n\n[dependencies]\nbitflags = \"2.0\"\nbytes = \"1.6\"\nglam = \"0.25\"\nlilt = \"0.8\"\nlog = \"0.4\"\nnum-traits = \"0.2\"\nrustc-hash = \"2.0\"\nsmol_str = \"0.2\"\nthiserror = \"1.0\"\nweb-time = \"1.1\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.dark-light]\noptional = true\nversion = \"2.0\"\n\n[dependencies.serde]\noptional = true\nfeatures = [ \"derive\",]\nversion = \"1.0\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
         "dest": "cargo/vendor/iced_core",
         "dest-filename": "Cargo.toml"
     },
@@ -2320,7 +2320,7 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/debug\" \"cargo/vendor/iced_debug\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/debug\" \"cargo/vendor/iced_debug\""
         ]
     },
     {
@@ -2338,12 +2338,12 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/devtools\" \"cargo/vendor/iced_devtools\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/devtools\" \"cargo/vendor/iced_devtools\""
         ]
     },
     {
         "type": "inline",
-        "contents": "[package]\nname = \"iced_devtools\"\nversion = \"0.14.0-dev\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nedition = \"2024\"\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\nrust-version = \"1.85\"\n\n[features]\ntime-travel = [ \"iced_program/time-travel\",]\n\n[dependencies]\nlog = \"0.4\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[dependencies.iced_program]\nversion = \"0.14.0-dev\"\npath = \"program\"\n\n[dependencies.iced_widget]\nversion = \"0.14.0-dev\"\npath = \"widget\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
+        "contents": "[package]\nname = \"iced_devtools\"\nversion = \"0.14.0-dev\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nedition = \"2024\"\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\nrust-version = \"1.85\"\n\n[features]\ntime-travel = [ \"iced_program/time-travel\",]\n\n[dependencies]\nlog = \"0.4\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[dependencies.iced_program]\nversion = \"0.14.0-dev\"\npath = \"program\"\n\n[dependencies.iced_widget]\nversion = \"0.14.0-dev\"\npath = \"widget\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
         "dest": "cargo/vendor/iced_devtools",
         "dest-filename": "Cargo.toml"
     },
@@ -2356,12 +2356,12 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/futures\" \"cargo/vendor/iced_futures\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/futures\" \"cargo/vendor/iced_futures\""
         ]
     },
     {
         "type": "inline",
-        "contents": "[package]\nname = \"iced_futures\"\ndescription = \"Commands, subscriptions, and future executors for iced\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\nthread-pool = [ \"futures/thread-pool\",]\n\n[dependencies]\nlog = \"0.4\"\nrustc-hash = \"2.0\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_core]\nversion = \"0.14.0-dev\"\npath = \"core\"\n\n[dependencies.futures]\nfeatures = [ \"std\", \"async-await\",]\nversion = \"0.3\"\ndefault-features = false\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n\n[target.\"cfg(target_arch = \\\"wasm32\\\")\".dependencies]\nwasm-bindgen-futures = \"0.4\"\nwasmtimer = \"0.4.1\"\n\n[package.metadata.docs.rs]\nrustdoc-args = [ \"--cfg\", \"docsrs\",]\nall-features = true\n\n[target.\"cfg(not(target_arch = \\\"wasm32\\\"))\".dependencies.smol]\noptional = true\nversion = \"2\"\n\n[target.\"cfg(not(target_arch = \\\"wasm32\\\"))\".dependencies.tokio]\noptional = true\nfeatures = [ \"rt\", \"rt-multi-thread\", \"time\",]\nversion = \"1.0\"\n",
+        "contents": "[package]\nname = \"iced_futures\"\ndescription = \"Commands, subscriptions, and future executors for iced\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\nthread-pool = [ \"futures/thread-pool\",]\n\n[dependencies]\nlog = \"0.4\"\nrustc-hash = \"2.0\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_core]\nversion = \"0.14.0-dev\"\npath = \"core\"\n\n[dependencies.futures]\nfeatures = [ \"std\", \"async-await\",]\nversion = \"0.3\"\ndefault-features = false\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n\n[target.\"cfg(target_arch = \\\"wasm32\\\")\".dependencies]\nwasm-bindgen-futures = \"0.4\"\nwasmtimer = \"0.4.1\"\n\n[package.metadata.docs.rs]\nrustdoc-args = [ \"--cfg\", \"docsrs\",]\nall-features = true\n\n[target.\"cfg(not(target_arch = \\\"wasm32\\\"))\".dependencies.smol]\noptional = true\nversion = \"2\"\n\n[target.\"cfg(not(target_arch = \\\"wasm32\\\"))\".dependencies.tokio]\noptional = true\nfeatures = [ \"rt\", \"rt-multi-thread\", \"time\",]\nversion = \"1.0\"\n",
         "dest": "cargo/vendor/iced_futures",
         "dest-filename": "Cargo.toml"
     },
@@ -2374,12 +2374,12 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/graphics\" \"cargo/vendor/iced_graphics\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/graphics\" \"cargo/vendor/iced_graphics\""
         ]
     },
     {
         "type": "inline",
-        "contents": "[package]\nname = \"iced_graphics\"\ndescription = \"A bunch of backend-agnostic types that can be leveraged to build a renderer for iced\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\ngeometry = [ \"lyon_path\",]\nimage = [ \"dep:image\", \"kamadak-exif\",]\nsvg = []\nweb-colors = []\nfira-sans = []\n\n[dependencies]\nbitflags = \"2.0\"\ncosmic-text = \"0.14\"\nhalf = \"2.2\"\nlog = \"0.4\"\nraw-window-handle = \"0.6\"\nrustc-hash = \"2.0\"\nthiserror = \"1.0\"\nunicode-segmentation = \"1.0\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_core]\nversion = \"0.14.0-dev\"\npath = \"core\"\n\n[dependencies.iced_futures]\nversion = \"0.14.0-dev\"\npath = \"futures\"\n\n[dependencies.bytemuck]\nversion = \"1.0\"\nfeatures = [ \"derive\",]\n\n[dependencies.image]\noptional = true\nversion = \"0.25\"\ndefault-features = false\n\n[dependencies.kamadak-exif]\noptional = true\nversion = \"0.5\"\n\n[dependencies.lyon_path]\noptional = true\nversion = \"1.0\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n\n[package.metadata.docs.rs]\nrustdoc-args = [ \"--cfg\", \"docsrs\",]\nall-features = true\n",
+        "contents": "[package]\nname = \"iced_graphics\"\ndescription = \"A bunch of backend-agnostic types that can be leveraged to build a renderer for iced\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\ngeometry = [ \"lyon_path\",]\nimage = [ \"dep:image\", \"kamadak-exif\",]\nsvg = []\nweb-colors = []\nfira-sans = []\n\n[dependencies]\nbitflags = \"2.0\"\ncosmic-text = \"0.14\"\nhalf = \"2.2\"\nlog = \"0.4\"\nraw-window-handle = \"0.6\"\nrustc-hash = \"2.0\"\nthiserror = \"1.0\"\nunicode-segmentation = \"1.0\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_core]\nversion = \"0.14.0-dev\"\npath = \"core\"\n\n[dependencies.iced_futures]\nversion = \"0.14.0-dev\"\npath = \"futures\"\n\n[dependencies.bytemuck]\nversion = \"1.0\"\nfeatures = [ \"derive\",]\n\n[dependencies.image]\noptional = true\nversion = \"0.25\"\ndefault-features = false\n\n[dependencies.kamadak-exif]\noptional = true\nversion = \"0.5\"\n\n[dependencies.lyon_path]\noptional = true\nversion = \"1.0\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n\n[package.metadata.docs.rs]\nrustdoc-args = [ \"--cfg\", \"docsrs\",]\nall-features = true\n",
         "dest": "cargo/vendor/iced_graphics",
         "dest-filename": "Cargo.toml"
     },
@@ -2392,12 +2392,12 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/program\" \"cargo/vendor/iced_program\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/program\" \"cargo/vendor/iced_program\""
         ]
     },
     {
         "type": "inline",
-        "contents": "[package]\nname = \"iced_program\"\nversion = \"0.14.0-dev\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nedition = \"2024\"\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\nrust-version = \"1.85\"\n\n[features]\ntime-travel = []\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_graphics]\nversion = \"0.14.0-dev\"\npath = \"graphics\"\n\n[dependencies.iced_runtime]\nversion = \"0.14.0-dev\"\npath = \"runtime\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
+        "contents": "[package]\nname = \"iced_program\"\nversion = \"0.14.0-dev\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nedition = \"2024\"\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\nrust-version = \"1.85\"\n\n[features]\ntime-travel = []\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_graphics]\nversion = \"0.14.0-dev\"\npath = \"graphics\"\n\n[dependencies.iced_runtime]\nversion = \"0.14.0-dev\"\npath = \"runtime\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
         "dest": "cargo/vendor/iced_program",
         "dest-filename": "Cargo.toml"
     },
@@ -2410,12 +2410,12 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/renderer\" \"cargo/vendor/iced_renderer\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/renderer\" \"cargo/vendor/iced_renderer\""
         ]
     },
     {
         "type": "inline",
-        "contents": "[package]\nname = \"iced_renderer\"\ndescription = \"The official renderer for iced\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\nwgpu = [ \"iced_wgpu\",]\ntiny-skia = [ \"iced_tiny_skia\",]\nimage = [ \"iced_tiny_skia?/image\", \"iced_wgpu?/image\",]\nsvg = [ \"iced_tiny_skia?/svg\", \"iced_wgpu?/svg\",]\ngeometry = [ \"iced_graphics/geometry\", \"iced_tiny_skia?/geometry\", \"iced_wgpu?/geometry\",]\nweb-colors = [ \"iced_wgpu?/web-colors\",]\nwebgl = [ \"iced_wgpu?/webgl\",]\nfira-sans = [ \"iced_graphics/fira-sans\",]\nstrict-assertions = [ \"iced_wgpu?/strict-assertions\",]\n\n[dependencies]\nlog = \"0.4\"\nthiserror = \"1.0\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_graphics]\nversion = \"0.14.0-dev\"\npath = \"graphics\"\n\n[dependencies.iced_tiny_skia]\noptional = true\nversion = \"0.14.0-dev\"\npath = \"tiny_skia\"\n\n[dependencies.iced_wgpu]\noptional = true\nversion = \"0.14.0-dev\"\npath = \"wgpu\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
+        "contents": "[package]\nname = \"iced_renderer\"\ndescription = \"The official renderer for iced\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\nwgpu = [ \"iced_wgpu\",]\ntiny-skia = [ \"iced_tiny_skia\",]\nimage = [ \"iced_tiny_skia?/image\", \"iced_wgpu?/image\",]\nsvg = [ \"iced_tiny_skia?/svg\", \"iced_wgpu?/svg\",]\ngeometry = [ \"iced_graphics/geometry\", \"iced_tiny_skia?/geometry\", \"iced_wgpu?/geometry\",]\nweb-colors = [ \"iced_wgpu?/web-colors\",]\nwebgl = [ \"iced_wgpu?/webgl\",]\nfira-sans = [ \"iced_graphics/fira-sans\",]\nstrict-assertions = [ \"iced_wgpu?/strict-assertions\",]\n\n[dependencies]\nlog = \"0.4\"\nthiserror = \"1.0\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_graphics]\nversion = \"0.14.0-dev\"\npath = \"graphics\"\n\n[dependencies.iced_tiny_skia]\noptional = true\nversion = \"0.14.0-dev\"\npath = \"tiny_skia\"\n\n[dependencies.iced_wgpu]\noptional = true\nversion = \"0.14.0-dev\"\npath = \"wgpu\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
         "dest": "cargo/vendor/iced_renderer",
         "dest-filename": "Cargo.toml"
     },
@@ -2428,12 +2428,12 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/runtime\" \"cargo/vendor/iced_runtime\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/runtime\" \"cargo/vendor/iced_runtime\""
         ]
     },
     {
         "type": "inline",
-        "contents": "[package]\nname = \"iced_runtime\"\ndescription = \"A renderer-agnostic runtime for iced\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[dependencies]\nbytes = \"1.6\"\nraw-window-handle = \"0.6\"\nthiserror = \"1.0\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_core]\nversion = \"0.14.0-dev\"\npath = \"core\"\n\n[dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[dependencies.iced_futures]\nversion = \"0.14.0-dev\"\npath = \"futures\"\n\n[dependencies.sipper]\noptional = true\nversion = \"0.1\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
+        "contents": "[package]\nname = \"iced_runtime\"\ndescription = \"A renderer-agnostic runtime for iced\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[dependencies]\nbytes = \"1.6\"\nraw-window-handle = \"0.6\"\nthiserror = \"1.0\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_core]\nversion = \"0.14.0-dev\"\npath = \"core\"\n\n[dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[dependencies.iced_futures]\nversion = \"0.14.0-dev\"\npath = \"futures\"\n\n[dependencies.sipper]\noptional = true\nversion = \"0.1\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
         "dest": "cargo/vendor/iced_runtime",
         "dest-filename": "Cargo.toml"
     },
@@ -2446,12 +2446,12 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/tiny_skia\" \"cargo/vendor/iced_tiny_skia\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/tiny_skia\" \"cargo/vendor/iced_tiny_skia\""
         ]
     },
     {
         "type": "inline",
-        "contents": "[package]\nname = \"iced_tiny_skia\"\ndescription = \"A software renderer for iced on top of tiny-skia\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\nimage = [ \"iced_graphics/image\",]\nsvg = [ \"iced_graphics/svg\", \"resvg\",]\ngeometry = [ \"iced_graphics/geometry\",]\n\n[dependencies]\ncosmic-text = \"0.14\"\nkurbo = \"0.10\"\nlog = \"0.4\"\nrustc-hash = \"2.0\"\nsoftbuffer = \"0.4\"\ntiny-skia = \"0.11\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[dependencies.iced_graphics]\nversion = \"0.14.0-dev\"\npath = \"graphics\"\n\n[dependencies.bytemuck]\nversion = \"1.0\"\nfeatures = [ \"derive\",]\n\n[dependencies.resvg]\noptional = true\nversion = \"0.42\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
+        "contents": "[package]\nname = \"iced_tiny_skia\"\ndescription = \"A software renderer for iced on top of tiny-skia\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\nimage = [ \"iced_graphics/image\",]\nsvg = [ \"iced_graphics/svg\", \"resvg\",]\ngeometry = [ \"iced_graphics/geometry\",]\n\n[dependencies]\ncosmic-text = \"0.14\"\nkurbo = \"0.10\"\nlog = \"0.4\"\nrustc-hash = \"2.0\"\nsoftbuffer = \"0.4\"\ntiny-skia = \"0.11\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[dependencies.iced_graphics]\nversion = \"0.14.0-dev\"\npath = \"graphics\"\n\n[dependencies.bytemuck]\nversion = \"1.0\"\nfeatures = [ \"derive\",]\n\n[dependencies.resvg]\noptional = true\nversion = \"0.42\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n",
         "dest": "cargo/vendor/iced_tiny_skia",
         "dest-filename": "Cargo.toml"
     },
@@ -2464,12 +2464,12 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/wgpu\" \"cargo/vendor/iced_wgpu\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/wgpu\" \"cargo/vendor/iced_wgpu\""
         ]
     },
     {
         "type": "inline",
-        "contents": "[package]\nname = \"iced_wgpu\"\ndescription = \"A renderer for iced on top of wgpu\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\ngeometry = [ \"iced_graphics/geometry\", \"lyon\",]\nimage = [ \"iced_graphics/image\",]\nsvg = [ \"iced_graphics/svg\", \"resvg/text\",]\nweb-colors = [ \"iced_graphics/web-colors\",]\nwebgl = [ \"wgpu/webgl\",]\nstrict-assertions = []\n\n[dependencies]\nbitflags = \"2.0\"\nglam = \"0.25\"\nguillotiere = \"0.6\"\nlog = \"0.4\"\nrustc-hash = \"2.0\"\nthiserror = \"1.0\"\nwgpu = \"24.0\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[dependencies.iced_graphics]\nversion = \"0.14.0-dev\"\npath = \"graphics\"\n\n[dependencies.bytemuck]\nversion = \"1.0\"\nfeatures = [ \"derive\",]\n\n[dependencies.futures]\nversion = \"0.3\"\ndefault-features = false\n\n[dependencies.cryoglyph]\ngit = \"https://github.com/iced-rs/cryoglyph.git\"\nrev = \"a456d1c17bbcf33afcca41d9e5e299f9f1193819\"\n\n[dependencies.lyon]\noptional = true\nversion = \"1.0\"\n\n[dependencies.resvg]\noptional = true\nversion = \"0.42\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n\n[package.metadata.docs.rs]\nrustdoc-args = [ \"--cfg\", \"docsrs\",]\nall-features = true\n",
+        "contents": "[package]\nname = \"iced_wgpu\"\ndescription = \"A renderer for iced on top of wgpu\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\ngeometry = [ \"iced_graphics/geometry\", \"lyon\",]\nimage = [ \"iced_graphics/image\",]\nsvg = [ \"iced_graphics/svg\", \"resvg/text\",]\nweb-colors = [ \"iced_graphics/web-colors\",]\nwebgl = [ \"wgpu/webgl\",]\nstrict-assertions = []\n\n[dependencies]\nbitflags = \"2.0\"\nglam = \"0.25\"\nguillotiere = \"0.6\"\nlog = \"0.4\"\nrustc-hash = \"2.0\"\nthiserror = \"1.0\"\nwgpu = \"24.0\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[dependencies.iced_graphics]\nversion = \"0.14.0-dev\"\npath = \"graphics\"\n\n[dependencies.bytemuck]\nversion = \"1.0\"\nfeatures = [ \"derive\",]\n\n[dependencies.futures]\nversion = \"0.3\"\ndefault-features = false\n\n[dependencies.cryoglyph]\ngit = \"https://github.com/iced-rs/cryoglyph.git\"\nrev = \"a456d1c17bbcf33afcca41d9e5e299f9f1193819\"\n\n[dependencies.lyon]\noptional = true\nversion = \"1.0\"\n\n[dependencies.resvg]\noptional = true\nversion = \"0.42\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n\n[package.metadata.docs.rs]\nrustdoc-args = [ \"--cfg\", \"docsrs\",]\nall-features = true\n",
         "dest": "cargo/vendor/iced_wgpu",
         "dest-filename": "Cargo.toml"
     },
@@ -2482,12 +2482,12 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/widget\" \"cargo/vendor/iced_widget\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/widget\" \"cargo/vendor/iced_widget\""
         ]
     },
     {
         "type": "inline",
-        "contents": "[package]\nname = \"iced_widget\"\ndescription = \"The built-in widgets for iced\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\nlazy = [ \"ouroboros\",]\nimage = [ \"iced_renderer/image\",]\nsvg = [ \"iced_renderer/svg\",]\ncanvas = [ \"iced_renderer/geometry\",]\nqr_code = [ \"canvas\", \"dep:qrcode\",]\nwgpu = [ \"iced_renderer/wgpu\",]\nmarkdown = [ \"dep:pulldown-cmark\", \"dep:url\",]\nhighlighter = [ \"dep:iced_highlighter\",]\nadvanced = []\n\n[dependencies]\nnum-traits = \"0.2\"\nlog = \"0.4\"\nrustc-hash = \"2.0\"\nthiserror = \"1.0\"\nunicode-segmentation = \"1.0\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_renderer]\nversion = \"0.14.0-dev\"\npath = \"renderer\"\n\n[dependencies.iced_runtime]\nversion = \"0.14.0-dev\"\npath = \"runtime\"\n\n[dependencies.ouroboros]\noptional = true\nversion = \"0.18\"\n\n[dependencies.qrcode]\noptional = true\nversion = \"0.13\"\ndefault-features = false\n\n[dependencies.pulldown-cmark]\noptional = true\nversion = \"0.12\"\n\n[dependencies.iced_highlighter]\noptional = true\nversion = \"0.14.0-dev\"\npath = \"highlighter\"\n\n[dependencies.url]\noptional = true\nversion = \"2.5\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n\n[package.metadata.docs.rs]\nrustdoc-args = [ \"--cfg\", \"docsrs\",]\nall-features = true\n",
+        "contents": "[package]\nname = \"iced_widget\"\ndescription = \"The built-in widgets for iced\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\nlazy = [ \"ouroboros\",]\nimage = [ \"iced_renderer/image\",]\nsvg = [ \"iced_renderer/svg\",]\ncanvas = [ \"iced_renderer/geometry\",]\nqr_code = [ \"canvas\", \"dep:qrcode\",]\nwgpu = [ \"iced_renderer/wgpu\",]\nmarkdown = [ \"dep:pulldown-cmark\", \"dep:url\",]\nhighlighter = [ \"dep:iced_highlighter\",]\nadvanced = []\ncrisp = []\n\n[dependencies]\nnum-traits = \"0.2\"\nlog = \"0.4\"\nrustc-hash = \"2.0\"\nthiserror = \"1.0\"\nunicode-segmentation = \"1.0\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_renderer]\nversion = \"0.14.0-dev\"\npath = \"renderer\"\n\n[dependencies.iced_runtime]\nversion = \"0.14.0-dev\"\npath = \"runtime\"\n\n[dependencies.ouroboros]\noptional = true\nversion = \"0.18\"\n\n[dependencies.qrcode]\noptional = true\nversion = \"0.13\"\ndefault-features = false\n\n[dependencies.pulldown-cmark]\noptional = true\nversion = \"0.12\"\n\n[dependencies.iced_highlighter]\noptional = true\nversion = \"0.14.0-dev\"\npath = \"highlighter\"\n\n[dependencies.url]\noptional = true\nversion = \"2.5\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n\n[package.metadata.docs.rs]\nrustdoc-args = [ \"--cfg\", \"docsrs\",]\nall-features = true\n",
         "dest": "cargo/vendor/iced_widget",
         "dest-filename": "Cargo.toml"
     },
@@ -2500,12 +2500,12 @@
     {
         "type": "shell",
         "commands": [
-            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7a97773/winit\" \"cargo/vendor/iced_winit\""
+            "cp -r --reflink=auto \"flatpak-cargo/git/iced-7afbb89/winit\" \"cargo/vendor/iced_winit\""
         ]
     },
     {
         "type": "inline",
-        "contents": "[package]\nname = \"iced_winit\"\ndescription = \"A runtime for iced on top of winit\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\ndefault = [ \"x11\", \"wayland\", \"wayland-dlopen\", \"wayland-csd-adwaita\",]\ndebug = [ \"iced_debug/enable\",]\nsystem = [ \"sysinfo\",]\nprogram = []\nx11 = [ \"winit/x11\",]\nwayland = [ \"winit/wayland\",]\nwayland-dlopen = [ \"winit/wayland-dlopen\",]\nwayland-csd-adwaita = [ \"winit/wayland-csd-adwaita\",]\nunconditional-rendering = []\n\n[dependencies]\nlog = \"0.4\"\nrustc-hash = \"2.0\"\nthiserror = \"1.0\"\ntracing = \"0.1\"\nwindow_clipboard = \"0.4.1\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[dependencies.iced_program]\nversion = \"0.14.0-dev\"\npath = \"program\"\n\n[dependencies.winit]\ngit = \"https://github.com/iced-rs/winit.git\"\nrev = \"11414b6aa45699f038114e61b4ddf5102b2d3b4b\"\n\n[dependencies.sysinfo]\noptional = true\nversion = \"0.33\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n\n[target.\"cfg(target_arch = \\\"wasm32\\\")\".dependencies]\nwasm-bindgen-futures = \"0.4\"\n\n[target.\"cfg(target_arch = \\\"wasm32\\\")\".dependencies.web-sys]\nfeatures = [ \"Document\", \"Window\", \"HtmlCanvasElement\",]\nversion = \"0.3.69\"\n",
+        "contents": "[package]\nname = \"iced_winit\"\ndescription = \"A runtime for iced on top of winit\"\nversion = \"0.14.0-dev\"\nedition = \"2024\"\nauthors = [ \"H\u00e9ctor Ram\u00f3n Jim\u00e9nez <hector@hecrj.dev>\",]\nlicense = \"MIT\"\nrepository = \"https://github.com/iced-rs/iced\"\nhomepage = \"https://iced.rs\"\ncategories = [ \"gui\",]\nkeywords = [ \"gui\", \"ui\", \"graphics\", \"interface\", \"widgets\",]\n\n[features]\ndefault = [ \"x11\", \"wayland\", \"wayland-dlopen\", \"wayland-csd-adwaita\",]\ndebug = [ \"iced_debug/enable\",]\nsystem = [ \"sysinfo\",]\nprogram = []\nx11 = [ \"winit/x11\",]\nwayland = [ \"winit/wayland\",]\nwayland-dlopen = [ \"winit/wayland-dlopen\",]\nwayland-csd-adwaita = [ \"winit/wayland-csd-adwaita\",]\nunconditional-rendering = []\n\n[dependencies]\nlog = \"0.4\"\nrustc-hash = \"2.0\"\nthiserror = \"1.0\"\ntracing = \"0.1\"\nwindow_clipboard = \"0.4.1\"\n\n[lints.rust]\nmissing_debug_implementations = \"deny\"\nmissing_docs = \"deny\"\nunsafe_code = \"deny\"\nunused_results = \"deny\"\n\n[lints.clippy]\ntype-complexity = \"allow\"\nmap-entry = \"allow\"\nlarge-enum-variant = \"allow\"\nresult_large_err = \"allow\"\nsemicolon_if_nothing_returned = \"deny\"\ntrivially-copy-pass-by-ref = \"deny\"\ndefault_trait_access = \"deny\"\nmatch-wildcard-for-single-variants = \"deny\"\nredundant-closure-for-method-calls = \"deny\"\nfilter_map_next = \"deny\"\nmanual_let_else = \"deny\"\nunused_async = \"deny\"\nfrom_over_into = \"deny\"\nneedless_borrow = \"deny\"\nnew_without_default = \"deny\"\nuseless_conversion = \"deny\"\n\n[lints.rustdoc]\nbroken_intra_doc_links = \"forbid\"\n\n[dependencies.iced_debug]\nversion = \"0.14.0-dev\"\npath = \"debug\"\n\n[dependencies.iced_program]\nversion = \"0.14.0-dev\"\npath = \"program\"\n\n[dependencies.winit]\ngit = \"https://github.com/iced-rs/winit.git\"\nrev = \"11414b6aa45699f038114e61b4ddf5102b2d3b4b\"\n\n[dependencies.sysinfo]\noptional = true\nversion = \"0.33\"\n\n[lints.rust.rust_2018_idioms]\nlevel = \"deny\"\npriority = -1\n\n[target.\"cfg(target_arch = \\\"wasm32\\\")\".dependencies]\nwasm-bindgen-futures = \"0.4\"\n\n[target.\"cfg(target_arch = \\\"wasm32\\\")\".dependencies.web-sys]\nfeatures = [ \"Document\", \"Window\", \"HtmlCanvasElement\",]\nversion = \"0.3.69\"\n",
         "dest": "cargo/vendor/iced_winit",
         "dest-filename": "Cargo.toml"
     },
@@ -2570,27 +2570,27 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/icu_properties/icu_properties-2.0.0.crate",
-        "sha256": "2549ca8c7241c82f59c80ba2a6f415d931c5b58d24fb8412caa1a1f02c49139a",
-        "dest": "cargo/vendor/icu_properties-2.0.0"
+        "url": "https://static.crates.io/crates/icu_properties/icu_properties-2.0.1.crate",
+        "sha256": "016c619c1eeb94efb86809b015c58f479963de65bdb6253345c1a1276f22e32b",
+        "dest": "cargo/vendor/icu_properties-2.0.1"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"2549ca8c7241c82f59c80ba2a6f415d931c5b58d24fb8412caa1a1f02c49139a\", \"files\": {}}",
-        "dest": "cargo/vendor/icu_properties-2.0.0",
+        "contents": "{\"package\": \"016c619c1eeb94efb86809b015c58f479963de65bdb6253345c1a1276f22e32b\", \"files\": {}}",
+        "dest": "cargo/vendor/icu_properties-2.0.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/icu_properties_data/icu_properties_data-2.0.0.crate",
-        "sha256": "8197e866e47b68f8f7d95249e172903bec06004b18b2937f1095d40a0c57de04",
-        "dest": "cargo/vendor/icu_properties_data-2.0.0"
+        "url": "https://static.crates.io/crates/icu_properties_data/icu_properties_data-2.0.1.crate",
+        "sha256": "298459143998310acd25ffe6810ed544932242d3f07083eee1084d83a71bd632",
+        "dest": "cargo/vendor/icu_properties_data-2.0.1"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"8197e866e47b68f8f7d95249e172903bec06004b18b2937f1095d40a0c57de04\", \"files\": {}}",
-        "dest": "cargo/vendor/icu_properties_data-2.0.0",
+        "contents": "{\"package\": \"298459143998310acd25ffe6810ed544932242d3f07083eee1084d83a71bd632\", \"files\": {}}",
+        "dest": "cargo/vendor/icu_properties_data-2.0.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -2908,14 +2908,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/libloading/libloading-0.8.6.crate",
-        "sha256": "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34",
-        "dest": "cargo/vendor/libloading-0.8.6"
+        "url": "https://static.crates.io/crates/libloading/libloading-0.8.8.crate",
+        "sha256": "07033963ba89ebaf1584d767badaa2e8fcec21aedea6b8c0346d487d49c28667",
+        "dest": "cargo/vendor/libloading-0.8.8"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34\", \"files\": {}}",
-        "dest": "cargo/vendor/libloading-0.8.6",
+        "contents": "{\"package\": \"07033963ba89ebaf1584d767badaa2e8fcec21aedea6b8c0346d487d49c28667\", \"files\": {}}",
+        "dest": "cargo/vendor/libloading-0.8.8",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -3025,14 +3025,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/lock_api/lock_api-0.4.12.crate",
-        "sha256": "07af8b9cdd281b7915f413fa73f29ebd5d55d0d3f0155584dade1ff18cea1b17",
-        "dest": "cargo/vendor/lock_api-0.4.12"
+        "url": "https://static.crates.io/crates/lock_api/lock_api-0.4.13.crate",
+        "sha256": "96936507f153605bddfcda068dd804796c84324ed2510809e5b2a624c81da765",
+        "dest": "cargo/vendor/lock_api-0.4.13"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"07af8b9cdd281b7915f413fa73f29ebd5d55d0d3f0155584dade1ff18cea1b17\", \"files\": {}}",
-        "dest": "cargo/vendor/lock_api-0.4.12",
+        "contents": "{\"package\": \"96936507f153605bddfcda068dd804796c84324ed2510809e5b2a624c81da765\", \"files\": {}}",
+        "dest": "cargo/vendor/lock_api-0.4.13",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -3181,14 +3181,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/mio/mio-1.0.3.crate",
-        "sha256": "2886843bf800fba2e3377cff24abf6379b4c4d5c6681eaf9ea5b0d15090450bd",
-        "dest": "cargo/vendor/mio-1.0.3"
+        "url": "https://static.crates.io/crates/mio/mio-1.0.4.crate",
+        "sha256": "78bed444cc8a2160f01cbcf811ef18cac863ad68ae8ca62092e8db51d51c761c",
+        "dest": "cargo/vendor/mio-1.0.4"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"2886843bf800fba2e3377cff24abf6379b4c4d5c6681eaf9ea5b0d15090450bd\", \"files\": {}}",
-        "dest": "cargo/vendor/mio-1.0.3",
+        "contents": "{\"package\": \"78bed444cc8a2160f01cbcf811ef18cac863ad68ae8ca62092e8db51d51c761c\", \"files\": {}}",
+        "dest": "cargo/vendor/mio-1.0.4",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -3285,14 +3285,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/nix/nix-0.29.0.crate",
-        "sha256": "71e2746dc3a24dd78b3cfcb7be93368c6de9963d30f43a6a73998a9cf4b17b46",
-        "dest": "cargo/vendor/nix-0.29.0"
+        "url": "https://static.crates.io/crates/nix/nix-0.30.1.crate",
+        "sha256": "74523f3a35e05aba87a1d978330aef40f67b0304ac79c1c00b294c9830543db6",
+        "dest": "cargo/vendor/nix-0.30.1"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"71e2746dc3a24dd78b3cfcb7be93368c6de9963d30f43a6a73998a9cf4b17b46\", \"files\": {}}",
-        "dest": "cargo/vendor/nix-0.29.0",
+        "contents": "{\"package\": \"74523f3a35e05aba87a1d978330aef40f67b0304ac79c1c00b294c9830543db6\", \"files\": {}}",
+        "dest": "cargo/vendor/nix-0.30.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -3818,14 +3818,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/os_pipe/os_pipe-1.2.1.crate",
-        "sha256": "5ffd2b0a5634335b135d5728d84c5e0fd726954b87111f7506a61c502280d982",
-        "dest": "cargo/vendor/os_pipe-1.2.1"
+        "url": "https://static.crates.io/crates/os_pipe/os_pipe-1.2.2.crate",
+        "sha256": "db335f4760b14ead6290116f2427bf33a14d4f0617d49f78a246de10c1831224",
+        "dest": "cargo/vendor/os_pipe-1.2.2"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"5ffd2b0a5634335b135d5728d84c5e0fd726954b87111f7506a61c502280d982\", \"files\": {}}",
-        "dest": "cargo/vendor/os_pipe-1.2.1",
+        "contents": "{\"package\": \"db335f4760b14ead6290116f2427bf33a14d4f0617d49f78a246de10c1831224\", \"files\": {}}",
+        "dest": "cargo/vendor/os_pipe-1.2.2",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -3857,27 +3857,27 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/parking_lot/parking_lot-0.12.3.crate",
-        "sha256": "f1bf18183cf54e8d6059647fc3063646a1801cf30896933ec2311622cc4b9a27",
-        "dest": "cargo/vendor/parking_lot-0.12.3"
+        "url": "https://static.crates.io/crates/parking_lot/parking_lot-0.12.4.crate",
+        "sha256": "70d58bf43669b5795d1576d0641cfb6fbb2057bf629506267a92807158584a13",
+        "dest": "cargo/vendor/parking_lot-0.12.4"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"f1bf18183cf54e8d6059647fc3063646a1801cf30896933ec2311622cc4b9a27\", \"files\": {}}",
-        "dest": "cargo/vendor/parking_lot-0.12.3",
+        "contents": "{\"package\": \"70d58bf43669b5795d1576d0641cfb6fbb2057bf629506267a92807158584a13\", \"files\": {}}",
+        "dest": "cargo/vendor/parking_lot-0.12.4",
         "dest-filename": ".cargo-checksum.json"
     },
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/parking_lot_core/parking_lot_core-0.9.10.crate",
-        "sha256": "1e401f977ab385c9e4e3ab30627d6f26d00e2c73eef317493c4ec6d468726cf8",
-        "dest": "cargo/vendor/parking_lot_core-0.9.10"
+        "url": "https://static.crates.io/crates/parking_lot_core/parking_lot_core-0.9.11.crate",
+        "sha256": "bc838d2a56b5b1a6c25f55575dfc605fabb63bb2365f6c2353ef9159aa69e4a5",
+        "dest": "cargo/vendor/parking_lot_core-0.9.11"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"1e401f977ab385c9e4e3ab30627d6f26d00e2c73eef317493c4ec6d468726cf8\", \"files\": {}}",
-        "dest": "cargo/vendor/parking_lot_core-0.9.10",
+        "contents": "{\"package\": \"bc838d2a56b5b1a6c25f55575dfc605fabb63bb2365f6c2353ef9159aa69e4a5\", \"files\": {}}",
+        "dest": "cargo/vendor/parking_lot_core-0.9.11",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -4052,14 +4052,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/polling/polling-3.7.4.crate",
-        "sha256": "a604568c3202727d1507653cb121dbd627a58684eb09a820fd746bee38b4442f",
-        "dest": "cargo/vendor/polling-3.7.4"
+        "url": "https://static.crates.io/crates/polling/polling-3.8.0.crate",
+        "sha256": "b53a684391ad002dd6a596ceb6c74fd004fdce75f4be2e3f615068abbea5fd50",
+        "dest": "cargo/vendor/polling-3.8.0"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"a604568c3202727d1507653cb121dbd627a58684eb09a820fd746bee38b4442f\", \"files\": {}}",
-        "dest": "cargo/vendor/polling-3.7.4",
+        "contents": "{\"package\": \"b53a684391ad002dd6a596ceb6c74fd004fdce75f4be2e3f615068abbea5fd50\", \"files\": {}}",
+        "dest": "cargo/vendor/polling-3.8.0",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -4416,14 +4416,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/read-fonts/read-fonts-0.25.3.crate",
-        "sha256": "f6f9e8a4f503e5c8750e4cd3b32a4e090035c46374b305a15c70bad833dca05f",
-        "dest": "cargo/vendor/read-fonts-0.25.3"
+        "url": "https://static.crates.io/crates/read-fonts/read-fonts-0.29.2.crate",
+        "sha256": "6f96bfbb7df43d34a2b7b8582fcbcb676ba02a763265cb90bc8aabfd62b57d64",
+        "dest": "cargo/vendor/read-fonts-0.29.2"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"f6f9e8a4f503e5c8750e4cd3b32a4e090035c46374b305a15c70bad833dca05f\", \"files\": {}}",
-        "dest": "cargo/vendor/read-fonts-0.25.3",
+        "contents": "{\"package\": \"6f96bfbb7df43d34a2b7b8582fcbcb676ba02a763265cb90bc8aabfd62b57d64\", \"files\": {}}",
+        "dest": "cargo/vendor/read-fonts-0.29.2",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -4611,14 +4611,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/rustversion/rustversion-1.0.20.crate",
-        "sha256": "eded382c5f5f786b989652c49544c4877d9f015cc22e145a5ea8ea66c2921cd2",
-        "dest": "cargo/vendor/rustversion-1.0.20"
+        "url": "https://static.crates.io/crates/rustversion/rustversion-1.0.21.crate",
+        "sha256": "8a0d197bd2c9dc6e53b84da9556a69ba4cdfab8619eb41a8bd1cc2027a0f6b1d",
+        "dest": "cargo/vendor/rustversion-1.0.21"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"eded382c5f5f786b989652c49544c4877d9f015cc22e145a5ea8ea66c2921cd2\", \"files\": {}}",
-        "dest": "cargo/vendor/rustversion-1.0.20",
+        "contents": "{\"package\": \"8a0d197bd2c9dc6e53b84da9556a69ba4cdfab8619eb41a8bd1cc2027a0f6b1d\", \"files\": {}}",
+        "dest": "cargo/vendor/rustversion-1.0.21",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -4897,14 +4897,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/skrifa/skrifa-0.26.6.crate",
-        "sha256": "8cc1aa86c26dbb1b63875a7180aa0819709b33348eb5b1491e4321fae388179d",
-        "dest": "cargo/vendor/skrifa-0.26.6"
+        "url": "https://static.crates.io/crates/skrifa/skrifa-0.31.3.crate",
+        "sha256": "dbeb4ca4399663735553a09dd17ce7e49a0a0203f03b706b39628c4d913a8607",
+        "dest": "cargo/vendor/skrifa-0.31.3"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"8cc1aa86c26dbb1b63875a7180aa0819709b33348eb5b1491e4321fae388179d\", \"files\": {}}",
-        "dest": "cargo/vendor/skrifa-0.26.6",
+        "contents": "{\"package\": \"dbeb4ca4399663735553a09dd17ce7e49a0a0203f03b706b39628c4d913a8607\", \"files\": {}}",
+        "dest": "cargo/vendor/skrifa-0.31.3",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -4988,14 +4988,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/socket2/socket2-0.5.9.crate",
-        "sha256": "4f5fd57c80058a56cf5c777ab8a126398ece8e442983605d280a44ce79d0edef",
-        "dest": "cargo/vendor/socket2-0.5.9"
+        "url": "https://static.crates.io/crates/socket2/socket2-0.5.10.crate",
+        "sha256": "e22376abed350d73dd1cd119b57ffccad95b4e585a7cda43e286245ce23c0678",
+        "dest": "cargo/vendor/socket2-0.5.10"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"4f5fd57c80058a56cf5c777ab8a126398ece8e442983605d280a44ce79d0edef\", \"files\": {}}",
-        "dest": "cargo/vendor/socket2-0.5.9",
+        "contents": "{\"package\": \"e22376abed350d73dd1cd119b57ffccad95b4e585a7cda43e286245ce23c0678\", \"files\": {}}",
+        "dest": "cargo/vendor/socket2-0.5.10",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -5131,14 +5131,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/swash/swash-0.2.2.crate",
-        "sha256": "fae9a562c7b46107d9c78cd78b75bbe1e991c16734c0aee8ff0ee711fb8b620a",
-        "dest": "cargo/vendor/swash-0.2.2"
+        "url": "https://static.crates.io/crates/swash/swash-0.2.5.crate",
+        "sha256": "f745de914febc7c9ab4388dfaf94bbc87e69f57bb41133a9b0c84d4be49856f3",
+        "dest": "cargo/vendor/swash-0.2.5"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"fae9a562c7b46107d9c78cd78b75bbe1e991c16734c0aee8ff0ee711fb8b620a\", \"files\": {}}",
-        "dest": "cargo/vendor/swash-0.2.2",
+        "contents": "{\"package\": \"f745de914febc7c9ab4388dfaf94bbc87e69f57bb41133a9b0c84d4be49856f3\", \"files\": {}}",
+        "dest": "cargo/vendor/swash-0.2.5",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -5209,14 +5209,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/tempfile/tempfile-3.19.1.crate",
-        "sha256": "7437ac7763b9b123ccf33c338a5cc1bac6f69b45a136c19bdd8a65e3916435bf",
-        "dest": "cargo/vendor/tempfile-3.19.1"
+        "url": "https://static.crates.io/crates/tempfile/tempfile-3.20.0.crate",
+        "sha256": "e8a64e3985349f2441a1a9ef0b853f869006c3855f2cda6862a94d26ebb9d6a1",
+        "dest": "cargo/vendor/tempfile-3.20.0"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"7437ac7763b9b123ccf33c338a5cc1bac6f69b45a136c19bdd8a65e3916435bf\", \"files\": {}}",
-        "dest": "cargo/vendor/tempfile-3.19.1",
+        "contents": "{\"package\": \"e8a64e3985349f2441a1a9ef0b853f869006c3855f2cda6862a94d26ebb9d6a1\", \"files\": {}}",
+        "dest": "cargo/vendor/tempfile-3.20.0",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -5378,14 +5378,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/tokio/tokio-1.45.0.crate",
-        "sha256": "2513ca694ef9ede0fb23fe71a4ee4107cb102b9dc1930f6d0fd77aae068ae165",
-        "dest": "cargo/vendor/tokio-1.45.0"
+        "url": "https://static.crates.io/crates/tokio/tokio-1.45.1.crate",
+        "sha256": "75ef51a33ef1da925cea3e4eb122833cb377c61439ca401b770f54902b806779",
+        "dest": "cargo/vendor/tokio-1.45.1"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"2513ca694ef9ede0fb23fe71a4ee4107cb102b9dc1930f6d0fd77aae068ae165\", \"files\": {}}",
-        "dest": "cargo/vendor/tokio-1.45.0",
+        "contents": "{\"package\": \"75ef51a33ef1da925cea3e4eb122833cb377c61439ca401b770f54902b806779\", \"files\": {}}",
+        "dest": "cargo/vendor/tokio-1.45.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -5781,14 +5781,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/uuid/uuid-1.16.0.crate",
-        "sha256": "458f7a779bf54acc9f347480ac654f68407d3aab21269a6e3c9f922acd9e2da9",
-        "dest": "cargo/vendor/uuid-1.16.0"
+        "url": "https://static.crates.io/crates/uuid/uuid-1.17.0.crate",
+        "sha256": "3cf4199d1e5d15ddd86a694e4d0dffa9c323ce759fea589f00fef9d81cc1931d",
+        "dest": "cargo/vendor/uuid-1.17.0"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"458f7a779bf54acc9f347480ac654f68407d3aab21269a6e3c9f922acd9e2da9\", \"files\": {}}",
-        "dest": "cargo/vendor/uuid-1.16.0",
+        "contents": "{\"package\": \"3cf4199d1e5d15ddd86a694e4d0dffa9c323ce759fea589f00fef9d81cc1931d\", \"files\": {}}",
+        "dest": "cargo/vendor/uuid-1.17.0",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -6106,40 +6106,40 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/weezl/weezl-0.1.8.crate",
-        "sha256": "53a85b86a771b1c87058196170769dd264f66c0782acf1ae6cc51bfd64b39082",
-        "dest": "cargo/vendor/weezl-0.1.8"
+        "url": "https://static.crates.io/crates/weezl/weezl-0.1.10.crate",
+        "sha256": "a751b3277700db47d3e574514de2eced5e54dc8a5436a3bf7a0b248b2cee16f3",
+        "dest": "cargo/vendor/weezl-0.1.10"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"53a85b86a771b1c87058196170769dd264f66c0782acf1ae6cc51bfd64b39082\", \"files\": {}}",
-        "dest": "cargo/vendor/weezl-0.1.8",
+        "contents": "{\"package\": \"a751b3277700db47d3e574514de2eced5e54dc8a5436a3bf7a0b248b2cee16f3\", \"files\": {}}",
+        "dest": "cargo/vendor/weezl-0.1.10",
         "dest-filename": ".cargo-checksum.json"
     },
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/wgpu/wgpu-24.0.3.crate",
-        "sha256": "35904fb00ba2d2e0a4d002fcbbb6e1b89b574d272a50e5fc95f6e81cf281c245",
-        "dest": "cargo/vendor/wgpu-24.0.3"
+        "url": "https://static.crates.io/crates/wgpu/wgpu-24.0.5.crate",
+        "sha256": "6b0b3436f0729f6cdf2e6e9201f3d39dc95813fad61d826c1ed07918b4539353",
+        "dest": "cargo/vendor/wgpu-24.0.5"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"35904fb00ba2d2e0a4d002fcbbb6e1b89b574d272a50e5fc95f6e81cf281c245\", \"files\": {}}",
-        "dest": "cargo/vendor/wgpu-24.0.3",
+        "contents": "{\"package\": \"6b0b3436f0729f6cdf2e6e9201f3d39dc95813fad61d826c1ed07918b4539353\", \"files\": {}}",
+        "dest": "cargo/vendor/wgpu-24.0.5",
         "dest-filename": ".cargo-checksum.json"
     },
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/wgpu-core/wgpu-core-24.0.2.crate",
-        "sha256": "671c25545d479b47d3f0a8e373aceb2060b67c6eb841b24ac8c32348151c7a0c",
-        "dest": "cargo/vendor/wgpu-core-24.0.2"
+        "url": "https://static.crates.io/crates/wgpu-core/wgpu-core-24.0.5.crate",
+        "sha256": "7f0aa306497a238d169b9dc70659105b4a096859a34894544ca81719242e1499",
+        "dest": "cargo/vendor/wgpu-core-24.0.5"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"671c25545d479b47d3f0a8e373aceb2060b67c6eb841b24ac8c32348151c7a0c\", \"files\": {}}",
-        "dest": "cargo/vendor/wgpu-core-24.0.2",
+        "contents": "{\"package\": \"7f0aa306497a238d169b9dc70659105b4a096859a34894544ca81719242e1499\", \"files\": {}}",
+        "dest": "cargo/vendor/wgpu-core-24.0.5",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -6392,6 +6392,19 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/windows-targets/windows-targets-0.53.0.crate",
+        "sha256": "b1e4c7e8ceaaf9cb7d7507c974735728ab453b67ef8f18febdd7c11fe59dca8b",
+        "dest": "cargo/vendor/windows-targets-0.53.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"b1e4c7e8ceaaf9cb7d7507c974735728ab453b67ef8f18febdd7c11fe59dca8b\", \"files\": {}}",
+        "dest": "cargo/vendor/windows-targets-0.53.0",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/windows_aarch64_gnullvm/windows_aarch64_gnullvm-0.42.2.crate",
         "sha256": "597a5118570b68bc08d8d59125332c54f1ba9d9adeedeef5b99b02ba2b0698f8",
         "dest": "cargo/vendor/windows_aarch64_gnullvm-0.42.2"
@@ -6426,6 +6439,19 @@
         "type": "inline",
         "contents": "{\"package\": \"32a4622180e7a0ec044bb555404c800bc9fd9ec262ec147edd5989ccd0c02cd3\", \"files\": {}}",
         "dest": "cargo/vendor/windows_aarch64_gnullvm-0.52.6",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/windows_aarch64_gnullvm/windows_aarch64_gnullvm-0.53.0.crate",
+        "sha256": "86b8d5f90ddd19cb4a147a5fa63ca848db3df085e25fee3cc10b39b6eebae764",
+        "dest": "cargo/vendor/windows_aarch64_gnullvm-0.53.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"86b8d5f90ddd19cb4a147a5fa63ca848db3df085e25fee3cc10b39b6eebae764\", \"files\": {}}",
+        "dest": "cargo/vendor/windows_aarch64_gnullvm-0.53.0",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -6470,6 +6496,19 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/windows_aarch64_msvc/windows_aarch64_msvc-0.53.0.crate",
+        "sha256": "c7651a1f62a11b8cbd5e0d42526e55f2c99886c77e007179efff86c2b137e66c",
+        "dest": "cargo/vendor/windows_aarch64_msvc-0.53.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"c7651a1f62a11b8cbd5e0d42526e55f2c99886c77e007179efff86c2b137e66c\", \"files\": {}}",
+        "dest": "cargo/vendor/windows_aarch64_msvc-0.53.0",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/windows_i686_gnu/windows_i686_gnu-0.42.2.crate",
         "sha256": "c61d927d8da41da96a81f029489353e68739737d3beca43145c8afec9a31a84f",
         "dest": "cargo/vendor/windows_i686_gnu-0.42.2"
@@ -6509,6 +6548,19 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/windows_i686_gnu/windows_i686_gnu-0.53.0.crate",
+        "sha256": "c1dc67659d35f387f5f6c479dc4e28f1d4bb90ddd1a5d3da2e5d97b42d6272c3",
+        "dest": "cargo/vendor/windows_i686_gnu-0.53.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"c1dc67659d35f387f5f6c479dc4e28f1d4bb90ddd1a5d3da2e5d97b42d6272c3\", \"files\": {}}",
+        "dest": "cargo/vendor/windows_i686_gnu-0.53.0",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/windows_i686_gnullvm/windows_i686_gnullvm-0.52.6.crate",
         "sha256": "0eee52d38c090b3caa76c563b86c3a4bd71ef1a819287c19d586d7334ae8ed66",
         "dest": "cargo/vendor/windows_i686_gnullvm-0.52.6"
@@ -6517,6 +6569,19 @@
         "type": "inline",
         "contents": "{\"package\": \"0eee52d38c090b3caa76c563b86c3a4bd71ef1a819287c19d586d7334ae8ed66\", \"files\": {}}",
         "dest": "cargo/vendor/windows_i686_gnullvm-0.52.6",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/windows_i686_gnullvm/windows_i686_gnullvm-0.53.0.crate",
+        "sha256": "9ce6ccbdedbf6d6354471319e781c0dfef054c81fbc7cf83f338a4296c0cae11",
+        "dest": "cargo/vendor/windows_i686_gnullvm-0.53.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"9ce6ccbdedbf6d6354471319e781c0dfef054c81fbc7cf83f338a4296c0cae11\", \"files\": {}}",
+        "dest": "cargo/vendor/windows_i686_gnullvm-0.53.0",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -6561,6 +6626,19 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/windows_i686_msvc/windows_i686_msvc-0.53.0.crate",
+        "sha256": "581fee95406bb13382d2f65cd4a908ca7b1e4c2f1917f143ba16efe98a589b5d",
+        "dest": "cargo/vendor/windows_i686_msvc-0.53.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"581fee95406bb13382d2f65cd4a908ca7b1e4c2f1917f143ba16efe98a589b5d\", \"files\": {}}",
+        "dest": "cargo/vendor/windows_i686_msvc-0.53.0",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/windows_x86_64_gnu/windows_x86_64_gnu-0.42.2.crate",
         "sha256": "8de912b8b8feb55c064867cf047dda097f92d51efad5b491dfb98f6bbb70cb36",
         "dest": "cargo/vendor/windows_x86_64_gnu-0.42.2"
@@ -6595,6 +6673,19 @@
         "type": "inline",
         "contents": "{\"package\": \"147a5c80aabfbf0c7d901cb5895d1de30ef2907eb21fbbab29ca94c5b08b1a78\", \"files\": {}}",
         "dest": "cargo/vendor/windows_x86_64_gnu-0.52.6",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/windows_x86_64_gnu/windows_x86_64_gnu-0.53.0.crate",
+        "sha256": "2e55b5ac9ea33f2fc1716d1742db15574fd6fc8dadc51caab1c16a3d3b4190ba",
+        "dest": "cargo/vendor/windows_x86_64_gnu-0.53.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"2e55b5ac9ea33f2fc1716d1742db15574fd6fc8dadc51caab1c16a3d3b4190ba\", \"files\": {}}",
+        "dest": "cargo/vendor/windows_x86_64_gnu-0.53.0",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -6639,6 +6730,19 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/windows_x86_64_gnullvm/windows_x86_64_gnullvm-0.53.0.crate",
+        "sha256": "0a6e035dd0599267ce1ee132e51c27dd29437f63325753051e71dd9e42406c57",
+        "dest": "cargo/vendor/windows_x86_64_gnullvm-0.53.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"0a6e035dd0599267ce1ee132e51c27dd29437f63325753051e71dd9e42406c57\", \"files\": {}}",
+        "dest": "cargo/vendor/windows_x86_64_gnullvm-0.53.0",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/windows_x86_64_msvc/windows_x86_64_msvc-0.42.2.crate",
         "sha256": "9aec5da331524158c6d1a4ac0ab1541149c0b9505fde06423b02f5ef0106b9f0",
         "dest": "cargo/vendor/windows_x86_64_msvc-0.42.2"
@@ -6673,6 +6777,19 @@
         "type": "inline",
         "contents": "{\"package\": \"589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec\", \"files\": {}}",
         "dest": "cargo/vendor/windows_x86_64_msvc-0.52.6",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/windows_x86_64_msvc/windows_x86_64_msvc-0.53.0.crate",
+        "sha256": "271414315aff87387382ec3d271b52d7ae78726f5d44ac98b4f4030c91880486",
+        "dest": "cargo/vendor/windows_x86_64_msvc-0.53.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"271414315aff87387382ec3d271b52d7ae78726f5d44ac98b4f4030c91880486\", \"files\": {}}",
+        "dest": "cargo/vendor/windows_x86_64_msvc-0.53.0",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -6891,27 +7008,27 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/zbus/zbus-5.6.0.crate",
-        "sha256": "2522b82023923eecb0b366da727ec883ace092e7887b61d3da5139f26b44da58",
-        "dest": "cargo/vendor/zbus-5.6.0"
+        "url": "https://static.crates.io/crates/zbus/zbus-5.7.1.crate",
+        "sha256": "d3a7c7cee313d044fca3f48fa782cb750c79e4ca76ba7bc7718cd4024cdf6f68",
+        "dest": "cargo/vendor/zbus-5.7.1"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"2522b82023923eecb0b366da727ec883ace092e7887b61d3da5139f26b44da58\", \"files\": {}}",
-        "dest": "cargo/vendor/zbus-5.6.0",
+        "contents": "{\"package\": \"d3a7c7cee313d044fca3f48fa782cb750c79e4ca76ba7bc7718cd4024cdf6f68\", \"files\": {}}",
+        "dest": "cargo/vendor/zbus-5.7.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/zbus_macros/zbus_macros-5.6.0.crate",
-        "sha256": "05d2e12843c75108c00c618c2e8ef9675b50b6ec095b36dc965f2e5aed463c15",
-        "dest": "cargo/vendor/zbus_macros-5.6.0"
+        "url": "https://static.crates.io/crates/zbus_macros/zbus_macros-5.7.1.crate",
+        "sha256": "a17e7e5eec1550f747e71a058df81a9a83813ba0f6a95f39c4e218bdc7ba366a",
+        "dest": "cargo/vendor/zbus_macros-5.7.1"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"05d2e12843c75108c00c618c2e8ef9675b50b6ec095b36dc965f2e5aed463c15\", \"files\": {}}",
-        "dest": "cargo/vendor/zbus_macros-5.6.0",
+        "contents": "{\"package\": \"a17e7e5eec1550f747e71a058df81a9a83813ba0f6a95f39c4e218bdc7ba366a\", \"files\": {}}",
+        "dest": "cargo/vendor/zbus_macros-5.7.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -6930,27 +7047,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/zeno/zeno-0.3.2.crate",
-        "sha256": "cc0de2315dc13d00e5df3cd6b8d2124a6eaec6a2d4b6a1c5f37b7efad17fcc17",
-        "dest": "cargo/vendor/zeno-0.3.2"
+        "url": "https://static.crates.io/crates/zeno/zeno-0.3.3.crate",
+        "sha256": "6df3dc4292935e51816d896edcd52aa30bc297907c26167fec31e2b0c6a32524",
+        "dest": "cargo/vendor/zeno-0.3.3"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"cc0de2315dc13d00e5df3cd6b8d2124a6eaec6a2d4b6a1c5f37b7efad17fcc17\", \"files\": {}}",
-        "dest": "cargo/vendor/zeno-0.3.2",
-        "dest-filename": ".cargo-checksum.json"
-    },
-    {
-        "type": "archive",
-        "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/zerocopy/zerocopy-0.7.35.crate",
-        "sha256": "1b9b4fd18abc82b8136838da5d50bae7bdea537c574d8dc1a34ed098d6c166f0",
-        "dest": "cargo/vendor/zerocopy-0.7.35"
-    },
-    {
-        "type": "inline",
-        "contents": "{\"package\": \"1b9b4fd18abc82b8136838da5d50bae7bdea537c574d8dc1a34ed098d6c166f0\", \"files\": {}}",
-        "dest": "cargo/vendor/zerocopy-0.7.35",
+        "contents": "{\"package\": \"6df3dc4292935e51816d896edcd52aa30bc297907c26167fec31e2b0c6a32524\", \"files\": {}}",
+        "dest": "cargo/vendor/zeno-0.3.3",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -6964,19 +7068,6 @@
         "type": "inline",
         "contents": "{\"package\": \"a1702d9583232ddb9174e01bb7c15a2ab8fb1bc6f227aa1233858c351a3ba0cb\", \"files\": {}}",
         "dest": "cargo/vendor/zerocopy-0.8.25",
-        "dest-filename": ".cargo-checksum.json"
-    },
-    {
-        "type": "archive",
-        "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/zerocopy-derive/zerocopy-derive-0.7.35.crate",
-        "sha256": "fa4f8080344d4671fb4e831a13ad1e68092748387dfc4f55e356242fae12ce3e",
-        "dest": "cargo/vendor/zerocopy-derive-0.7.35"
-    },
-    {
-        "type": "inline",
-        "contents": "{\"package\": \"fa4f8080344d4671fb4e831a13ad1e68092748387dfc4f55e356242fae12ce3e\", \"files\": {}}",
-        "dest": "cargo/vendor/zerocopy-derive-0.7.35",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -7099,27 +7190,27 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/zvariant/zvariant-5.5.1.crate",
-        "sha256": "557e89d54880377a507c94cd5452f20e35d14325faf9d2958ebeadce0966c1b2",
-        "dest": "cargo/vendor/zvariant-5.5.1"
+        "url": "https://static.crates.io/crates/zvariant/zvariant-5.5.3.crate",
+        "sha256": "9d30786f75e393ee63a21de4f9074d4c038d52c5b1bb4471f955db249f9dffb1",
+        "dest": "cargo/vendor/zvariant-5.5.3"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"557e89d54880377a507c94cd5452f20e35d14325faf9d2958ebeadce0966c1b2\", \"files\": {}}",
-        "dest": "cargo/vendor/zvariant-5.5.1",
+        "contents": "{\"package\": \"9d30786f75e393ee63a21de4f9074d4c038d52c5b1bb4471f955db249f9dffb1\", \"files\": {}}",
+        "dest": "cargo/vendor/zvariant-5.5.3",
         "dest-filename": ".cargo-checksum.json"
     },
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/zvariant_derive/zvariant_derive-5.5.1.crate",
-        "sha256": "757779842a0d242061d24c28be589ce392e45350dfb9186dfd7a042a2e19870c",
-        "dest": "cargo/vendor/zvariant_derive-5.5.1"
+        "url": "https://static.crates.io/crates/zvariant_derive/zvariant_derive-5.5.3.crate",
+        "sha256": "75fda702cd42d735ccd48117b1630432219c0e9616bf6cb0f8350844ee4d9580",
+        "dest": "cargo/vendor/zvariant_derive-5.5.3"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"757779842a0d242061d24c28be589ce392e45350dfb9186dfd7a042a2e19870c\", \"files\": {}}",
-        "dest": "cargo/vendor/zvariant_derive-5.5.1",
+        "contents": "{\"package\": \"75fda702cd42d735ccd48117b1630432219c0e9616bf6cb0f8350844ee4d9580\", \"files\": {}}",
+        "dest": "cargo/vendor/zvariant_derive-5.5.3",
         "dest-filename": ".cargo-checksum.json"
     },
     {

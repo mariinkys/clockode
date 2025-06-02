@@ -20,12 +20,12 @@ iced = { git = "https://github.com/iced-rs/iced", default-features = false, feat
 serde = { version = "1.0.219", features = ["derive"] }
 ron = "0.10.1"
 dirs = "6.0.0"
-tokio = { version = "1.45.0", features = ["fs"] }
+tokio = { version = "1.45.1", features = ["fs"] }
 scrypt = "0.11.0"
 aes-gcm = "0.10.3"
 totp-lite = "2.0.1"
 fast32 = "1.0.3"
-uuid = { version = "1.16.0", features = ["v4", "serde"] }
+uuid = { version = "1.17.0", features = ["v4", "serde"] }
 arboard = { version = "3.5.0", features = [
     "wayland-data-control",
 ] } #https://github.com/bitwarden/clients/issues/6812
