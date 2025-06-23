@@ -62,6 +62,14 @@
     </keywords>
 
     <releases>
+        <release version="0.1.2" date="2025-06-23">
+            <description>
+                <p>Improve vault handling code</p>
+                <p>Allow the use of Tab to toggle between input fields</p>
+                <p>Allow the use of Enter to submit input values</p>
+                <p>Updated dependencies</p>
+            </description>
+        </release>
         <release version="0.1.1" date="2025-05-09">
             <description>
                 <p>Add file-picker support on all supported platforms</p>
