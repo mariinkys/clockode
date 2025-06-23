@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use arboard::Clipboard;
+use iced::keyboard::key::Named;
+use iced::keyboard::{self, Key, Modifiers};
 use iced::time::Instant;
 use iced::widget::{
-    button, column, container, float, mouse_area, pick_list, row, scrollable, text, text_input,
+    button, column, container, float, focus_next, focus_previous, mouse_area, pick_list, row,
+    scrollable, text, text_input,
 };
-use iced::{Alignment, Element, Length, Padding, Subscription, Task, Theme};
+use iced::{Alignment, Element, Length, Padding, Subscription, Task, Theme, event};
 use rfd::AsyncFileDialog;
 use std::collections::HashMap;
 
@@ -23,6 +26,7 @@ pub struct Vault {
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    Hotkey(Hotkey),
     SetClipboardContent(String),
     ChangedTheme(ColockodeTheme),
     TextInputted(TextInputs, String),
@@ -170,6 +174,15 @@ impl Vault {
     #[allow(clippy::only_used_in_recursion)]
     pub fn update(&mut self, message: Message, now: Instant) -> Action {
         match message {
+            Message::Hotkey(hotkey) => match hotkey {
+                Hotkey::Tab(modifiers) => {
+                    if modifiers.shift() {
+                        Action::Run(focus_previous())
+                    } else {
+                        Action::Run(focus_next())
+                    }
+                }
+            },
             Message::SetClipboardContent(content) => {
                 if let Some(clipboard) = &mut self.clipboard {
                     let res = &clipboard.set_text(content);
@@ -559,18 +572,33 @@ impl Vault {
     }
 
     pub fn subscription(&self, _now: Instant) -> Subscription<Message> {
+        let mut subscriptions = vec![];
         match &self.state {
             State::Creation {
                 new_password: _,
                 new_password_repeat: _,
-            } => Subscription::none(),
-            State::Decryption { password: _ } => Subscription::none(),
+            } => subscriptions.push(event::listen_with(handle_event)),
+            State::Decryption { password: _ } => {
+                subscriptions.push(event::listen_with(handle_event))
+            }
             State::List {
-                modal: _,
+                modal: current_modal,
                 time_count: _,
-            } => iced::time::every(std::time::Duration::from_secs(1))
-                .map(|_| Message::UpdateTimeCount),
+            } => {
+                subscriptions.push(
+                    iced::time::every(std::time::Duration::from_secs(1))
+                        .map(|_| Message::UpdateTimeCount),
+                );
+
+                match &current_modal {
+                    Modal::None => {}
+                    Modal::AddEdit { .. } => subscriptions.push(event::listen_with(handle_event)),
+                    Modal::Config => {}
+                }
+            }
         }
+
+        Subscription::batch(subscriptions)
     }
 
     pub fn view(&self, _now: Instant) -> Element<Message> {
@@ -811,6 +839,7 @@ impl Vault {
                     text("Name").size(13.).width(Length::Fill),
                     text_input("Name", entry_name)
                         .on_input(|s| Message::TextInputted(TextInputs::EntryName, s))
+                        .on_submit_maybe(can_save.clone())
                         .width(Length::Fill)
                 ]
                 .spacing(2.),
@@ -818,6 +847,7 @@ impl Vault {
                     text("Secret").size(13.).width(Length::Fill),
                     text_input("Secret", entry_secret)
                         .on_input(|s| Message::TextInputted(TextInputs::EntrySecret, s))
+                        .on_submit_maybe(can_save.clone())
                         .width(Length::Fill)
                 ]
                 .spacing(2.),
@@ -933,4 +963,20 @@ fn custom_modal(content: Element<Message>) -> Element<Message> {
             .style(container::secondary),
     )
     .into()
+}
+
+#[derive(Debug, Clone)]
+pub enum Hotkey {
+    Tab(Modifiers),
+}
+
+fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> Option<Message> {
+    #[allow(clippy::collapsible_match)]
+    match event {
+        event::Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => match key {
+            Key::Named(Named::Tab) => Some(Message::Hotkey(Hotkey::Tab(modifiers))),
+            _ => None,
+        },
+        _ => None,
+    }
 }
