@@ -58,7 +58,7 @@ impl Vault {
                     state: State::Locked,
                 })
             } else {
-                eprintln!("Vault not found on {:?}", vault_path);
+                eprintln!("Vault not found on {vault_path:?}");
                 Err(anywho!("Vault not found"))
             }
         })
@@ -68,12 +68,12 @@ impl Vault {
     /// Attempts to decrypt a [`Vault`] given a password
     pub async fn decrypt(mut self, password: String) -> (Self, Option<anywho::Error>) {
         use aes_gcm::{
-            aead::{Aead, KeyInit, Payload},
             Aes256Gcm, Nonce,
+            aead::{Aead, KeyInit, Payload},
         };
         use scrypt::{
-            password_hash::{PasswordHash, PasswordHasher, SaltString},
             Scrypt,
+            password_hash::{PasswordHash, PasswordHasher, SaltString},
         };
         use tokio::fs;
 
@@ -139,13 +139,13 @@ impl Vault {
     /// Attempts to create an encrypted [`Vault`] given a password
     pub async fn create(password: String) -> Result<Self, anywho::Error> {
         use aes_gcm::{
-            aead::{Aead, KeyInit, OsRng, Payload},
             Aes256Gcm, Nonce,
+            aead::{Aead, KeyInit, OsRng, Payload},
         };
         use dirs;
         use scrypt::{
-            password_hash::{PasswordHash, PasswordHasher, SaltString},
             Scrypt,
+            password_hash::{PasswordHash, PasswordHasher, SaltString},
         };
         use tokio::fs;
 
@@ -226,8 +226,8 @@ impl Vault {
     /// Attempts to save the current [`Vault`] state
     pub async fn save(&self) -> Result<(), anywho::Error> {
         use aes_gcm::{
-            aead::{Aead, KeyInit, OsRng, Payload},
             Aes256Gcm, Nonce,
+            aead::{Aead, KeyInit, OsRng, Payload},
         };
         use tokio::fs;
 

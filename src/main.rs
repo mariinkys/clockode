@@ -135,14 +135,14 @@ impl Clockode {
                         vault.set_config(self.config.clone());
                     }
                     Err(err) => {
-                        eprintln!("Error loading config: {}", err);
+                        eprintln!("Error loading config: {err}");
                     }
                 }
                 Task::none()
             }
             Message::ConfigSaved(res) => {
                 if let Err(err) = res {
-                    eprintln!("{}", err);
+                    eprintln!("{err}");
                 }
                 Task::none()
             }

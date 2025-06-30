@@ -41,7 +41,7 @@ impl Display for Algorithm {
             Algorithm::Sha256 => "SHA256",
             Algorithm::Sha512 => "SHA512",
         };
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 

@@ -142,7 +142,7 @@ impl Vault {
     pub fn new(vault: Result<crate::Vault, anywho::Error>, config: Config) -> Self {
         let clipboard = Clipboard::new();
         if let Err(clip_err) = &clipboard {
-            eprintln!("{}", clip_err);
+            eprintln!("{clip_err}");
         };
 
         if let Ok(vault) = vault {
@@ -191,7 +191,7 @@ impl Vault {
                             return Action::AddToast(Toast::success_toast("Copied to clipboard"));
                         }
                         Err(err) => {
-                            eprintln!("{}", err);
+                            eprintln!("{err}");
                         }
                     }
                 }
@@ -310,7 +310,7 @@ impl Vault {
                         self.vault = Some(vault);
                     }
                     Err(err) => {
-                        eprintln!("{}", err);
+                        eprintln!("{err}");
                     }
                 }
                 Action::None
@@ -339,9 +339,9 @@ impl Vault {
                     self.update(Message::UpdateAllTOTP, now)
                 }
                 Some(err) => {
-                    eprintln!("{}", err);
+                    eprintln!("{err}");
                     self.vault = Some(vault);
-                    Action::AddToast(Toast::error_toast(format!("{}", err)))
+                    Action::AddToast(Toast::error_toast(format!("{err}")))
                 }
             },
             Message::SavedVault(res) => {
@@ -352,7 +352,7 @@ impl Vault {
                         }
                     }
                     Err(err) => {
-                        eprintln!("Error saving vault: {}", err);
+                        eprintln!("Error saving vault: {err}");
                     }
                 }
                 Action::None
@@ -395,14 +395,13 @@ impl Vault {
             Message::ExportedVault(res) => {
                 match res {
                     Ok(path) => {
-                        println!("Vault exported sucessfully to: {}", path);
+                        println!("Vault exported sucessfully to: {path}");
                         return Action::AddToast(Toast::success_toast(format!(
-                            "Vault exported sucessfully to: {}",
-                            path
+                            "Vault exported sucessfully to: {path}"
                         )));
                     }
                     Err(err) => {
-                        eprintln!("{}", err);
+                        eprintln!("{err}");
                     }
                 }
                 Action::None
@@ -445,14 +444,14 @@ impl Vault {
                                     ));
                                 }
                                 Err(err) => {
-                                    eprintln!("{}", err);
+                                    eprintln!("{err}");
                                     return Action::None;
                                 }
                             }
                         }
                     }
                     Err(err) => {
-                        eprintln!("{}", err);
+                        eprintln!("{err}");
                     }
                 }
 
@@ -476,7 +475,7 @@ impl Vault {
                             ));
                         }
                         Err(err) => {
-                            eprintln!("{}", err);
+                            eprintln!("{err}");
                             return Action::None;
                         }
                     }
@@ -496,7 +495,7 @@ impl Vault {
                             ));
                         }
                         Err(err) => {
-                            eprintln!("{}", err);
+                            eprintln!("{err}");
                             return Action::None;
                         }
                     }
@@ -542,12 +541,12 @@ impl Vault {
                                     return Action::None;
                                 }
                                 Err(err) => {
-                                    eprintln!("Error substituting entries: {}", err);
+                                    eprintln!("Error substituting entries: {err}");
                                 }
                             }
                         }
                         Err(err) => {
-                            eprintln!("Error generating TOTPS: {}", err);
+                            eprintln!("Error generating TOTPS: {err}");
                         }
                     }
                 }
@@ -685,8 +684,8 @@ impl Vault {
                                 } else {
                                     let entries_content: Element<Message> = column(
                                         entries
-                                            .iter()
-                                            .map(|(_, e)| {
+                                            .values()
+                                            .map(|e| {
                                                 mouse_area(
                                                     container(
                                                         row![
