@@ -502,6 +502,7 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
                     .as_widget()
                     .mouse_interaction(state, layout, cursor, &self.viewport, renderer)
                     .max(
+                        #[allow(clippy::obfuscated_if_else)]
                         cursor
                             .is_over(layout.bounds())
                             .then_some(mouse::Interaction::Idle)
