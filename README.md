@@ -47,10 +47,10 @@ cargo build --release
 sudo just install
 ```
 ### Windows
-Use the [provided binary on the latest release](https://github.com/mariinkys/clockode/releases). Note that this is not an installer, and you will have to download and update the binary icon yourself. You can also use cargo to compile the application yourself.
+Use the [provided binary on the latest release](https://github.com/mariinkys/clockode/releases). Note that this is not an installer, and you will have to download and update the binary and icon yourself. You can also use cargo to compile the application yourself.
 
 ### Mac
-Use the [provided binary on the latest release](https://github.com/mariinkys/clockode/releases). Note that this is not an installer, and you will have to download and update the binary icon yourself. You can also use cargo to compile the application yourself.
+Use the [provided binary on the latest release](https://github.com/mariinkys/clockode/releases). Note that this is not an installer, and you will have to download and update the binary and icon yourself. You can also use cargo to compile the application yourself.
 
 ## Attributions
 
