@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #![windows_subsystem = "windows"]
+#![allow(clippy::collapsible_if)]
+#![allow(mismatched_lifetime_syntaxes)]
 
 use core::vault::Vault;
 
