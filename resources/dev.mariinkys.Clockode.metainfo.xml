@@ -15,8 +15,9 @@
     <project_license>GPL-3.0-only</project_license>
 
     <description>
-        <p>Clockode is a minimal, and offline-only TOTP code generator that stores your 
-            authentication secrets in an encrypted local vault, keeping your two-factor codes private and 
+        <p>Clockode is a minimal, and offline-only TOTP code generator that stores your
+            authentication secrets in an encrypted local vault, keeping your two-factor codes
+            private and
             accessible without needing an internet connection.</p>
         <ul>
             <li>Local encrypted vault</li>
@@ -28,24 +29,27 @@
         </ul>
     </description>
 
-    <icon type="remote" height="256" width="256">https://raw.githubusercontent.com/mariinkys/clockode/main/resources/icons/hicolor/scalable/apps/icon.svg</icon>
+    <icon type="remote" height="256" width="256">
+        https://raw.githubusercontent.com/mariinkys/clockode/main/resources/icons/hicolor/scalable/apps/icon.svg</icon>
     <launchable type="desktop-id">dev.mariinkys.Clockode.desktop</launchable>
-    <content_rating type="oars-1.1"/>
+    <content_rating type="oars-1.1" />
 
     <screenshots>
         <screenshot type="default" xml:lang="en">
-            <image>https://raw.githubusercontent.com/mariinkys/clockode/main/screenshots/main-light.png</image>
+            <image>
+                https://raw.githubusercontent.com/mariinkys/clockode/main/screenshots/main-light.png</image>
             <caption>Main Page (Light)</caption>
         </screenshot>
         <screenshot xml:lang="en">
-            <image>https://raw.githubusercontent.com/mariinkys/clockode/main/screenshots/main-dark.png</image>
+            <image>
+                https://raw.githubusercontent.com/mariinkys/clockode/main/screenshots/main-dark.png</image>
             <caption>Main Page (Dark)</caption>
         </screenshot>
     </screenshots>
 
     <branding>
-      <color type="primary" scheme_preference="light">#2E2E2E</color>
-      <color type="primary" scheme_preference="dark">#F59E0B</color>
+        <color type="primary" scheme_preference="light">#2E2E2E</color>
+        <color type="primary" scheme_preference="dark">#F59E0B</color>
     </branding>
 
     <categories>
@@ -62,6 +66,11 @@
     </keywords>
 
     <releases>
+        <release version="0.1.3" date="2025-09-25">
+            <description>
+                <p>Updated dependencies</p>
+            </description>
+        </release>
         <release version="0.1.2" date="2025-06-23">
             <description>
                 <p>Improve vault handling code</p>
