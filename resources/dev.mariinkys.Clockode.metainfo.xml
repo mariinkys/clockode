@@ -66,7 +66,13 @@
     </keywords>
 
     <releases>
-        <release version="0.1.3" date="2025-09-25">
+        <release version="0.1.4" date="2025-09-15">
+            <description>
+                <p>Add support for Standard Backup Format (Compatible with Aegis...)</p>
+                <p>Updated dependencies</p>
+            </description>
+        </release>
+        <release version="0.1.3" date="2025-09-13">
             <description>
                 <p>Updated dependencies</p>
             </description>
