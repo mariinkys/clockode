@@ -471,4 +471,99 @@ impl Vault {
 
         Ok(imported_entries)
     }
+
+    /// Imports OTP URIs from a file and adds the deserialized entries to the vault
+    pub async fn import_uri(
+        &mut self,
+        file_path: PathBuf,
+    ) -> Result<HashMap<super::entry::Id, Entry>, anywho::Error> {
+        use crate::core::entry::Id;
+        use crate::core::otp_uri::OtpUri;
+        use tokio::task;
+
+        // Check if the vault is unlocked
+        let data = match &mut self.state {
+            State::Unlocked { data, .. } => data,
+            State::Locked => return Err(anywho!("Cannot add entry to locked vault")),
+        };
+
+        let entries_clone = data.entries.clone();
+        let imported_entries =
+            task::spawn_blocking(move || -> Result<HashMap<Id, Entry>, anywho::Error> {
+                let file_content = std::fs::read_to_string(&file_path)
+                    .map_err(|e| anywho!("Failed to read import file: {}", e))?;
+
+                let mut new_entries = HashMap::new();
+
+                // Process each line as an OTP URI
+                for (line_num, line) in file_content.lines().enumerate() {
+                    let line = line.trim();
+                    if line.is_empty() || line.starts_with('#') {
+                        continue; // Skip empty lines and comments
+                    }
+
+                    match OtpUri::parse(line) {
+                        Ok(otp_uri) => {
+                            let entry = crate::core::otp_uri::otp_uri_to_entry(otp_uri)?;
+
+                            // Generate a new ID if none exists
+                            let id = entry.id.unwrap_or_else(|| Id(Uuid::new_v4()));
+
+                            // Only add if not already present
+                            if !entries_clone.contains_key(&id) {
+                                new_entries.insert(id, entry);
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!(
+                                "Warning: Failed to parse OTP URI on line {}: {} - Error: {}",
+                                line_num + 1,
+                                line,
+                                e
+                            );
+                            // Continue processing other lines instead of failing completely
+                        }
+                    }
+                }
+
+                Ok(new_entries)
+            })
+            .await??;
+
+        // Add the imported entries to the vault
+        if let State::Unlocked { data, .. } = &mut self.state {
+            for (id, entry) in &imported_entries {
+                data.entries.insert(*id, entry.clone());
+            }
+        }
+
+        Ok(imported_entries)
+    }
+
+    /// Exports vault entries to Standard Backup Format (OTP URIs)
+    pub async fn export_uri(&self, export_path: impl AsRef<Path>) -> Result<String, anywho::Error> {
+        use tokio::fs;
+
+        let vault_data = match &self.state {
+            State::Unlocked { data, .. } => data,
+            State::Locked => return Err(anywho!("Cannot export locked vault")),
+        };
+
+        let mut otp_uris = Vec::new();
+        for entry in vault_data.entries.values() {
+            let otp_uri = crate::core::otp_uri::entry_to_otp_uri(entry);
+            otp_uris.push(otp_uri);
+        }
+
+        let content = otp_uris.join("\n");
+        fs::write(export_path.as_ref(), content).await?;
+
+        let path_string = export_path
+            .as_ref()
+            .to_str()
+            .ok_or_else(|| anywho!("Invalid path encoding"))?
+            .to_string();
+
+        Ok(path_string)
+    }
 }

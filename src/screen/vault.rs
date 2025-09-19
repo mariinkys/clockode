@@ -6,7 +6,7 @@ use iced::keyboard::{self, Key, Modifiers};
 use iced::time::Instant;
 use iced::widget::{
     button, column, container, float, focus_next, focus_previous, mouse_area, pick_list, row,
-    scrollable, text, text_input,
+    scrollable, text, text_input, tooltip,
 };
 use iced::{Alignment, Element, Length, Padding, Subscription, Task, Theme, event};
 use rfd::AsyncFileDialog;
@@ -37,11 +37,11 @@ pub enum Message {
     UnlockVault,
     UnlockedVault((crate::Vault, Option<anywho::Error>)),
     SavedVault(Result<(), anywho::Error>),
-    OpenExportVaultDialog,
-    ExportVault(Box<Option<rfd::FileHandle>>),
+    OpenExportVaultDialog(ExportImportType),
+    ExportVault(Box<Option<rfd::FileHandle>>, ExportImportType),
     ExportedVault(Result<String, anywho::Error>),
-    OpenImportVaultDialog,
-    ImportVault(Box<Option<rfd::FileHandle>>),
+    OpenImportVaultDialog(ExportImportType),
+    ImportVault(Box<Option<rfd::FileHandle>>, ExportImportType),
     ImportedVault(Result<HashMap<entry::Id, Entry>, anywho::Error>),
 
     OpenModal(Modal),
@@ -133,6 +133,12 @@ impl Modal {
     pub fn config() -> Modal {
         Modal::Config
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum ExportImportType {
+    Custom,
+    Standard,
 }
 
 impl Vault {
@@ -357,19 +363,33 @@ impl Vault {
                 }
                 Action::None
             }
-            Message::OpenExportVaultDialog => Action::Run(Task::perform(
-                async move {
-                    let result = AsyncFileDialog::new()
-                        .set_file_name("vault_export.ron")
-                        .set_directory(dirs::download_dir().unwrap_or("/".into()))
-                        .save_file()
-                        .await;
+            Message::OpenExportVaultDialog(export_type) => match export_type {
+                ExportImportType::Custom => Action::Run(Task::perform(
+                    async move {
+                        let result = AsyncFileDialog::new()
+                            .set_file_name("vault_export.ron")
+                            .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                            .save_file()
+                            .await;
 
-                    Box::new(result)
-                },
-                Message::ExportVault,
-            )),
-            Message::ExportVault(handle) => {
+                        Box::new(result)
+                    },
+                    |res| Message::ExportVault(res, ExportImportType::Custom),
+                )),
+                ExportImportType::Standard => Action::Run(Task::perform(
+                    async move {
+                        let result = AsyncFileDialog::new()
+                            .set_file_name("vault_export.txt")
+                            .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                            .save_file()
+                            .await;
+
+                        Box::new(result)
+                    },
+                    |res| Message::ExportVault(res, ExportImportType::Standard),
+                )),
+            },
+            Message::ExportVault(handle, export_type) => {
                 if let Some(file_handle) = *handle {
                     if let Some(vault) = &self.vault {
                         match vault.entries() {
@@ -379,10 +399,16 @@ impl Vault {
                                 }
 
                                 let cloned_vault = vault.clone(); // CLONE
-                                return Action::Run(Task::perform(
-                                    async move { cloned_vault.export(file_handle.path()).await },
-                                    Message::ExportedVault,
-                                ));
+                                return match export_type {
+                                    ExportImportType::Custom => Action::Run(Task::perform(
+                                        async move { cloned_vault.export(file_handle.path()).await },
+                                        Message::ExportedVault,
+                                    )),
+                                    ExportImportType::Standard => Action::Run(Task::perform(
+                                        async move { cloned_vault.export_uri(file_handle.path()).await },
+                                        Message::ExportedVault,
+                                    )),
+                                };
                             }
                             None => {
                                 println!("Error getting vault entries");
@@ -406,26 +432,52 @@ impl Vault {
                 }
                 Action::None
             }
-            Message::OpenImportVaultDialog => Action::Run(Task::perform(
-                async move {
-                    let result = AsyncFileDialog::new()
-                        .add_filter("ron", &["ron"])
-                        .set_directory(dirs::download_dir().unwrap_or("/".into()))
-                        .pick_file()
-                        .await;
+            Message::OpenImportVaultDialog(import_type) => match import_type {
+                ExportImportType::Custom => Action::Run(Task::perform(
+                    async move {
+                        let result = AsyncFileDialog::new()
+                            .add_filter("ron", &["ron"])
+                            .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                            .pick_file()
+                            .await;
 
-                    Box::new(result)
-                },
-                Message::ImportVault,
-            )),
-            Message::ImportVault(handle) => {
+                        Box::new(result)
+                    },
+                    |res| Message::ImportVault(res, ExportImportType::Custom),
+                )),
+                ExportImportType::Standard => Action::Run(Task::perform(
+                    async move {
+                        let result = AsyncFileDialog::new()
+                            .add_filter("txt", &["txt"])
+                            .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                            .pick_file()
+                            .await;
+
+                        Box::new(result)
+                    },
+                    |res| Message::ImportVault(res, ExportImportType::Standard),
+                )),
+            },
+            Message::ImportVault(handle, import_type) => {
                 if let Some(file_handle) = *handle {
                     if let Some(vault) = &mut self.vault {
                         let mut cloned_vault = vault.clone(); // CLONE
-                        return Action::Run(Task::perform(
-                            async move { cloned_vault.import(file_handle.path().to_path_buf()).await },
-                            Message::ImportedVault,
-                        ));
+                        return match import_type {
+                            ExportImportType::Custom => Action::Run(Task::perform(
+                                async move {
+                                    cloned_vault.import(file_handle.path().to_path_buf()).await
+                                },
+                                Message::ImportedVault,
+                            )),
+                            ExportImportType::Standard => Action::Run(Task::perform(
+                                async move {
+                                    cloned_vault
+                                        .import_uri(file_handle.path().to_path_buf())
+                                        .await
+                                },
+                                Message::ImportedVault,
+                            )),
+                        };
                     }
                 }
                 Action::None
@@ -876,14 +928,38 @@ impl Vault {
 
         let content = container(
             column![
+            column![
                 column![
-                    text("Export unencrypted vault"),
-                    button("Export").on_press(Message::OpenExportVaultDialog)
+                    row![
+                        text("Export/Import unencrypted vault (Custom Format)").width(Length::Fill),
+                        tooltip(
+                            button(text("i")).style(rounded_primary_button),
+                            container(text("The custom format is only compatible with Clockode")).padding(3.).style(container::primary),
+                            tooltip::Position::Top
+                        )
+                    ],
+                    row![
+                        button("Export").on_press(Message::OpenExportVaultDialog(ExportImportType::Custom)),
+                        button("Import").on_press(Message::OpenImportVaultDialog(ExportImportType::Custom))
+                    ]
+                    .spacing(5.)
                 ]
                 .spacing(3.),
                 column![
-                    text("Import unencrypted vault"),
-                    button("Import").on_press(Message::OpenImportVaultDialog)
+                    row![
+                        text("Export/Import unencrypted vault (Standard Backup Format)")
+                            .width(Length::Fill),
+                        tooltip(
+                            button(text("i")).style(rounded_primary_button),
+                            container(text("This format is compatible with Aegis, Authenticator(GNOME), FreeOTP+...")).padding(3.).style(container::primary),
+                            tooltip::Position::Top
+                        )
+                    ],
+                    row![
+                        button("Export").on_press(Message::OpenExportVaultDialog(ExportImportType::Standard)),
+                        button("Import").on_press(Message::OpenImportVaultDialog(ExportImportType::Standard))
+                    ]
+                    .spacing(5.)
                 ]
                 .spacing(3.),
                 column![
@@ -899,7 +975,12 @@ impl Vault {
                 ]
                 .spacing(3.)
             ]
-            .spacing(10.),
+            .height(Length::Fill)
+            .spacing(10.), 
+                text(format!("Version: {}", env!("CARGO_PKG_VERSION"))).width(Length::Fill).align_x(Alignment::Center).font(iced::font::Font {
+                weight: iced::font::Weight::Bold,
+                ..Default::default()
+            })]
         )
         .height(Length::Fill);
 
