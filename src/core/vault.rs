@@ -495,22 +495,22 @@ impl Vault {
 
                 let mut new_entries = HashMap::new();
 
-                // Process each line as an OTP URI
                 for (line_num, line) in file_content.lines().enumerate() {
                     let line = line.trim();
                     if line.is_empty() || line.starts_with('#') {
-                        continue; // Skip empty lines and comments
+                        continue; // skip empty lines and comments
                     }
 
                     match OtpUri::parse(line) {
                         Ok(otp_uri) => {
                             let entry = crate::core::otp_uri::otp_uri_to_entry(otp_uri)?;
 
-                            // Generate a new ID if none exists
+                            // generate a new ID if none exists (it should never exist)
                             let id = entry.id.unwrap_or_else(|| Id(Uuid::new_v4()));
 
-                            // Only add if not already present
-                            if !entries_clone.contains_key(&id) {
+                            if !entries_clone.values().any(|e| {
+                                e.name.trim() == entry.name.trim() && e.secret == entry.secret
+                            }) {
                                 new_entries.insert(id, entry);
                             }
                         }
@@ -521,7 +521,6 @@ impl Vault {
                                 line,
                                 e
                             );
-                            // Continue processing other lines instead of failing completely
                         }
                     }
                 }
@@ -530,7 +529,7 @@ impl Vault {
             })
             .await??;
 
-        // Add the imported entries to the vault
+        // add the imported entries to the vault
         if let State::Unlocked { data, .. } = &mut self.state {
             for (id, entry) in &imported_entries {
                 data.entries.insert(*id, entry.clone());
