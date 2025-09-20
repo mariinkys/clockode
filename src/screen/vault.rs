@@ -770,7 +770,7 @@ impl Vault {
                                     )
                                     .spacing(10.)
                                     .into();
-                                    container(scrollable(column![entries_content]).spacing(5.))
+                                    container(scrollable(column![entries_content, text(format!("{} - Entries", &entries.len())).align_x(Alignment::Center).width(Length::Fill)].spacing(5.)).spacing(5.))
                                 }
                             } else {
                                 container(text("Error, getting vault entries..."))
