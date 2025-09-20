@@ -66,9 +66,11 @@
     </keywords>
 
     <releases>
-        <release version="0.1.4" date="2025-09-15">
+        <release version="0.1.4" date="2025-09-20">
             <description>
                 <p>Add support for Standard Backup Format (Compatible with Aegis...)</p>
+                <p>Add number of total entries to vault screen</p>
+                <p>Updated Flatpak runtime to 25.08</p>
                 <p>Updated dependencies</p>
             </description>
         </release>
