@@ -4,8 +4,9 @@ use arboard::Clipboard;
 use iced::keyboard::key::Named;
 use iced::keyboard::{self, Key, Modifiers};
 use iced::time::Instant;
+use iced::widget::operation::{focus_next, focus_previous};
 use iced::widget::{
-    button, column, container, float, focus_next, focus_previous, mouse_area, pick_list, row,
+    button, column, container, float, mouse_area, pick_list, row,
     scrollable, text, text_input, tooltip,
 };
 use iced::{Alignment, Element, Length, Padding, Subscription, Task, Theme, event};

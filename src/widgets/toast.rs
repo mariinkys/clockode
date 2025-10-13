@@ -9,7 +9,7 @@ use iced::advanced::{Clipboard, Shell, Widget};
 use iced::mouse;
 use iced::theme;
 use iced::time::{self, Duration, Instant};
-use iced::widget::{button, column, container, horizontal_rule, horizontal_space, row, text};
+use iced::widget::{button, column, container, row, rule, space, text};
 use iced::window;
 use iced::{
     Alignment, Center, Element, Event, Fill, Length, Point, Rectangle, Renderer, Size, Theme,
@@ -122,7 +122,7 @@ where
                     container(
                         row![
                             text(toast.title.as_str()),
-                            horizontal_space(),
+                            space::horizontal(),
                             button(" X ")
                                 .on_press((on_close)(index))
                                 .style(|t, s| {
@@ -156,7 +156,7 @@ where
                         style.border.radius = iced::border::top(DEFAULT_BORDER_RADIUS);
                         style
                     }),
-                    horizontal_rule(1),
+                    rule::horizontal(1),
                     container(text(toast.body.as_str()))
                         .width(Fill)
                         .padding(5)
@@ -253,7 +253,8 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
         renderer: &Renderer,
         operation: &mut dyn Operation,
     ) {
-        operation.container(None, layout.bounds(), &mut |operation| {
+        operation.container(None, layout.bounds());
+        operation.traverse(&mut |operation| {
             self.content.as_widget_mut().operate(
                 &mut state.children[0],
                 layout,
@@ -477,7 +478,8 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
         renderer: &Renderer,
         operation: &mut dyn widget::Operation,
     ) {
-        operation.container(None, layout.bounds(), &mut |operation| {
+        operation.container(None, layout.bounds());
+        operation.traverse(&mut |operation| {
             self.toasts
                 .iter_mut()
                 .zip(self.state.iter_mut())
