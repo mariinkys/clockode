@@ -735,9 +735,12 @@ impl Vault {
                                 if entries.is_empty() {
                                     container(text("No entries..."))
                                 } else {
+                                    let mut sorted_entries: Vec<_> = entries.values().collect();
+                                    sorted_entries.sort_by(|a, b| a.name.cmp(&b.name));
+                                    
                                     let entries_content: Element<Message> = column(
-                                        entries
-                                            .values()
+                                        sorted_entries
+                                            .iter()
                                             .map(|e| {
                                                 mouse_area(
                                                     container(
@@ -753,7 +756,7 @@ impl Vault {
                                                             ))
                                                             .style(rounded_primary_button)
                                                             .on_press(Message::OpenModal(
-                                                                Modal::add_edit(Some(e.clone()))
+                                                                Modal::add_edit(Some((*e).clone()))
                                                             ))
                                                         ]
                                                         .align_y(Alignment::Center)
