@@ -736,7 +736,7 @@ impl Vault {
                                     container(text("No entries..."))
                                 } else {
                                     let mut sorted_entries: Vec<_> = entries.values().collect();
-                                    sorted_entries.sort_by(|a, b| a.name.cmp(&b.name));
+                                    sorted_entries.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
                                     
                                     let entries_content: Element<Message> = column(
                                         sorted_entries
