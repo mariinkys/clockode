@@ -2,19 +2,29 @@
 name = "clockode"
 description = "TOTP client made with Iced"
 authors = ["mariinkys <kysdev.owjga@aleeas.com>"]
-version = "0.1.4"
+version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0"
 repository = "https://github.com/mariinkys/clockode"
 
 [dependencies]
-anywho = "0.1.2"
 iced = { version = "0.14.0", default-features = true, features = [
-    "tokio",
     "image",
     "advanced",
     "svg",
 ] }
+anywho = "0.1.2"
+dirs = "6.0.0"
+smol = "2.0.2"
+keepass = { version = "0.8.16", features = [
+    "save_kdbx4",
+] } # KeePass DB Management
+rqrr = "0.10.0" # QR Detection
+totp-rs = "5.7.0" # TOTP Generation ...
+arboard = { version = "3.6.1", features = [
+    "wayland-data-control",
+] } # Clipboard (https://github.com/bitwarden/clients/issues/6812)
+rfd = "0.16.0" # File System Dialogs
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]
