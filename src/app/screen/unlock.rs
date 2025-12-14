@@ -14,9 +14,8 @@ use iced::{
         text, text_input,
     },
 };
-use keepass::Database;
 
-use crate::app::core::unlock_database;
+use crate::app::core::{ClockodeDatabase, unlock_database};
 
 pub struct UnlockDatabase {
     db_path: PathBuf,
@@ -30,7 +29,7 @@ pub enum Message {
     UpdatePassword(String),
     Submit,
 
-    DatabaseUnlocked(Box<Result<Database, anywho::Error>>),
+    DatabaseUnlocked(Box<Result<ClockodeDatabase, anywho::Error>>),
 }
 
 pub enum Action {
@@ -39,7 +38,7 @@ pub enum Action {
     /// Ask parent to run an [`iced::Task`]
     Run(Task<Message>),
     /// Ask parent to open the [`Screen::HomePage`]
-    OpenHomePage(Box<Database>),
+    OpenHomePage(Box<ClockodeDatabase>),
 }
 
 impl UnlockDatabase {
@@ -88,7 +87,7 @@ impl UnlockDatabase {
                 Action::None
             }
             Message::Submit => Action::Run(Task::perform(
-                unlock_database(self.db_path.clone(), self.inputs.password.clone()),
+                unlock_database(self.db_path.clone(), self.inputs.password.clone().into()),
                 |res| Message::DatabaseUnlocked(Box::from(res)),
             )),
             Message::DatabaseUnlocked(res) => match *res {

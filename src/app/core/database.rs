@@ -2,6 +2,7 @@
 
 use anywho::anywho;
 use keepass::{Database, DatabaseKey, db::Group};
+use secrecy::{ExposeSecret, SecretString};
 use std::path::PathBuf;
 
 use crate::APP_ID;
@@ -34,7 +35,7 @@ pub fn check_database() -> Result<Option<PathBuf>, anywho::Error> {
     }
 }
 
-pub async fn create_database(password: String) -> Result<PathBuf, anywho::Error> {
+pub async fn create_database(password: SecretString) -> Result<PathBuf, anywho::Error> {
     let path = dirs::data_dir()
         .ok_or_else(|| anywho!("Could not determine data directory"))?
         .join(APP_ID)
@@ -49,7 +50,7 @@ pub async fn create_database(password: String) -> Result<PathBuf, anywho::Error>
 
         db.save(
             &mut std::fs::File::create(&path)?,
-            DatabaseKey::new().with_password(&password),
+            DatabaseKey::new().with_password(password.expose_secret()),
         )?;
 
         Ok(path)
@@ -57,13 +58,31 @@ pub async fn create_database(password: String) -> Result<PathBuf, anywho::Error>
     .await
 }
 
-pub async fn unlock_database(path: PathBuf, password: String) -> Result<Database, anywho::Error> {
+pub async fn unlock_database(
+    path: PathBuf,
+    password: SecretString,
+) -> Result<ClockodeDatabase, anywho::Error> {
     smol::unblock(move || {
-        let mut file = std::fs::File::open(path)?;
-        let key = DatabaseKey::new().with_password(&password);
-        let db = Database::open(&mut file, key)?;
+        let mut file = std::fs::File::open(&path)?;
+        let key = DatabaseKey::new().with_password(password.expose_secret());
+        let _db = Database::open(&mut file, key)?;
 
-        Ok(db)
+        Ok(ClockodeDatabase {
+            path: Box::from(path),
+            password: Box::from(password),
+        })
     })
     .await
+}
+
+#[derive(Debug, Clone)]
+pub struct ClockodeDatabase {
+    path: Box<PathBuf>,
+    password: Box<SecretString>,
+}
+
+impl ClockodeDatabase {
+    pub async fn add_entry(&self) -> Result<(), anywho::Error> {
+        todo!()
+    }
 }

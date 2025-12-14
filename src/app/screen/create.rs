@@ -94,7 +94,7 @@ impl CreateDatabase {
                 Action::None
             }
             Message::Submit => Action::Run(Task::perform(
-                create_database(self.inputs.password.clone()),
+                create_database(self.inputs.password.clone().into()),
                 Message::DatabaseCreated,
             )),
 

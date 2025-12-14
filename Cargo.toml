@@ -25,6 +25,7 @@ arboard = { version = "3.6.1", features = [
     "wayland-data-control",
 ] } # Clipboard (https://github.com/bitwarden/clients/issues/6812)
 rfd = "0.16.0" # File System Dialogs
+secrecy = "0.10.3" # Provides us with SecretString
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]

@@ -6,10 +6,11 @@ use iced::{
     time::Instant,
     widget::{container, text},
 };
-use keepass::Database;
+
+use crate::app::core::ClockodeDatabase;
 
 pub struct HomePage {
-    database: Box<Database>,
+    database: Box<ClockodeDatabase>,
 }
 
 #[derive(Debug, Clone)]
@@ -23,7 +24,7 @@ pub enum Action {
 }
 
 impl HomePage {
-    pub fn new(database: Box<Database>) -> (Self, Task<Message>) {
+    pub fn new(database: Box<ClockodeDatabase>) -> (Self, Task<Message>) {
         (Self { database }, Task::none())
     }
 
