@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-pub mod create_database;
+pub mod create;
 pub mod homepage;
-pub mod unlock_database;
+pub mod unlock;
 
-pub use create_database::CreateDatabase;
+pub use create::CreateDatabase;
 pub use homepage::HomePage;
 use iced::Task;
-pub use unlock_database::UnlockDatabase;
+pub use unlock::UnlockDatabase;
 
 pub enum Screen {
     Error(String),

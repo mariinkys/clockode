@@ -8,7 +8,7 @@ use iced::{
 
 use crate::app::{
     core::check_database,
-    screen::{HomePage, Screen, UnlockDatabase, create_database, homepage, unlock_database},
+    screen::{HomePage, Screen, UnlockDatabase, create, homepage, unlock},
 };
 
 mod core;
@@ -22,9 +22,9 @@ pub struct Clockode {
 #[derive(Debug, Clone)]
 pub enum Message {
     /// Create Database [`Screen`] Messages
-    CreateDatabase(create_database::Message),
+    CreateDatabase(create::Message),
     /// Unlock Database [`Screen`] Messages
-    UnlockDatabase(unlock_database::Message),
+    UnlockDatabase(unlock::Message),
     /// Homepage [`Screen`] Messages
     HomePage(homepage::Message),
 }
@@ -51,9 +51,9 @@ impl Clockode {
                 };
 
                 match create_database.update(message, self.now) {
-                    create_database::Action::None => Task::none(),
-                    create_database::Action::Run(task) => task.map(Message::CreateDatabase),
-                    create_database::Action::OpenUnlockDatabase(db_path) => {
+                    create::Action::None => Task::none(),
+                    create::Action::Run(task) => task.map(Message::CreateDatabase),
+                    create::Action::OpenUnlockDatabase(db_path) => {
                         let (unlock_database, task) = UnlockDatabase::new(db_path);
 
                         self.screen = Screen::UnlockDatabase(unlock_database);
@@ -68,9 +68,9 @@ impl Clockode {
                 };
 
                 match unlock_database.update(message, self.now) {
-                    unlock_database::Action::None => Task::none(),
-                    unlock_database::Action::Run(task) => task.map(Message::UnlockDatabase),
-                    unlock_database::Action::OpenHomePage(database) => {
+                    unlock::Action::None => Task::none(),
+                    unlock::Action::Run(task) => task.map(Message::UnlockDatabase),
+                    unlock::Action::OpenHomePage(database) => {
                         let (homepage, task) = HomePage::new(database);
 
                         self.screen = Screen::HomePage(homepage);
