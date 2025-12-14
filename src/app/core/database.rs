@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use anywho::anywho;
-use keepass::{Database, DatabaseKey, db::Group};
+use keepass::{
+    Database, DatabaseKey,
+    db::{Entry, Group},
+};
 use secrecy::{ExposeSecret, SecretString};
 use std::path::PathBuf;
 
-use crate::APP_ID;
+use crate::{APP_ID, app::core::entry::ClockodeEntry};
 
 /// Checks whether the application database already exists.
 ///
@@ -82,7 +85,75 @@ pub struct ClockodeDatabase {
 }
 
 impl ClockodeDatabase {
-    pub async fn add_entry(&self) -> Result<(), anywho::Error> {
-        todo!()
+    pub async fn list_entries(&self) -> Result<Vec<ClockodeEntry>, anywho::Error> {
+        let path = self.path.clone();
+        let password = self.password.clone();
+
+        smol::unblock(move || {
+            let mut file = std::fs::File::open(&*path)?;
+            let key = DatabaseKey::new().with_password(password.expose_secret());
+            let db = Database::open(&mut file, key)?;
+
+            let entries = db
+                .root
+                .children
+                .iter()
+                .find_map(|node| {
+                    if let keepass::db::Node::Group(g) = node
+                        && g.name == "Default Group"
+                    {
+                        return Some(g.entries());
+                    }
+                    None
+                })
+                .map(|entries_iter| {
+                    entries_iter
+                        .into_iter()
+                        .map(|e| ClockodeEntry::try_from(e.to_owned()))
+                        .collect::<Result<Vec<ClockodeEntry>, _>>()
+                })
+                .transpose()?
+                .unwrap_or_else(Vec::new);
+
+            Ok(entries)
+        })
+        .await
+    }
+
+    pub async fn add_entry(&self, entry: ClockodeEntry) -> Result<(), anywho::Error> {
+        let path = self.path.clone();
+        let password = self.password.clone();
+
+        smol::unblock(move || {
+            let mut file = std::fs::File::open(&*path)?;
+            let key = DatabaseKey::new().with_password(password.expose_secret());
+            let mut db = Database::open(&mut file, key)?;
+
+            let keepass_entry = Entry::from(entry);
+
+            let target_group = db
+                .root
+                .children
+                .iter_mut()
+                .find_map(|node| {
+                    if let keepass::db::Node::Group(g) = node
+                        && g.name == "Default Group"
+                    {
+                        return Some(g);
+                    }
+                    None
+                })
+                .unwrap();
+
+            target_group.add_child(keepass_entry);
+
+            db.save(
+                &mut std::fs::File::create(&*path)?,
+                DatabaseKey::new().with_password(password.expose_secret()),
+            )?;
+
+            Ok(())
+        })
+        .await
     }
 }

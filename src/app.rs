@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
+use std::sync::Arc;
+
 use iced::{
     Element, Length, Subscription, Task, Theme,
     time::Instant,
@@ -71,7 +73,7 @@ impl Clockode {
                     unlock::Action::None => Task::none(),
                     unlock::Action::Run(task) => task.map(Message::UnlockDatabase),
                     unlock::Action::OpenHomePage(database) => {
-                        let (homepage, task) = HomePage::new(database);
+                        let (homepage, task) = HomePage::new(Arc::new(*database));
 
                         self.screen = Screen::HomePage(homepage);
                         task.map(Message::HomePage)
