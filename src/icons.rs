@@ -39,6 +39,7 @@ impl IconCache {
         bundle!("emblem-system-symbolic", 21);
         bundle!("list-add-symbolic", 21);
         bundle!("x-office-document-symbolic", 21);
+
         Self { cache }
     }
 
