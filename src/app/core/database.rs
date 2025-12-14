@@ -6,7 +6,7 @@ use keepass::{
     db::{Entry, Group},
 };
 use secrecy::{ExposeSecret, SecretString};
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc, sync::Mutex};
 
 use crate::{APP_ID, app::core::entry::ClockodeEntry};
 
@@ -73,6 +73,7 @@ pub async fn unlock_database(
         Ok(ClockodeDatabase {
             path: Box::from(path),
             password: Box::from(password),
+            lock: Arc::new(Mutex::new(())),
         })
     })
     .await
@@ -82,17 +83,25 @@ pub async fn unlock_database(
 pub struct ClockodeDatabase {
     path: Box<PathBuf>,
     password: Box<SecretString>,
+    lock: Arc<std::sync::Mutex<()>>, // We use this to prevent Race Condition / Data Loss
 }
 
 impl ClockodeDatabase {
     pub async fn list_entries(&self) -> Result<Vec<ClockodeEntry>, anywho::Error> {
+        let lock = self.lock.clone();
+
         let path = self.path.clone();
         let password = self.password.clone();
 
         smol::unblock(move || {
+            let _guard = lock
+                .lock()
+                .map_err(|e| anywho!("Database lock poisoned: {}", e))?;
+
             let mut file = std::fs::File::open(&*path)?;
             let key = DatabaseKey::new().with_password(password.expose_secret());
             let db = Database::open(&mut file, key)?;
+            drop(file); // this should't be needed here because we only read, I just added it for consistency
 
             let entries = db
                 .root
@@ -121,13 +130,20 @@ impl ClockodeDatabase {
     }
 
     pub async fn add_entry(&self, entry: ClockodeEntry) -> Result<(), anywho::Error> {
+        let lock = self.lock.clone();
+
         let path = self.path.clone();
         let password = self.password.clone();
 
         smol::unblock(move || {
+            let _guard = lock
+                .lock()
+                .map_err(|e| anywho!("Database lock poisoned: {}", e))?;
+
             let mut file = std::fs::File::open(&*path)?;
             let key = DatabaseKey::new().with_password(password.expose_secret());
             let mut db = Database::open(&mut file, key)?;
+            drop(file);
 
             let keepass_entry = Entry::from(entry);
 
@@ -143,9 +159,125 @@ impl ClockodeDatabase {
                     }
                     None
                 })
-                .unwrap();
+                .ok_or_else(|| anywho!("Default Group not found"))?;
 
             target_group.add_child(keepass_entry);
+
+            db.save(
+                &mut std::fs::File::create(&*path)?,
+                DatabaseKey::new().with_password(password.expose_secret()),
+            )?;
+
+            Ok(())
+        })
+        .await
+    }
+
+    pub async fn update_entry(&self, entry: ClockodeEntry) -> Result<(), anywho::Error> {
+        let lock = self.lock.clone();
+
+        let path = self.path.clone();
+        let password = self.password.clone();
+
+        smol::unblock(move || {
+            let _guard = lock
+                .lock()
+                .map_err(|e| anywho!("Database lock poisoned: {}", e))?;
+
+            let mut file = std::fs::File::open(&*path)?;
+            let key = DatabaseKey::new().with_password(password.expose_secret());
+            let mut db = Database::open(&mut file, key)?;
+            drop(file);
+
+            let entry_id = entry
+                .id
+                .ok_or_else(|| anywho!("Cannot update entry without UUID"))?;
+
+            let target_group = db
+                .root
+                .children
+                .iter_mut()
+                .find_map(|node| {
+                    if let keepass::db::Node::Group(g) = node
+                        && g.name == "Default Group"
+                    {
+                        return Some(g);
+                    }
+                    None
+                })
+                .ok_or_else(|| anywho!("Default Group not found"))?;
+
+            // Find and update the entry
+            let entry_found = target_group
+                .children
+                .iter_mut()
+                .find_map(|node| {
+                    if let keepass::db::Node::Entry(e) = node
+                        && e.get_uuid() == &entry_id
+                    {
+                        return Some(e);
+                    }
+                    None
+                })
+                .ok_or_else(|| anywho!("Entry with UUID {} not found", entry_id))?;
+
+            let updated_keepass_entry = Entry::from(entry);
+
+            // Update all fields from the new entry
+            entry_found.fields = updated_keepass_entry.fields;
+
+            db.save(
+                &mut std::fs::File::create(&*path)?,
+                DatabaseKey::new().with_password(password.expose_secret()),
+            )?;
+
+            Ok(())
+        })
+        .await
+    }
+
+    pub async fn delete_entry(&self, entry_id: uuid::Uuid) -> Result<(), anywho::Error> {
+        let lock = self.lock.clone();
+
+        let path = self.path.clone();
+        let password = self.password.clone();
+
+        smol::unblock(move || {
+            let _guard = lock
+                .lock()
+                .map_err(|e| anywho!("Database lock poisoned: {}", e))?;
+
+            let mut file = std::fs::File::open(&*path)?;
+            let key = DatabaseKey::new().with_password(password.expose_secret());
+            let mut db = Database::open(&mut file, key)?;
+            drop(file);
+
+            let target_group = db
+                .root
+                .children
+                .iter_mut()
+                .find_map(|node| {
+                    if let keepass::db::Node::Group(g) = node
+                        && g.name == "Default Group"
+                    {
+                        return Some(g);
+                    }
+                    None
+                })
+                .ok_or_else(|| anywho!("Default Group not found"))?;
+
+            let entry_index = target_group
+                .children
+                .iter()
+                .position(|node| {
+                    if let keepass::db::Node::Entry(e) = node {
+                        return e.get_uuid() == &entry_id;
+                    }
+                    false
+                })
+                .ok_or_else(|| anywho!("Entry with UUID {} not found", entry_id))?;
+
+            target_group.children.remove(entry_index);
 
             db.save(
                 &mut std::fs::File::create(&*path)?,

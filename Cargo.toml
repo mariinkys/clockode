@@ -20,12 +20,13 @@ keepass = { version = "0.8.16", features = [
     "save_kdbx4",
 ] } # KeePass DB Management
 rqrr = "0.10.0" # QR Detection
-totp-rs = "5.7.0" # TOTP Generation ...
+totp-rs = { version = "5.7.0", features = ["otpauth"] } # TOTP Generation ...
 arboard = { version = "3.6.1", features = [
     "wayland-data-control",
 ] } # Clipboard (https://github.com/bitwarden/clients/issues/6812)
 rfd = "0.16.0" # File System Dialogs
 secrecy = "0.10.3" # Provides us with SecretString
+uuid = "1.19.0"
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]

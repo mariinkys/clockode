@@ -1,15 +1,19 @@
 use anywho::anywho;
 use keepass::db::{Entry, Value};
 use totp_rs::{Algorithm, Secret, TOTP};
+use uuid::Uuid;
 
 // These constants define the names of the custom fields used to store TOTP parameters within a generic KeePass entry.
 const CUSTOM_SECRET_KEY: &str = "ClockodeTotpSecret";
 const CUSTOM_ALGORITHM_KEY: &str = "ClockodeTotpAlgorithm";
 const CUSTOM_PERIOD_KEY: &str = "ClockodeTotpPeriod";
 const CUSTOM_DIGITS_KEY: &str = "ClockodeTotpDigits";
+const CUSTOM_ISSUER_KEY: &str = "ClockodeTotpIssuer";
+const CUSTOM_ACCOUNTNAME_KEY: &str = "ClockodeTotpAccountName";
 
 #[derive(Debug, Clone)]
 pub struct ClockodeEntry {
+    pub id: Option<Uuid>,
     pub name: String,
     pub totp: TOTP,
 }
@@ -44,6 +48,21 @@ impl ClockodeEntry {
             return false;
         }
 
+        // Validate account name is not empty
+        if self.totp.account_name.trim().is_empty() {
+            return false;
+        }
+
+        // Validate issuer does not contain colon
+        if self
+            .totp
+            .issuer
+            .as_deref()
+            .is_some_and(|x| x.contains("\""))
+        {
+            return false;
+        }
+
         true
     }
 }
@@ -52,6 +71,8 @@ impl TryFrom<Entry> for ClockodeEntry {
     type Error = anywho::Error;
 
     fn try_from(value: Entry) -> Result<Self, anywho::Error> {
+        let id = value.get_uuid();
+
         let name = value
             .get_title()
             .unwrap_or("Unnamed TOTP Entry")
@@ -87,10 +108,26 @@ impl TryFrom<Entry> for ClockodeEntry {
             .to_bytes()
             .map_err(|e| anywho!("Failed to decode TOTP secret from KeePass entry: {}", e))?;
 
-        let totp_result = TOTP::new(algorithm, digits, 0, period, secret_bytes)
-            .map_err(|e| anywho!("Failed to construct TOTP object: {}", e))?;
+        let issuer: Option<String> = value.get(CUSTOM_ISSUER_KEY).map(String::from);
+
+        let account_name: String = value
+            .get(CUSTOM_ACCOUNTNAME_KEY)
+            .unwrap_or(&name)
+            .to_string();
+
+        let totp_result = TOTP::new(
+            algorithm,
+            digits,
+            0,
+            period,
+            secret_bytes,
+            issuer,
+            account_name,
+        )
+        .map_err(|e| anywho!("Failed to construct TOTP object: {}", e))?;
 
         Ok(ClockodeEntry {
+            id: Some(*id),
             name,
             totp: totp_result,
         })
@@ -103,7 +140,7 @@ impl From<ClockodeEntry> for Entry {
 
         entry
             .fields
-            .insert("Title".to_string(), Value::Unprotected(value.name));
+            .insert("Title".to_string(), Value::Unprotected(value.name.clone()));
 
         let secret_b32_string = value.totp.get_secret_base32().to_string();
         entry.fields.insert(
@@ -124,6 +161,16 @@ impl From<ClockodeEntry> for Entry {
         entry.fields.insert(
             CUSTOM_DIGITS_KEY.to_string(),
             Value::Unprotected(value.totp.digits.to_string()),
+        );
+
+        entry.fields.insert(
+            CUSTOM_ISSUER_KEY.to_string(),
+            Value::Unprotected(value.totp.issuer.unwrap_or(value.name)),
+        );
+
+        entry.fields.insert(
+            CUSTOM_ACCOUNTNAME_KEY.to_string(),
+            Value::Unprotected(value.totp.account_name),
         );
 
         entry

@@ -40,6 +40,7 @@ pub enum Message {
 
     UpsertPage(upsert::Message),
     OpenUpsertPage(Option<ClockodeEntry>),
+    EntryUpserted(Result<(), anywho::Error>),
 }
 
 pub enum Action {
@@ -49,6 +50,8 @@ pub enum Action {
     Run(Task<Message>),
     /// Add a new [`Toast`] to show
     AddToast(Toast),
+    /// Ask parent to run an [`iced::Task`] and add a [`Toast`] to show
+    RunAndToast(Task<Message>, Toast),
 }
 
 impl HomePage {
@@ -126,8 +129,22 @@ impl HomePage {
                 match upsert_page.update(message, now) {
                     upsert::Action::None => Action::None,
                     upsert::Action::Back => self.update(Message::LoadEntries, now),
-                    upsert::Action::Run(task) => Action::Run(task.map(Message::UpsertPage)),
+                    //upsert::Action::Run(task) => Action::Run(task.map(Message::UpsertPage)),
                     upsert::Action::AddToast(toast) => Action::AddToast(toast),
+                    upsert::Action::UpdateEntry(clockode_entry) => {
+                        let db_clone = Arc::clone(&self.database);
+                        Action::Run(Task::perform(
+                            async move { db_clone.update_entry(clockode_entry).await },
+                            Message::EntryUpserted,
+                        ))
+                    }
+                    upsert::Action::CreateEntry(clockode_entry) => {
+                        let db_clone = Arc::clone(&self.database);
+                        Action::Run(Task::perform(
+                            async move { db_clone.add_entry(clockode_entry).await },
+                            Message::EntryUpserted,
+                        ))
+                    }
                 }
             }
             Message::OpenUpsertPage(entry) => {
@@ -139,6 +156,20 @@ impl HomePage {
                 *subscreen = SubScreen::UpsertPage(upsert_page);
                 Action::Run(task.map(Message::UpsertPage))
             }
+            Message::EntryUpserted(result) => match result {
+                Ok(_) => self.update(Message::LoadEntries, now),
+                Err(err) => {
+                    self.state = State::Loading;
+                    let db_clone = Arc::clone(&self.database);
+                    Action::RunAndToast(
+                        Task::perform(
+                            async move { db_clone.list_entries().await },
+                            Message::EntriesLoaded,
+                        ),
+                        Toast::error_toast(err),
+                    )
+                }
+            },
         }
     }
 

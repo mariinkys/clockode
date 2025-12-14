@@ -785,6 +785,7 @@ dependencies = [
  "secrecy",
  "smol",
  "totp-rs",
+ "uuid",
 ]
 
 [[package]]
@@ -4301,6 +4302,8 @@ dependencies = [
  "hmac",
  "sha1",
  "sha2",
+ "url",
+ "urlencoding",
 ]
 
 [[package]]

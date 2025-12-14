@@ -16,6 +16,7 @@ use crate::app::{
 
 mod core;
 mod screen;
+mod utils;
 mod widgets;
 
 pub struct Clockode {
@@ -109,6 +110,10 @@ impl Clockode {
                     homepage::Action::None => Task::none(),
                     homepage::Action::Run(task) => task.map(Message::HomePage),
                     homepage::Action::AddToast(toast) => self.update(Message::AddToast(toast), now),
+                    homepage::Action::RunAndToast(task, toast) => Task::batch([
+                        task.map(Message::HomePage),
+                        self.update(Message::AddToast(toast), now),
+                    ]),
                 }
             }
         }
