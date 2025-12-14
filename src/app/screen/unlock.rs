@@ -15,7 +15,10 @@ use iced::{
     },
 };
 
-use crate::app::core::{ClockodeDatabase, unlock_database};
+use crate::app::{
+    core::{ClockodeDatabase, unlock_database},
+    widgets::Toast,
+};
 
 pub struct UnlockDatabase {
     db_path: PathBuf,
@@ -39,6 +42,8 @@ pub enum Action {
     Run(Task<Message>),
     /// Ask parent to open the [`Screen::HomePage`]
     OpenHomePage(Box<ClockodeDatabase>),
+    /// Add a new [`Toast`] to show
+    AddToast(Toast),
 }
 
 impl UnlockDatabase {
@@ -92,7 +97,7 @@ impl UnlockDatabase {
             )),
             Message::DatabaseUnlocked(res) => match *res {
                 Ok(db) => Action::OpenHomePage(Box::from(db)),
-                Err(err) => todo!(),
+                Err(err) => Action::AddToast(Toast::error_toast(err)),
             },
         }
     }

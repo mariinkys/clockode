@@ -8,7 +8,7 @@ use iced::{
     widget::{Column, button, column, container, row, scrollable, text},
 };
 
-use crate::app::core::ClockodeEntry;
+use crate::app::{core::ClockodeEntry, widgets::Toast};
 
 pub struct UpsertPage {
     entry: Option<ClockodeEntry>,
@@ -27,6 +27,8 @@ pub enum Action {
     Back,
     /// Ask parent to run an [`iced::Task`]
     Run(Task<Message>),
+    /// Add a new [`Toast`] to show
+    AddToast(Toast),
 }
 
 impl UpsertPage {

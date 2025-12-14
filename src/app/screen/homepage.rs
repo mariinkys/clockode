@@ -10,7 +10,10 @@ use iced::{
     widget::{Column, button, column, container, row, scrollable, text},
 };
 
-use crate::app::core::{ClockodeDatabase, ClockodeEntry};
+use crate::app::{
+    core::{ClockodeDatabase, ClockodeEntry},
+    widgets::Toast,
+};
 
 mod settings;
 mod upsert;
@@ -44,6 +47,8 @@ pub enum Action {
     None,
     /// Ask parent to run an [`iced::Task`]
     Run(Task<Message>),
+    /// Add a new [`Toast`] to show
+    AddToast(Toast),
 }
 
 impl HomePage {
@@ -96,21 +101,18 @@ impl HomePage {
                     Message::EntriesLoaded,
                 ))
             }
-            Message::EntriesLoaded(result) => {
-                match result {
-                    Ok(entries) => {
-                        self.state = State::Ready {
-                            subscreen: SubScreen::Home { entries },
-                        };
-                        Action::None
-                    }
-                    Err(err) => {
-                        // TODO:
-                        eprintln!("{}", err);
-                        Action::None
-                    }
+            Message::EntriesLoaded(result) => match result {
+                Ok(entries) => {
+                    self.state = State::Ready {
+                        subscreen: SubScreen::Home { entries },
+                    };
+                    Action::None
                 }
-            }
+                Err(err) => {
+                    eprintln!("{}", err);
+                    Action::AddToast(Toast::error_toast(err))
+                }
+            },
 
             Message::UpsertPage(message) => {
                 let State::Ready { subscreen } = &mut self.state else {
@@ -125,6 +127,7 @@ impl HomePage {
                     upsert::Action::None => Action::None,
                     upsert::Action::Back => self.update(Message::LoadEntries, now),
                     upsert::Action::Run(task) => Action::Run(task.map(Message::UpsertPage)),
+                    upsert::Action::AddToast(toast) => Action::AddToast(toast),
                 }
             }
             Message::OpenUpsertPage(entry) => {

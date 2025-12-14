@@ -15,7 +15,7 @@ use iced::{
     },
 };
 
-use crate::app::core::create_database;
+use crate::app::{core::create_database, widgets::Toast};
 
 pub struct CreateDatabase {
     inputs: PageInputs,
@@ -39,6 +39,8 @@ pub enum Action {
     Run(Task<Message>),
     /// Ask parent to open the [`Screen::UnlockDatabase`]
     OpenUnlockDatabase(PathBuf),
+    /// Add a new [`Toast`] to show
+    AddToast(Toast),
 }
 
 impl CreateDatabase {
@@ -100,7 +102,7 @@ impl CreateDatabase {
 
             Message::DatabaseCreated(result) => match result {
                 Ok(db_path) => Action::OpenUnlockDatabase(db_path),
-                Err(err) => todo!(),
+                Err(err) => Action::AddToast(Toast::error_toast(err)),
             },
         }
     }

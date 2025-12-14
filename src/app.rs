@@ -11,18 +11,25 @@ use iced::{
 use crate::app::{
     core::check_database,
     screen::{HomePage, Screen, UnlockDatabase, create, homepage, unlock},
+    widgets::Toast,
 };
 
 mod core;
 mod screen;
+mod widgets;
 
 pub struct Clockode {
+    toasts: Vec<Toast>,
     now: Instant,
     screen: Screen,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    /// Add a new [`Toast`] to show in the app
+    AddToast(Toast),
+    /// Close the given [`Toast`]
+    CloseToast(usize),
     /// Create Database [`Screen`] Messages
     CreateDatabase(create::Message),
     /// Unlock Database [`Screen`] Messages
@@ -36,6 +43,7 @@ impl Clockode {
         let (screen, task) = Screen::from_database_check(check_database());
         (
             Self {
+                toasts: Vec::new(),
                 now: Instant::now(),
                 screen,
             },
@@ -47,6 +55,15 @@ impl Clockode {
         self.now = now;
 
         match message {
+            Message::AddToast(toast) => {
+                self.toasts.push(toast);
+                Task::none()
+            }
+            Message::CloseToast(index) => {
+                self.toasts.remove(index);
+                Task::none()
+            }
+
             Message::CreateDatabase(message) => {
                 let Screen::CreateDatabase(create_database) = &mut self.screen else {
                     return Task::none();
@@ -55,6 +72,7 @@ impl Clockode {
                 match create_database.update(message, self.now) {
                     create::Action::None => Task::none(),
                     create::Action::Run(task) => task.map(Message::CreateDatabase),
+                    create::Action::AddToast(toast) => self.update(Message::AddToast(toast), now),
                     create::Action::OpenUnlockDatabase(db_path) => {
                         let (unlock_database, task) = UnlockDatabase::new(db_path);
 
@@ -72,6 +90,7 @@ impl Clockode {
                 match unlock_database.update(message, self.now) {
                     unlock::Action::None => Task::none(),
                     unlock::Action::Run(task) => task.map(Message::UnlockDatabase),
+                    unlock::Action::AddToast(toast) => self.update(Message::AddToast(toast), now),
                     unlock::Action::OpenHomePage(database) => {
                         let (homepage, task) = HomePage::new(Arc::new(*database));
 
@@ -89,13 +108,14 @@ impl Clockode {
                 match homepage.update(message, self.now) {
                     homepage::Action::None => Task::none(),
                     homepage::Action::Run(task) => task.map(Message::HomePage),
+                    homepage::Action::AddToast(toast) => self.update(Message::AddToast(toast), now),
                 }
             }
         }
     }
 
     pub fn view(&self) -> Element<'_, Message> {
-        match &self.screen {
+        let content = match &self.screen {
             Screen::Error(error) => container(text(error)).center(Length::Fill).into(),
             Screen::CreateDatabase(create_database) => {
                 create_database.view(self.now).map(Message::CreateDatabase)
@@ -104,7 +124,9 @@ impl Clockode {
                 unlock_database.view(self.now).map(Message::UnlockDatabase)
             }
             Screen::HomePage(homepage) => homepage.view(self.now).map(Message::HomePage),
-        }
+        };
+
+        widgets::toast::Manager::new(content, &self.toasts, Message::CloseToast).into()
     }
 
     pub fn subscription(&self) -> Subscription<Message> {
