@@ -5,7 +5,7 @@ use iced::{
     Length::{self},
     Subscription, Task,
     time::Instant,
-    widget::{button, column, container, pick_list, row, text, text_input},
+    widget::{button, column, container, pick_list, row, space, text, text_input},
 };
 use totp_rs::Algorithm;
 
@@ -28,6 +28,8 @@ pub enum Message {
     InputUpdated(TOTPEntryInput),
     /// Submit the changes
     Submit,
+    /// Delete the currently editing entry
+    Delete,
 }
 
 pub enum Action {
@@ -43,6 +45,8 @@ pub enum Action {
     UpdateEntry(ClockodeEntry),
     /// Ask the parent to create the given [`ClockodeEntry`]
     CreateEntry(ClockodeEntry),
+    /// Ask the parent to delete the [`ClockodeEntry`] with the give [`uuid::Uuid`]
+    DeleteEntry(uuid::Uuid),
 }
 
 /// Represents the different inputs the user can perfrom on the upsert screen
@@ -66,7 +70,7 @@ impl UpsertPage {
     }
 
     pub fn view(&self, _now: Instant) -> iced::Element<'_, Message> {
-        let header = header_view();
+        let header = header_view(&self.entry);
         let content = upsert_entry_view(&self.entry);
 
         container(
@@ -134,6 +138,13 @@ impl UpsertPage {
                     Action::AddToast(Toast::error_toast("Invalid TOTP Entity"))
                 }
             }
+            Message::Delete => {
+                if let Some(id) = self.entry.uuid {
+                    Action::DeleteEntry(id)
+                } else {
+                    Action::None
+                }
+            }
         }
     }
 
@@ -143,11 +154,17 @@ impl UpsertPage {
 }
 
 /// View of the header of this screen
-fn header_view<'a>() -> Element<'a, Message> {
-    row![button("Back").on_press(Message::Back)]
-        .width(Length::Fill)
-        .height(Length::Fixed(30.))
-        .into()
+fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
+    row![
+        button("Back").on_press(Message::Back),
+        space().width(Length::Fill),
+        button("Delete")
+            .style(button::danger)
+            .on_press_maybe(entry.uuid.is_some().then_some(Message::Delete))
+    ]
+    .width(Length::Fill)
+    .height(Length::Fixed(30.))
+    .into()
 }
 
 fn upsert_entry_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {

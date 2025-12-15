@@ -132,7 +132,6 @@ impl HomePage {
                 match upsert_page.update(message, now) {
                     upsert::Action::None => Action::None,
                     upsert::Action::Back => self.update(Message::LoadEntries, now),
-                    //upsert::Action::Run(task) => Action::Run(task.map(Message::UpsertPage)),
                     upsert::Action::AddToast(toast) => Action::AddToast(toast),
                     upsert::Action::UpdateEntry(clockode_entry) => {
                         let db_clone = Arc::clone(&self.database);
@@ -145,6 +144,13 @@ impl HomePage {
                         let db_clone = Arc::clone(&self.database);
                         Action::Run(Task::perform(
                             async move { db_clone.add_entry(clockode_entry).await },
+                            Message::EntryUpserted,
+                        ))
+                    }
+                    upsert::Action::DeleteEntry(uuid) => {
+                        let db_clone = Arc::clone(&self.database);
+                        Action::Run(Task::perform(
+                            async move { db_clone.delete_entry(uuid).await },
                             Message::EntryUpserted,
                         ))
                     }
@@ -251,6 +257,9 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
                             .spacing(4)
                             .align_x(iced::Alignment::End),
                         button("Copy").padding(8),
+                        button("Edit")
+                            .on_press(Message::OpenUpsertPage(Some(entry.clone())))
+                            .padding(8),
                     ]
                     .spacing(20)
                     .padding(16)
