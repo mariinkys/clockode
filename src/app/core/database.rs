@@ -122,10 +122,13 @@ impl ClockodeDatabase {
                     None
                 })
                 .map(|entries_iter| {
-                    entries_iter
+                    let mut v = entries_iter
                         .into_iter()
                         .map(|e| ClockodeEntry::try_from(e.to_owned()))
-                        .collect::<Result<Vec<ClockodeEntry>, _>>()
+                        .collect::<Result<Vec<_>, _>>()?;
+
+                    v.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+                    Ok::<Vec<ClockodeEntry>, anywho::Error>(v)
                 })
                 .transpose()?
                 .unwrap_or_else(Vec::new);
