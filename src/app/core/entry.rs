@@ -54,12 +54,7 @@ impl ClockodeEntry {
         }
 
         // Validate issuer does not contain colon
-        if self
-            .totp
-            .issuer
-            .as_deref()
-            .is_some_and(|x| x.contains("\""))
-        {
+        if self.totp.issuer.as_deref().is_some_and(|x| x.contains(":")) {
             return false;
         }
 
@@ -115,16 +110,18 @@ impl TryFrom<Entry> for ClockodeEntry {
             .unwrap_or(&name)
             .to_string();
 
-        let totp_result = TOTP::new(
+        // Don't use TOTP::new() because it enforces validation and some secrets (ej: microsoft)
+        // that are xxxx xxxx xxxx xxxx will fail here if we use ::new() with error:
+        // Failed to construct TOTP object: The length of the shared secret MUST be at least 128 bits. 80 bits is not enough
+        let totp_result = TOTP {
             algorithm,
             digits,
-            0,
-            period,
-            secret_bytes,
+            skew: 0,
+            step: period,
+            secret: secret_bytes,
             issuer,
             account_name,
-        )
-        .map_err(|e| anywho!("Failed to construct TOTP object: {}", e))?;
+        };
 
         Ok(ClockodeEntry {
             id: Some(*id),

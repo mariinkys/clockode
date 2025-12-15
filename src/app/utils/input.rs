@@ -53,6 +53,13 @@ impl TryFrom<InputableClockodeEntry> for ClockodeEntry {
     type Error = anywho::Error;
 
     fn try_from(value: InputableClockodeEntry) -> Result<Self, anywho::Error> {
+        let secret = value
+            .secret
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .collect::<String>()
+            .to_uppercase();
+
         let entry = Self {
             id: value.uuid,
             name: value.name,
@@ -61,11 +68,9 @@ impl TryFrom<InputableClockodeEntry> for ClockodeEntry {
                 digits: value.digits,
                 skew: 0,
                 step: value.step,
-                secret: totp_rs::Secret::Encoded(value.secret)
-                    .to_bytes()
-                    .map_err(|e| {
-                        anywho!("Failed to decode TOTP secret from KeePass entry: {}", e)
-                    })?,
+                secret: totp_rs::Secret::Encoded(secret).to_bytes().map_err(|e| {
+                    anywho!("Failed to decode TOTP secret from KeePass entry: {}", e)
+                })?,
                 issuer: value.issuer,
                 account_name: value.account_name,
             },
@@ -111,7 +116,7 @@ impl InputableClockodeEntry {
         }
 
         // Validate issuer does not contain colon
-        if self.issuer.as_deref().is_some_and(|x| x.contains("\"")) {
+        if self.issuer.as_deref().is_some_and(|x| x.contains(':')) {
             return false;
         }
 
