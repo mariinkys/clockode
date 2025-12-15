@@ -74,7 +74,10 @@ pub async fn unlock_database(
     smol::unblock(move || {
         let mut file = std::fs::File::open(&path)?;
         let key = DatabaseKey::new().with_password(password.expose_secret());
-        let _db = Database::open(&mut file, key)?;
+        let _db = Database::open(&mut file, key).map_err(|e| match e {
+            keepass::error::DatabaseOpenError::Key(_) => anywho!("Incorrect Password"),
+            other => other.into(),
+        })?;
 
         Ok(ClockodeDatabase {
             path: Box::from(path),
