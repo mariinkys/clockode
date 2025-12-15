@@ -8,10 +8,10 @@
   ![GitHub Repo stars](https://img.shields.io/github/stars/mariinkys/clockode)
 
 
-  <h3>Minimal TOTP client made with Iced</h3>
+  <h3>TOTP client made with Iced</h3>
 
-  <img width="350" alt="Main Page Light Mode" src="./screenshots/main-light.png"/>
-  <img width="350" alt="Main Page Dark Mode" src="./screenshots/main-dark.png"/>
+  <img width="320" alt="Main Page (Light Mode)" src="./screenshots/main-light.png"/>
+  <img width="320" alt="Main Page (Dark Mode)" src="./screenshots/main-dark.png"/>
 
   <br><br>
 
@@ -93,4 +93,4 @@ You can also help do this and more projects, [Buy me a coffee](https://www.buyme
 
 Copyright 2025 © Alex Marín
 
-Released under the terms of the [GPL-3.0](https://github.com/mariinkys/clockode/blob/main/LICENSE)
+Released under the terms of the [GPL-3.0](./LICENSE)
