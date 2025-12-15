@@ -297,4 +297,67 @@ impl ClockodeDatabase {
         })
         .await
     }
+
+    // Import the content given in standard totp
+    pub async fn import_content(&self, file_path: PathBuf) -> Result<(), anywho::Error> {
+        // Read the import file
+        let content = std::fs::read_to_string(&file_path)
+            .map_err(|e| anywho!("Failed to read import file: {}", e))?;
+
+        for line in content.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+
+            // we use from_url unchecked because of the same reason we can't use TOTP::new
+            // Don't use TOTP::new() because it enforces validation and some secrets (ej: microsoft)
+            // that are xxxx xxxx xxxx xxxx will fail here if we use ::new() with error:
+            // Failed to construct TOTP object: The length of the shared secret MUST be at least 128 bits. 80 bits is not enough
+            match totp_rs::TOTP::from_url_unchecked(line) {
+                Ok(totp) => {
+                    let name = if totp.account_name.trim().is_empty() {
+                        "Default".to_string()
+                    } else {
+                        totp.account_name.clone()
+                    };
+
+                    let entry = ClockodeEntry {
+                        id: None,
+                        name,
+                        totp,
+                    };
+
+                    self.add_entry(entry).await?;
+                }
+                Err(e) => {
+                    eprintln!("Warning: Failed to parse TOTP URL '{}': {}", line, e);
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    // Export content to standard
+    pub async fn export_content(&self, file_path: PathBuf) -> Result<(), anywho::Error> {
+        let entries = self.list_entries().await?;
+
+        if entries.is_empty() {
+            return Err(anywho!("No entries found to export"));
+        }
+
+        let mut export_content = String::new();
+
+        for entry in entries {
+            let url = entry.totp.get_url();
+            export_content.push_str(&url);
+            export_content.push('\n');
+        }
+
+        std::fs::write(&file_path, export_content)
+            .map_err(|e| anywho!("Failed to write export file: {}", e))?;
+
+        Ok(())
+    }
 }

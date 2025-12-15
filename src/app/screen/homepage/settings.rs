@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::sync::{Arc, Mutex};
+use std::{
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
 
 use iced::{
     Alignment, Element,
@@ -9,6 +12,7 @@ use iced::{
     time::Instant,
     widget::{button, column, container, pick_list, row, scrollable, space, text},
 };
+use rfd::{AsyncFileDialog, FileHandle};
 
 use crate::{
     APP_ID,
@@ -29,6 +33,14 @@ pub enum Message {
     ChangedTheme(ColockodeTheme),
     /// Configuration Saved
     ConfigurationSaved(Result<(), anywho::Error>),
+    /// Open the File Dialog to select a file to import
+    OpenImportDialog,
+    /// Open the File Dialog to select where to export the file
+    OpenExportDialog,
+    /// Import Path Selected Callback (after dialog)
+    ImportPathSelected(Option<FileHandle>),
+    /// Export Path Selected Callback (after dialog)
+    ExportPathSelected(Option<FileHandle>),
 }
 
 pub enum Action {
@@ -40,6 +52,10 @@ pub enum Action {
     Run(Task<Message>),
     /// Add a new [`Toast`] to show
     AddToast(Toast),
+    /// Ask parent to import some content from the given filepath
+    ImportContent(PathBuf),
+    /// Ask parent to export the context to the given filepath
+    ExportContent(PathBuf),
 }
 
 impl SettingsPage {
@@ -82,6 +98,38 @@ impl SettingsPage {
                 Ok(_) => Action::None,
                 Err(e) => Action::AddToast(Toast::error_toast(e)),
             },
+            Message::OpenImportDialog => Action::Run(Task::perform(
+                async move {
+                    AsyncFileDialog::new()
+                        .add_filter("txt", &["txt"])
+                        .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                        .pick_file()
+                        .await
+                },
+                Message::ImportPathSelected,
+            )),
+            Message::OpenExportDialog => Action::Run(Task::perform(
+                async move {
+                    AsyncFileDialog::new()
+                        .set_file_name("export.txt")
+                        .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                        .save_file()
+                        .await
+                },
+                Message::ExportPathSelected,
+            )),
+            Message::ImportPathSelected(handle) => {
+                if let Some(file_handle) = handle {
+                    return Action::ImportContent(file_handle.path().to_path_buf());
+                }
+                Action::None
+            }
+            Message::ExportPathSelected(handle) => {
+                if let Some(file_handle) = handle {
+                    return Action::ExportContent(file_handle.path().to_path_buf());
+                }
+                Action::None
+            }
         }
     }
 
@@ -143,7 +191,7 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
                     .spacing(style::spacing::TINY)
                     .align_y(Alignment::Center)
                 )
-                //.on_press(Message::ExportVault)
+                .on_press(Message::OpenExportDialog)
                 .padding(12)
                 .width(Length::Fill)
                 .style(style::primary_button),
@@ -161,7 +209,7 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
                     .spacing(style::spacing::TINY)
                     .align_y(Alignment::Center)
                 )
-                //.on_press(Message::ImportVault)
+                .on_press(Message::OpenImportDialog)
                 .padding(12)
                 .width(Length::Fill)
                 .style(style::primary_button),
