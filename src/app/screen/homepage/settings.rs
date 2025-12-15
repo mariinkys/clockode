@@ -163,7 +163,7 @@ fn header_view<'a>() -> Element<'a, Message> {
         space().width(Length::Fill),
     ]
     .spacing(style::spacing::LARGE)
-    .padding(20)
+    .padding(10)
     .align_y(iced::Alignment::Center)
     .width(Length::Fill)
     .into()
@@ -236,7 +236,7 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
         .spacing(style::spacing::TINY),
     ]
     .spacing(style::spacing::XLARGE)
-    .padding(20)
+    .padding(10)
     .max_width(600);
 
     container(
@@ -252,7 +252,7 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
             )
             .width(Length::Fill)
             .align_x(Alignment::Center)
-            .padding(20),
+            .padding(10),
         ]
         .height(Length::Fill),
     )

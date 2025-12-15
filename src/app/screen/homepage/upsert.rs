@@ -218,7 +218,7 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
         .on_press_maybe(entry.uuid.is_some().then_some(Message::Delete))
     ]
     .spacing(style::spacing::LARGE)
-    .padding(20)
+    .padding(10)
     .align_y(iced::Alignment::Center)
     .width(Length::Fill)
     .into()
@@ -340,7 +340,7 @@ fn upsert_entry_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Messa
         .style(style::primary_submit_button),
     ]
     .spacing(style::spacing::XLARGE)
-    .padding(20)
+    .padding(10)
     .max_width(600);
 
     scrollable(container(form).center_x(Length::Fill))

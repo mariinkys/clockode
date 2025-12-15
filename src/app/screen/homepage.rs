@@ -111,7 +111,7 @@ impl HomePage {
             State::Loading => text("Loading...").into(),
             State::Ready { subscreen } => match subscreen {
                 SubScreen::Home { entries } => {
-                    let header = header_view();
+                    let header = header_view(entries.len());
                     let content = content_view(entries);
 
                     container(column![header, content])
@@ -303,7 +303,7 @@ impl HomePage {
 }
 
 /// View of the header of this screen
-fn header_view<'a>() -> Element<'a, Message> {
+fn header_view<'a>(entry_count: usize) -> Element<'a, Message> {
     row![
         // Title section
         column![
@@ -311,6 +311,13 @@ fn header_view<'a>() -> Element<'a, Message> {
             text("Two-Factor Authentication")
                 .size(style::font_size::SMALL)
                 .style(style::muted_text),
+            text(format!(
+                "{} {}",
+                entry_count,
+                if entry_count == 1 { "Entry" } else { "Entries" }
+            ))
+            .size(style::font_size::SMALL)
+            .style(style::muted_text)
         ]
         .spacing(style::spacing::TINY),
         space().width(Length::Fill),
@@ -328,7 +335,7 @@ fn header_view<'a>() -> Element<'a, Message> {
         .spacing(style::spacing::SMALL)
     ]
     .spacing(style::spacing::LARGE)
-    .padding(20)
+    .padding(10)
     .align_y(iced::Alignment::Center)
     .width(Length::Fill)
     .into()
@@ -352,7 +359,7 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
             Column::new()
                 .height(Length::Fill)
                 .spacing(style::spacing::MEDIUM)
-                .padding(20),
+                .padding(10),
             |col, entry| {
                 let code = entry.totp.generate_current().unwrap_or_default();
                 let time_remaining = get_time_until_next_totp_refresh(entry.totp.step);
