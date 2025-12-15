@@ -2,6 +2,7 @@
 
 use std::{sync::Arc, time::Duration};
 
+use arboard::Clipboard;
 use iced::{
     Alignment, Element,
     Length::{self},
@@ -23,6 +24,7 @@ mod settings;
 mod upsert;
 
 pub struct HomePage {
+    clipboard: Option<Clipboard>,
     database: Arc<ClockodeDatabase>,
     state: State,
 }
@@ -39,6 +41,8 @@ pub enum SubScreen {
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    /// Attempt to copy some [`String`] to the user clipboard
+    CopyToClipboard(String),
     /// Ask to load the [`ClockodeEntry`]s to list on the page
     LoadEntries,
     /// Callback after asking to load [`ClockodeEntry`]s, set's the entries on the state if Ok
@@ -69,9 +73,14 @@ pub enum Action {
 impl HomePage {
     pub fn new(database: Arc<ClockodeDatabase>) -> (Self, Task<Message>) {
         let db_clone = Arc::clone(&database);
+        let clipboard = Clipboard::new();
+        if let Err(clip_err) = &clipboard {
+            eprintln!("{clip_err}");
+        };
 
         (
             Self {
+                clipboard: clipboard.ok(),
                 database,
                 state: State::Loading,
             },
@@ -107,6 +116,20 @@ impl HomePage {
 
     pub fn update(&mut self, message: Message, now: Instant) -> Action {
         match message {
+            Message::CopyToClipboard(value) => {
+                if let Some(clipboard) = &mut self.clipboard {
+                    let res = &clipboard.set_text(value);
+                    match res {
+                        Ok(_) => {
+                            return Action::AddToast(Toast::success_toast("Copied to clipboard"));
+                        }
+                        Err(err) => {
+                            eprintln!("{err}");
+                        }
+                    }
+                }
+                Action::None
+            }
             Message::LoadEntries => {
                 self.state = State::Loading;
 
@@ -286,13 +309,14 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
                         .spacing(style::spacing::TINY)
                         .width(Length::Fill),
                         column![
-                            text(code)
+                            text(code.clone())
                                 .size(style::font_size::HERO)
                                 .font(iced::Font::MONOSPACE)
                         ]
                         .spacing(style::spacing::TINY)
                         .align_x(iced::Alignment::End),
                         button(icons::get_icon("edit-copy-symbolic", 21))
+                            .on_press(Message::CopyToClipboard(code))
                             .padding(8)
                             .style(style::primary_button),
                         button(icons::get_icon("edit-symbolic", 21))
