@@ -44,7 +44,7 @@
                 https://raw.githubusercontent.com/mariinkys/clockode/main/screenshots/main-dark.png</image>
             <caption>Main Page (Dark)</caption>
         </screenshot>
-        <screenshot type="default" xml:lang="en">
+        <screenshot xml:lang="en">
             <image>
                 https://raw.githubusercontent.com/mariinkys/clockode/main/screenshots/add-light.png</image>
             <caption>New Entry Page (Light)</caption>
