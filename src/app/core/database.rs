@@ -45,6 +45,12 @@ pub async fn create_database(password: SecretString) -> Result<PathBuf, anywho::
         .join("database.kdbx");
 
     smol::unblock(move || {
+        // Create the directory if it does not exist
+        let dir_path = path
+            .parent()
+            .ok_or_else(|| anywho!("Database path has no parent directory"))?;
+        std::fs::create_dir_all(dir_path)?;
+
         let mut db = Database::new(Default::default());
         db.meta.database_name = Some(String::from("Clockode Database"));
         let group = Group::new("Default Group");
