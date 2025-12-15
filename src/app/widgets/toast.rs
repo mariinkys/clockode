@@ -5,6 +5,7 @@
 
 use std::fmt;
 
+use iced::Length::Shrink;
 use iced::advanced::layout::{self, Layout};
 use iced::advanced::overlay;
 use iced::advanced::renderer;
@@ -127,7 +128,7 @@ where
                                 weight: iced::font::Weight::Bold,
                                 ..Default::default()
                             }),
-                        text(toast.body.as_str()).width(Fill),
+                        text(toast.body.as_str()).width(Shrink),
                         button(" X ")
                             .style(|t, s| {
                                 let mut style = match toast.status {
@@ -147,7 +148,7 @@ where
                     .align_y(Center)
                     .spacing(3),
                 )
-                .width(Fill)
+                .width(Shrink)
                 .padding(10)
                 .style(|t| {
                     let mut style = match toast.status {
@@ -365,26 +366,28 @@ struct Overlay<'a, 'b, Message> {
 
 impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Message> {
     fn layout(&mut self, renderer: &Renderer, bounds: Size) -> layout::Node {
+        let max_width = bounds.width * 0.75;
         let limits = layout::Limits::new(Size::ZERO, bounds)
-            .width(Fill)
-            .shrink(Size::new(bounds.width * 0.25, 0.0));
+            .max_width(max_width)
+            .width(Length::Shrink);
 
-        layout::flex::resolve(
+        let node = layout::flex::resolve(
             layout::flex::Axis::Vertical,
             renderer,
             &limits,
-            Fill,
+            Shrink,
             Fill,
             10.into(),
             10.0,
             Alignment::Start,
             self.toasts,
             self.trees,
-        )
-        .translate(Vector::new(
-            self.position.x + bounds.width * 0.125,
-            self.position.y,
-        ))
+        );
+
+        let toast_width = node.size().width;
+        let x_offset = (bounds.width - toast_width) / 2.0;
+
+        node.translate(Vector::new(self.position.x + x_offset, self.position.y))
     }
 
     fn update(
