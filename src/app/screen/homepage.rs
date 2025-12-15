@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use iced::{
     Alignment, Element,
@@ -12,6 +12,7 @@ use iced::{
 
 use crate::app::{
     core::{ClockodeDatabase, ClockodeEntry},
+    utils::get_time_until_next_totp_refresh,
     widgets::Toast,
 };
 
@@ -41,6 +42,8 @@ pub enum Message {
     UpsertPage(upsert::Message),
     OpenUpsertPage(Option<ClockodeEntry>),
     EntryUpserted(Result<(), anywho::Error>),
+
+    RefreshCodes,
 }
 
 pub enum Action {
@@ -170,6 +173,12 @@ impl HomePage {
                     )
                 }
             },
+
+            Message::RefreshCodes => {
+                // This forces a re-render every second
+                // Since view() calls totp.generate_current(), codes will update automatically
+                Action::None
+            }
         }
     }
 
@@ -179,7 +188,13 @@ impl HomePage {
         };
 
         match subscreen {
-            SubScreen::Home { .. } => Subscription::none(),
+            SubScreen::Home { entries } => {
+                if entries.is_empty() {
+                    Subscription::none()
+                } else {
+                    iced::time::every(Duration::from_secs(1)).map(|_| Message::RefreshCodes)
+                }
+            }
             SubScreen::UpsertPage(upsert_page) => {
                 upsert_page.subscription(now).map(Message::UpsertPage)
             }
@@ -213,6 +228,7 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
             Column::new().height(Length::Fill).spacing(12).padding(20),
             |col, entry| {
                 let code = entry.totp.generate_current().unwrap_or_default();
+                let time_remaining = get_time_until_next_totp_refresh(entry.totp.step);
 
                 let entry_view = container(
                     row![
@@ -220,7 +236,7 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
                             text(&entry.name).size(18),
                             text(format!(
                                 "{} digits · {}s",
-                                entry.totp.digits, entry.totp.step
+                                entry.totp.digits, time_remaining
                             ))
                             .size(12)
                             .style(|theme: &iced::Theme| {

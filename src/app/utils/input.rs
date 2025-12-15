@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 use crate::app::core::ClockodeEntry;
 use anywho::anywho;
 use totp_rs::{Algorithm, TOTP};
