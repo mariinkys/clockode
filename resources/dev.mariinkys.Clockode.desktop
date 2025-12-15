@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Clockode
-Comment=Minimal TOTP client
+Comment=TOTP Client
 Exec=clockode %F
 Terminal=false
 Type=Application

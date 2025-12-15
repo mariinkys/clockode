@@ -9,16 +9,15 @@
     <url type="donation">https://buymeacoffee.com/mariinkys</url>
 
     <name>Clockode</name>
-    <summary>Minimal TOTP client</summary>
+    <summary>TOTP Client</summary>
 
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>GPL-3.0-only</project_license>
 
     <description>
-        <p>Clockode is a minimal, and offline-only TOTP code generator that stores your
-            authentication secrets in an encrypted local vault, keeping your two-factor codes
-            private and
-            accessible without needing an internet connection.</p>
+        <p>Clockode TOTP code generator that stores your authentication secrets in an encrypted
+            local vault, keeping your two-factor codes private and accessible without needing an
+            internet connection.</p>
         <ul>
             <li>Local encrypted vault</li>
             <li>Offline-first, no internet access required</li>
@@ -52,6 +51,10 @@
         <color type="primary" scheme_preference="dark">#F59E0B</color>
     </branding>
 
+    <requires>
+        <display_length compare="ge">360</display_length>
+    </requires>
+
     <categories>
         <category>Utility</category>
     </categories>
@@ -66,6 +69,11 @@
     </keywords>
 
     <releases>
+        <release version="0.2.0" date="2025-12-16">
+            <description>
+                <p>TODO</p>
+            </description>
+        </release>
         <release version="0.1.4" date="2025-09-20">
             <description>
                 <p>Add support for Standard Backup Format (Compatible with Aegis...)</p>

@@ -1,36 +1,37 @@
 [package]
 name = "clockode"
-description = "Minimal TOTP client made with Iced"
-authors = ["Alex Marín <kysdev.owjga@aleeas.com>"]
-version = "0.1.4"
+description = "TOTP client made with Iced"
+authors = ["mariinkys <kysdev.owjga@aleeas.com>"]
+version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0"
 repository = "https://github.com/mariinkys/clockode"
 
 [dependencies]
-anywho = "0.1.2"
-iced = { git = "https://github.com/iced-rs/iced", default-features = false, features = [
+iced = { version = "0.14.0", default-features = true, features = [
     "tokio",
-    "wgpu",
     "image",
     "advanced",
     "svg",
 ] }
-serde = { version = "1.0.228", features = ["derive"] }
-ron = "0.11.0"
+anywho = "0.1.2"
 dirs = "6.0.0"
-tokio = { version = "1.47.1", features = ["fs"] }
-scrypt = "0.11.0"
-aes-gcm = "0.10.3"
-totp-lite = "2.0.1"
-fast32 = "1.0.3"
-uuid = { version = "1.18.0", features = ["v4", "serde"] }
+smol = "2.0.2"
+keepass = { version = "0.8.16", features = [
+    "save_kdbx4",
+] } # KeePass DB Management
+rqrr = "0.10.0" # QR Detection
+totp-rs = { version = "5.7.0", features = ["otpauth"] } # TOTP Generation ...
 arboard = { version = "3.6.1", features = [
     "wayland-data-control",
-] } #https://github.com/bitwarden/clients/issues/6812
-rfd = "0.15.4"
-urlencoding = "2.1.3"
-url = "2.5.7"
+] } # Clipboard (https://github.com/bitwarden/clients/issues/6812)
+rfd = "0.16.0" # File System Dialogs
+secrecy = "0.10.3" # Provides us with SecretString
+uuid = "1.19.0" # Allows us to identify entries
+serde = { version = "1.0.228", features = [
+    "derive",
+] } # Needed for config serializing and deserializing
+ron = "0.12.0" # Needed for config serializing and deserializing
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]

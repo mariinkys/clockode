@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 use anywho::anywho;
 use iced::Theme;
 use serde::{Deserialize, Serialize};
@@ -11,11 +13,10 @@ impl Config {
     pub async fn load(app_id: &str) -> Result<Self, anywho::Error> {
         use dirs;
         use std::fs;
-        use tokio::task;
 
         let app_id = app_id.to_string();
 
-        task::spawn_blocking(move || {
+        smol::unblock(move || {
             let config_dir = dirs::data_dir()
                 .ok_or_else(|| anywho!("Could not determine config directory"))?
                 .join(&app_id);
@@ -49,18 +50,17 @@ impl Config {
             }
         })
         .await
-        .map_err(|e| anywho!("Task join error: {}", e))?
+        .map_err(|e| anywho!("Error loading config: {}", e))
     }
 
     pub async fn save(self, app_id: &str) -> Result<(), anywho::Error> {
         use dirs;
         use std::fs;
-        use tokio::task;
 
         let config_clone = self.clone();
         let app_id = app_id.to_string();
 
-        task::spawn_blocking(move || {
+        smol::unblock(move || {
             let config_dir = dirs::data_dir()
                 .ok_or_else(|| anywho!("Could not determine config directory"))?
                 .join(&app_id);
@@ -82,7 +82,7 @@ impl Config {
             Ok(())
         })
         .await
-        .map_err(|e| anywho!("Task join error: {}", e))?
+        .map_err(|e: anywho::Error| anywho!("Unblock error: {}", e))
     }
 }
 

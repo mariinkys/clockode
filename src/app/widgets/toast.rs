@@ -1,5 +1,9 @@
-// Code based on the original Toast example that can be found
-// on https://github.com/iced-rs/iced/tree/master/examples/toast
+// SPDX-License-Identifier: GPL-3.0-only
+
+// Toast widget based on: https://github.com/iced-rs/iced/blob/master/examples/toast/src/main.rs
+// I mainly added QOL and styling changes
+
+use std::fmt;
 
 use iced::advanced::layout::{self, Layout};
 use iced::advanced::overlay;
@@ -7,18 +11,15 @@ use iced::advanced::renderer;
 use iced::advanced::widget::{self, Operation, Tree};
 use iced::advanced::{Clipboard, Shell, Widget};
 use iced::mouse;
-use iced::theme;
 use iced::time::{self, Duration, Instant};
-use iced::widget::{button, column, container, row, rule, space, text};
+use iced::widget::{button, container, row, text};
 use iced::window;
 use iced::{
     Alignment, Center, Element, Event, Fill, Length, Point, Rectangle, Renderer, Size, Theme,
     Vector,
 };
-use std::fmt;
 
-pub const DEFAULT_TIMEOUT: u64 = 3;
-pub const DEFAULT_BORDER_RADIUS: f32 = 12.0;
+pub const DEFAULT_TIMEOUT: u64 = 5;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Status {
@@ -118,58 +119,48 @@ where
             .iter()
             .enumerate()
             .map(|(index, toast)| {
-                container(column![
-                    container(
-                        row![
-                            text(toast.title.as_str()),
-                            space::horizontal(),
-                            button(" X ")
-                                .on_press((on_close)(index))
-                                .style(|t, s| {
-                                    let mut style = match toast.status {
-                                        Status::Primary => iced::widget::button::primary(t, s),
-                                        Status::Secondary => iced::widget::button::secondary(t, s),
-                                        Status::Success => iced::widget::button::success(t, s),
-                                        Status::Danger => iced::widget::button::danger(t, s),
-                                        Status::Warning => iced::widget::button::warning(t, s),
-                                    };
+                container(
+                    row![
+                        text(format!("{}:", toast.title.as_str()))
+                            .width(Length::Shrink)
+                            .font(iced::Font {
+                                weight: iced::font::Weight::Bold,
+                                ..Default::default()
+                            }),
+                        text(toast.body.as_str()).width(Fill),
+                        button(" X ")
+                            .style(|t, s| {
+                                let mut style = match toast.status {
+                                    Status::Primary => iced::widget::button::primary(t, s),
+                                    Status::Secondary => iced::widget::button::secondary(t, s),
+                                    Status::Success => iced::widget::button::success(t, s),
+                                    Status::Danger => iced::widget::button::danger(t, s),
+                                    Status::Warning => iced::widget::button::warning(t, s),
+                                };
 
-                                    style.border.radius =
-                                        iced::border::radius(DEFAULT_BORDER_RADIUS);
-                                    style
-                                })
-                                .padding(3),
-                        ]
-                        .align_y(Center)
-                    )
-                    .width(Fill)
-                    .padding(5)
-                    .style(|t| {
-                        let mut style = match toast.status {
-                            Status::Primary => container::primary(t),
-                            Status::Secondary => container::secondary(t),
-                            Status::Success => container::success(t),
-                            Status::Danger => container::danger(t),
-                            Status::Warning => container::danger(t),
-                        };
+                                style.border.radius = iced::border::radius(8.);
+                                style
+                            })
+                            .on_press((on_close)(index))
+                            .padding(3),
+                    ]
+                    .align_y(Center)
+                    .spacing(3),
+                )
+                .width(Fill)
+                .padding(10)
+                .style(|t| {
+                    let mut style = match toast.status {
+                        Status::Primary => container::primary(t),
+                        Status::Secondary => container::secondary(t),
+                        Status::Success => container::success(t),
+                        Status::Danger => container::danger(t),
+                        Status::Warning => container::warning(t),
+                    };
 
-                        style.border.radius = iced::border::top(DEFAULT_BORDER_RADIUS);
-                        style
-                    }),
-                    rule::horizontal(1),
-                    container(text(toast.body.as_str()))
-                        .width(Fill)
-                        .padding(5)
-                        .style(|t: &Theme| {
-                            let palette = t.extended_palette();
-                            let mut style = container::rounded_box(t);
-
-                            style.border.radius = iced::border::bottom(DEFAULT_BORDER_RADIUS);
-                            style.background = Some(palette.background.strongest.color.into());
-                            style
-                        }),
-                ])
-                .max_width(200)
+                    style.border.radius = iced::border::radius(8.);
+                    style
+                })
                 .into()
             })
             .collect();
@@ -248,7 +239,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
 
     fn operate(
         &mut self,
-        state: &mut Tree,
+        tree: &mut Tree,
         layout: Layout<'_>,
         renderer: &Renderer,
         operation: &mut dyn Operation,
@@ -256,7 +247,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
         operation.container(None, layout.bounds());
         operation.traverse(&mut |operation| {
             self.content.as_widget_mut().operate(
-                &mut state.children[0],
+                &mut tree.children[0],
                 layout,
                 renderer,
                 operation,
@@ -266,7 +257,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
 
     fn update(
         &mut self,
-        state: &mut Tree,
+        tree: &mut Tree,
         event: &Event,
         layout: Layout<'_>,
         cursor: mouse::Cursor,
@@ -276,7 +267,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
         viewport: &Rectangle,
     ) {
         self.content.as_widget_mut().update(
-            &mut state.children[0],
+            &mut tree.children[0],
             event,
             layout,
             cursor,
@@ -289,7 +280,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
 
     fn draw(
         &self,
-        state: &Tree,
+        tree: &Tree,
         renderer: &mut Renderer,
         theme: &Theme,
         style: &renderer::Style,
@@ -298,7 +289,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
         viewport: &Rectangle,
     ) {
         self.content.as_widget().draw(
-            &state.children[0],
+            &tree.children[0],
             renderer,
             theme,
             style,
@@ -310,14 +301,14 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
 
     fn mouse_interaction(
         &self,
-        state: &Tree,
+        tree: &Tree,
         layout: Layout<'_>,
         cursor: mouse::Cursor,
         viewport: &Rectangle,
         renderer: &Renderer,
     ) -> mouse::Interaction {
         self.content.as_widget().mouse_interaction(
-            &state.children[0],
+            &tree.children[0],
             layout,
             cursor,
             viewport,
@@ -327,15 +318,15 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
 
     fn overlay<'b>(
         &'b mut self,
-        state: &'b mut Tree,
+        tree: &'b mut Tree,
         layout: Layout<'b>,
         renderer: &Renderer,
         viewport: &Rectangle,
         translation: Vector,
     ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
-        let instants = state.state.downcast_mut::<Vec<Option<Instant>>>();
+        let instants = tree.state.downcast_mut::<Vec<Option<Instant>>>();
 
-        let (content_state, toasts_state) = state.children.split_at_mut(1);
+        let (content_state, toasts_state) = tree.children.split_at_mut(1);
 
         let content = self.content.as_widget_mut().overlay(
             &mut content_state[0],
@@ -350,7 +341,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
                 position: layout.bounds().position() + translation,
                 viewport: *viewport,
                 toasts: &mut self.toasts,
-                state: toasts_state,
+                trees: toasts_state,
                 instants,
                 on_close: &self.on_close,
                 timeout_secs: self.timeout_secs,
@@ -366,7 +357,7 @@ struct Overlay<'a, 'b, Message> {
     position: Point,
     viewport: Rectangle,
     toasts: &'b mut [Element<'a, Message>],
-    state: &'b mut [Tree],
+    trees: &'b mut [Tree],
     instants: &'b mut [Option<Instant>],
     on_close: &'b dyn Fn(usize) -> Message,
     timeout_secs: u64,
@@ -374,7 +365,9 @@ struct Overlay<'a, 'b, Message> {
 
 impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Message> {
     fn layout(&mut self, renderer: &Renderer, bounds: Size) -> layout::Node {
-        let limits = layout::Limits::new(Size::ZERO, bounds);
+        let limits = layout::Limits::new(Size::ZERO, bounds)
+            .width(Fill)
+            .shrink(Size::new(bounds.width * 0.25, 0.0));
 
         layout::flex::resolve(
             layout::flex::Axis::Vertical,
@@ -384,11 +377,14 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
             Fill,
             10.into(),
             10.0,
-            Alignment::Center, // Center toast on the screen
+            Alignment::Start,
             self.toasts,
-            self.state,
+            self.trees,
         )
-        .translate(Vector::new(self.position.x, self.position.y))
+        .translate(Vector::new(
+            self.position.x + bounds.width * 0.125,
+            self.position.y,
+        ))
     }
 
     fn update(
@@ -424,7 +420,7 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
         for (((child, state), layout), instant) in self
             .toasts
             .iter_mut()
-            .zip(self.state.iter_mut())
+            .zip(self.trees.iter_mut())
             .zip(layout.children())
             .zip(self.instants.iter_mut())
         {
@@ -460,15 +456,15 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
     ) {
         let viewport = layout.bounds();
 
-        for ((child, state), layout) in self
+        for ((child, tree), layout) in self
             .toasts
             .iter()
-            .zip(self.state.iter())
+            .zip(self.trees.iter())
             .zip(layout.children())
         {
             child
                 .as_widget()
-                .draw(state, renderer, theme, style, layout, cursor, &viewport);
+                .draw(tree, renderer, theme, style, layout, cursor, &viewport);
         }
     }
 
@@ -482,7 +478,7 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
         operation.traverse(&mut |operation| {
             self.toasts
                 .iter_mut()
-                .zip(self.state.iter_mut())
+                .zip(self.trees.iter_mut())
                 .zip(layout.children())
                 .for_each(|((child, state), layout)| {
                     child
@@ -500,19 +496,17 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
     ) -> mouse::Interaction {
         self.toasts
             .iter()
-            .zip(self.state.iter())
+            .zip(self.trees.iter())
             .zip(layout.children())
             .map(|((child, state), layout)| {
                 child
                     .as_widget()
                     .mouse_interaction(state, layout, cursor, &self.viewport, renderer)
-                    .max(
-                        #[allow(clippy::obfuscated_if_else)]
-                        cursor
-                            .is_over(layout.bounds())
-                            .then_some(mouse::Interaction::Idle)
-                            .unwrap_or_default(),
-                    )
+                    .max(if cursor.is_over(layout.bounds()) {
+                        mouse::Interaction::Idle
+                    } else {
+                        Default::default()
+                    })
             })
             .max()
             .unwrap_or_default()
@@ -526,48 +520,4 @@ where
     fn from(manager: Manager<'a, Message>) -> Self {
         Element::new(manager)
     }
-}
-
-#[allow(dead_code)]
-fn styled(pair: theme::palette::Pair) -> container::Style {
-    container::Style {
-        background: Some(pair.color.into()),
-        text_color: pair.text.into(),
-        ..Default::default()
-    }
-}
-
-#[allow(dead_code)]
-fn primary(theme: &Theme) -> container::Style {
-    let palette = theme.extended_palette();
-
-    styled(palette.primary.weak)
-}
-
-#[allow(dead_code)]
-fn secondary(theme: &Theme) -> container::Style {
-    let palette = theme.extended_palette();
-
-    styled(palette.secondary.weak)
-}
-
-#[allow(dead_code)]
-fn success(theme: &Theme) -> container::Style {
-    let palette = theme.extended_palette();
-
-    styled(palette.success.weak)
-}
-
-#[allow(dead_code)]
-fn danger(theme: &Theme) -> container::Style {
-    let palette = theme.extended_palette();
-
-    styled(palette.danger.weak)
-}
-
-#[allow(dead_code)]
-fn warning(theme: &Theme) -> container::Style {
-    let palette = theme.extended_palette();
-
-    styled(palette.warning.weak)
 }
