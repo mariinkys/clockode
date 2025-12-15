@@ -10,8 +10,8 @@
 
   <h3>TOTP client made with Iced</h3>
 
-  <img width="320" alt="Main Page (Light Mode)" src="./screenshots/main-light.png"/>
-  <img width="320" alt="Main Page (Dark Mode)" src="./screenshots/main-dark.png"/>
+  <img width="360" alt="Main Page (Light Mode)" src="./screenshots/main-light.png"/>
+  <img width="360" alt="Main Page (Dark Mode)" src="./screenshots/main-dark.png"/>
 
   <br><br>
 
