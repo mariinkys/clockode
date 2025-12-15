@@ -39,13 +39,19 @@ pub enum SubScreen {
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    /// Ask to load the [`ClockodeEntry`]s to list on the page
     LoadEntries,
+    /// Callback after asking to load [`ClockodeEntry`]s, set's the entries on the state if Ok
     EntriesLoaded(Result<Vec<ClockodeEntry>, anywho::Error>),
 
+    /// Messages of the [`UpsertPage`]
     UpsertPage(upsert::Message),
+    /// Ask to open the [`ClockodeEntry`]  [`UpsertPage`]
     OpenUpsertPage(Option<ClockodeEntry>),
+    /// Callback after upserting a [`ClockodeEntry`]
     EntryUpserted(Result<(), anywho::Error>),
 
+    /// Makes iced rerun the view to refresh and tick the timers, runs every second on a subscription
     RefreshCodes,
 }
 
@@ -135,6 +141,7 @@ impl HomePage {
                 match upsert_page.update(message, now) {
                     upsert::Action::None => Action::None,
                     upsert::Action::Back => self.update(Message::LoadEntries, now),
+                    upsert::Action::Run(task) => Action::Run(task.map(Message::UpsertPage)),
                     upsert::Action::AddToast(toast) => Action::AddToast(toast),
                     upsert::Action::UpdateEntry(clockode_entry) => {
                         let db_clone = Arc::clone(&self.database);

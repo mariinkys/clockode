@@ -3,9 +3,14 @@
 use iced::{
     Alignment, Element,
     Length::{self},
-    Subscription, Task,
+    Subscription, Task, event,
+    keyboard::{self, Key, Modifiers, key::Named},
     time::Instant,
-    widget::{button, column, container, pick_list, row, scrollable, space, text, text_input},
+    widget::{
+        button, column, container,
+        operation::{focus_next, focus_previous},
+        pick_list, row, scrollable, space, text, text_input,
+    },
 };
 use totp_rs::Algorithm;
 
@@ -24,6 +29,8 @@ pub struct UpsertPage {
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    /// Callback after pressing a [`Hotkey`] of this page
+    Hotkey(Hotkey),
     /// Go back a screen
     Back,
 
@@ -41,7 +48,7 @@ pub enum Action {
     /// Go back a screen
     Back,
     // Ask parent to run an [`iced::Task`]
-    // Run(Task<Message>),
+    Run(Task<Message>),
     /// Add a new [`Toast`] to show
     AddToast(Toast),
     /// Ask the parent to update the given [`ClockodeEntry`]
@@ -88,6 +95,15 @@ impl UpsertPage {
 
     pub fn update(&mut self, message: Message, _now: Instant) -> Action {
         match message {
+            Message::Hotkey(hotkey) => match hotkey {
+                Hotkey::Tab(modifiers) => {
+                    if modifiers.shift() {
+                        Action::Run(focus_previous())
+                    } else {
+                        Action::Run(focus_next())
+                    }
+                }
+            },
             Message::Back => Action::Back,
 
             Message::InputUpdated(input) => {
@@ -152,7 +168,7 @@ impl UpsertPage {
     }
 
     pub fn subscription(&self, _now: Instant) -> Subscription<Message> {
-        Subscription::none()
+        event::listen_with(handle_event)
     }
 }
 
@@ -328,4 +344,24 @@ fn upsert_entry_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Messa
     scrollable(container(form).center_x(Length::Fill))
         .width(Length::Fill)
         .into()
+}
+
+//
+// SUBSCRIPTIONS
+//
+
+#[derive(Debug, Clone)]
+pub enum Hotkey {
+    Tab(Modifiers),
+}
+
+fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> Option<Message> {
+    #[allow(clippy::collapsible_match)]
+    match event {
+        event::Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => match key {
+            Key::Named(Named::Tab) => Some(Message::Hotkey(Hotkey::Tab(modifiers))),
+            _ => None,
+        },
+        _ => None,
+    }
 }
