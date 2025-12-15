@@ -174,14 +174,13 @@ impl UpsertPage {
 
 /// View of the header of this screen
 fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
-    let title = if entry.uuid.is_some() {
-        "Edit Entry"
+    let (title, subtitle) = if entry.uuid.is_some() {
+        ("Edit Entry", "Modify your TOTP entry")
     } else {
-        "New Entry"
+        ("New Entry", "Add a new TOTP entry")
     };
 
     row![
-        // Back button
         button(
             row![
                 icons::get_icon("go-previous-symbolic", 21),
@@ -193,11 +192,14 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
         .on_press(Message::Back)
         .padding(8)
         .style(style::secondary_button),
+        column![
+            text(title).size(style::font_size::TITLE),
+            text(subtitle)
+                .size(style::font_size::SMALL)
+                .style(style::muted_text),
+        ]
+        .spacing(style::spacing::TINY),
         space().width(Length::Fill),
-        // Title
-        text(title).size(style::font_size::XLARGE),
-        space().width(Length::Fill),
-        // Delete button
         button(
             row![
                 icons::get_icon("user-trash-full-symbolic", 21).style(|theme, _status| {

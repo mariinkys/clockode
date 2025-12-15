@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use iced::{
     Element, Length, Subscription, Task, Theme,
@@ -8,10 +8,14 @@ use iced::{
     widget::{container, text},
 };
 
-use crate::app::{
-    core::check_database,
-    screen::{HomePage, Screen, UnlockDatabase, create, homepage, unlock},
-    widgets::Toast,
+use crate::{
+    APP_ID,
+    app::{
+        core::check_database,
+        screen::{HomePage, Screen, UnlockDatabase, create, homepage, unlock},
+        widgets::Toast,
+    },
+    config::Config,
 };
 
 mod core;
@@ -21,12 +25,15 @@ mod widgets;
 
 pub struct Clockode {
     toasts: Vec<Toast>,
+    config: Arc<Mutex<Config>>,
     now: Instant,
     screen: Screen,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    /// Callback after loading the application [`Config`]
+    ConfigLoaded(Result<Config, anywho::Error>),
     /// Add a new [`Toast`] to show in the app
     AddToast(Toast),
     /// Close the given [`Toast`]
@@ -45,10 +52,11 @@ impl Clockode {
         (
             Self {
                 toasts: Vec::new(),
+                config: Arc::from(Mutex::new(Config::default())),
                 now: Instant::now(),
                 screen,
             },
-            task,
+            Task::perform(Config::load(APP_ID), Message::ConfigLoaded).chain(task),
         )
     }
 
@@ -56,6 +64,17 @@ impl Clockode {
         self.now = now;
 
         match message {
+            Message::ConfigLoaded(res) => {
+                match res {
+                    Ok(config) => {
+                        self.config = Arc::new(Mutex::from(config));
+                    }
+                    Err(err) => {
+                        eprintln!("Error loading config: {err}");
+                    }
+                }
+                Task::none()
+            }
             Message::AddToast(toast) => {
                 self.toasts.push(toast);
                 Task::none()
@@ -93,7 +112,8 @@ impl Clockode {
                     unlock::Action::Run(task) => task.map(Message::UnlockDatabase),
                     unlock::Action::AddToast(toast) => self.update(Message::AddToast(toast), now),
                     unlock::Action::OpenHomePage(database) => {
-                        let (homepage, task) = HomePage::new(Arc::new(*database));
+                        let (homepage, task) =
+                            HomePage::new(Arc::new(*database), Arc::clone(&self.config));
 
                         self.screen = Screen::HomePage(homepage);
                         task.map(Message::HomePage)
@@ -148,6 +168,9 @@ impl Clockode {
     }
 
     pub fn theme(&self) -> Theme {
-        Theme::Light
+        self.config.lock().map_or_else(
+            |_| iced::Theme::Light, // fallback theme if lock fails
+            |cfg| cfg.theme.clone().into(),
+        )
     }
 }

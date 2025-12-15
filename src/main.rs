@@ -4,6 +4,7 @@
 use crate::app::Clockode;
 
 mod app;
+mod config;
 mod icons;
 
 const APP_ID: &str = "dev.mariinkys.Clockode";

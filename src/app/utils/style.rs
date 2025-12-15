@@ -23,7 +23,7 @@ pub mod font_size {
     pub const BODY: f32 = 14.0;
     pub const MEDIUM: f32 = 16.0;
     pub const LARGE: f32 = 18.0;
-    pub const XLARGE: f32 = 20.0;
+    //pub const XLARGE: f32 = 20.0;
     pub const TITLE: f32 = 24.0;
     pub const HERO: f32 = 28.0;
 }

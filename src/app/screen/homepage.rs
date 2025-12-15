@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 use arboard::Clipboard;
 use iced::{
@@ -17,6 +20,7 @@ use crate::{
         utils::{get_time_until_next_totp_refresh, style},
         widgets::Toast,
     },
+    config::Config,
     icons,
 };
 
@@ -24,6 +28,7 @@ mod settings;
 mod upsert;
 
 pub struct HomePage {
+    config: Arc<Mutex<Config>>,
     clipboard: Option<Clipboard>,
     database: Arc<ClockodeDatabase>,
     state: State,
@@ -37,6 +42,7 @@ pub enum State {
 pub enum SubScreen {
     Home { entries: Vec<ClockodeEntry> },
     UpsertPage(upsert::UpsertPage),
+    SettingsPage(settings::SettingsPage),
 }
 
 #[derive(Debug, Clone)]
@@ -55,6 +61,11 @@ pub enum Message {
     /// Callback after upserting a [`ClockodeEntry`]
     EntryUpserted(Result<(), anywho::Error>),
 
+    /// Messages of the [`SettingsPage`]
+    SettingsPage(settings::Message),
+    /// Ask to open the [`SettingsPage`]
+    OpenSettingsPage,
+
     /// Makes iced rerun the view to refresh and tick the timers, runs every second on a subscription
     RefreshCodes,
 }
@@ -71,7 +82,10 @@ pub enum Action {
 }
 
 impl HomePage {
-    pub fn new(database: Arc<ClockodeDatabase>) -> (Self, Task<Message>) {
+    pub fn new(
+        database: Arc<ClockodeDatabase>,
+        config: Arc<Mutex<Config>>,
+    ) -> (Self, Task<Message>) {
         let db_clone = Arc::clone(&database);
         let clipboard = Clipboard::new();
         if let Err(clip_err) = &clipboard {
@@ -80,6 +94,7 @@ impl HomePage {
 
         (
             Self {
+                config,
                 clipboard: clipboard.ok(),
                 database,
                 state: State::Loading,
@@ -107,6 +122,9 @@ impl HomePage {
                 }
                 SubScreen::UpsertPage(upsert_page) => {
                     upsert_page.view(now).map(Message::UpsertPage)
+                }
+                SubScreen::SettingsPage(settings_page) => {
+                    settings_page.view(now).map(Message::SettingsPage)
                 }
             },
         };
@@ -213,6 +231,32 @@ impl HomePage {
                 }
             },
 
+            Message::SettingsPage(message) => {
+                let State::Ready { subscreen } = &mut self.state else {
+                    return Action::None;
+                };
+
+                let SubScreen::SettingsPage(settings_page) = subscreen else {
+                    return Action::None;
+                };
+
+                match settings_page.update(message, now) {
+                    settings::Action::None => Action::None,
+                    settings::Action::Back => self.update(Message::LoadEntries, now),
+                    settings::Action::Run(task) => Action::Run(task.map(Message::SettingsPage)),
+                    settings::Action::AddToast(toast) => Action::AddToast(toast),
+                }
+            }
+            Message::OpenSettingsPage => {
+                let State::Ready { subscreen, .. } = &mut self.state else {
+                    return Action::None;
+                };
+
+                let (settings_page, task) = settings::SettingsPage::new(Arc::clone(&self.config));
+                *subscreen = SubScreen::SettingsPage(settings_page);
+                Action::Run(task.map(Message::SettingsPage))
+            }
+
             Message::RefreshCodes => {
                 // This forces a re-render every second
                 // Since view() calls totp.generate_current(), codes will update automatically
@@ -237,6 +281,9 @@ impl HomePage {
             SubScreen::UpsertPage(upsert_page) => {
                 upsert_page.subscription(now).map(Message::UpsertPage)
             }
+            SubScreen::SettingsPage(settings_page) => {
+                settings_page.subscription(now).map(Message::SettingsPage)
+            }
         }
     }
 }
@@ -260,6 +307,7 @@ fn header_view<'a>() -> Element<'a, Message> {
                 .padding(8)
                 .style(style::primary_button),
             button(icons::get_icon("emblem-system-symbolic", 21))
+                .on_press(Message::OpenSettingsPage)
                 .padding(8)
                 .style(style::secondary_button),
         ]
