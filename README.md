@@ -26,9 +26,8 @@ Key features are:
 
 - Storage for all your 2FA and OTP tokens
 - Automatic TOTP code generation
-- Data is encrypted on your device
-- Cross-platform support
-- Backup and import functionality
+- Data is encrypted on your device using battle-tested software (libraries)
+- Backup and import functionality (standard format)
 
 If you want to sync your vault you will have to do it yourself using tools like Syncthing...
 
@@ -46,11 +45,6 @@ cd clockode
 cargo build --release
 sudo just install
 ```
-### Windows
-Use the [provided binary on the latest release](https://github.com/mariinkys/clockode/releases). Note that this is not an installer, and you will have to download and update the binary and icon yourself. You can also use cargo to compile the application yourself.
-
-### Mac
-Use the [provided binary on the latest release](https://github.com/mariinkys/clockode/releases). Note that this is not an installer, and you will have to download and update the binary and icon yourself. You can also use cargo to compile the application yourself.
 
 ## Attributions
 

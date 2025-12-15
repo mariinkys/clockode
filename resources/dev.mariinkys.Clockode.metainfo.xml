@@ -19,12 +19,12 @@
             local vault, keeping your two-factor codes private and accessible without needing an
             internet connection.</p>
         <ul>
-            <li>Local encrypted vault</li>
+            <li>Local encrypted vault, using battle-tested software</li>
             <li>Offline-first, no internet access required</li>
             <li>Minimal and user-friendly interface</li>
             <li>Quick code copying and auto-refresh</li>
             <li>Support for multiple accounts and labels</li>
-            <li>Backup and import functionality</li>
+            <li>Backup and import functionality (standard format, works between apps)</li>
         </ul>
     </description>
 
