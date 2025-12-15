@@ -131,8 +131,14 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
             row![
                 button(
                     row![
-                        icons::get_icon("document-save-symbolic", 21),
-                        text("Export").size(style::font_size::BODY)
+                        icons::get_icon("document-export-symbolic", 21).style(|theme, _status| {
+                            let primary_style =
+                                button::primary(theme, iced::widget::button::Status::Active);
+                            iced::widget::svg::Style {
+                                color: Some(primary_style.text_color),
+                            }
+                        }),
+                        text("Export").size(style::font_size::MEDIUM)
                     ]
                     .spacing(style::spacing::TINY)
                     .align_y(Alignment::Center)
@@ -143,8 +149,14 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
                 .style(style::primary_button),
                 button(
                     row![
-                        icons::get_icon("document-open-symbolic", 21),
-                        text("Import").size(style::font_size::BODY)
+                        icons::get_icon("document-import-symbolic", 21).style(|theme, _status| {
+                            let primary_style =
+                                button::primary(theme, iced::widget::button::Status::Active);
+                            iced::widget::svg::Style {
+                                color: Some(primary_style.text_color),
+                            }
+                        }),
+                        text("Import").size(style::font_size::MEDIUM)
                     ]
                     .spacing(style::spacing::TINY)
                     .align_y(Alignment::Center)

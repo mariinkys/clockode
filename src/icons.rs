@@ -42,6 +42,8 @@ impl IconCache {
         bundle!("go-previous-symbolic", 21);
         bundle!("list-add-symbolic", 21);
         bundle!("user-trash-full-symbolic", 21);
+        bundle!("document-export-symbolic", 21);
+        bundle!("document-import-symbolic", 21);
 
         Self { cache }
     }
