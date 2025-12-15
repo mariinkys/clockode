@@ -41,6 +41,10 @@ fn main() -> iced::Result {
         Clockode::view,
     )
     .theme(Clockode::theme)
+    .window_size(iced::Size {
+        width: 1100.,
+        height: 700.,
+    })
     .window(iced::window::Settings {
         min_size: Some(iced::Size {
             width: 450.,
