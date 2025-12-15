@@ -42,8 +42,8 @@ fn main() -> iced::Result {
     .theme(Clockode::theme)
     .window(iced::window::Settings {
         min_size: Some(iced::Size {
-            width: 300.,
-            height: 400.,
+            width: 450.,
+            height: 500.,
         }),
         icon: app_icon.ok(),
         platform_specific: platform_settings,

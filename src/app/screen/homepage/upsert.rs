@@ -5,7 +5,7 @@ use iced::{
     Length::{self},
     Subscription, Task,
     time::Instant,
-    widget::{button, column, container, pick_list, row, space, text, text_input},
+    widget::{button, column, container, pick_list, row, scrollable, space, text, text_input},
 };
 use totp_rs::Algorithm;
 
@@ -325,5 +325,7 @@ fn upsert_entry_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Messa
     .padding(20)
     .max_width(600);
 
-    container(form).center_x(Length::Fill).into()
+    scrollable(container(form).center_x(Length::Fill))
+        .width(Length::Fill)
+        .into()
 }
