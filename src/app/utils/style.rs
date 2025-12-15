@@ -97,6 +97,16 @@ pub fn danger_button(theme: &Theme, status: button::Status) -> button::Style {
     style
 }
 
+/// Success button style with rounded corners
+pub fn success_button(theme: &Theme, status: button::Status) -> button::Style {
+    let mut style = button::success(theme, status);
+    style.border = iced::Border {
+        radius: radius::SMALL.into(),
+        ..Default::default()
+    };
+    style
+}
+
 /// Label text style (subdued color)
 pub fn label_text(theme: &Theme) -> text::Style {
     text::Style {

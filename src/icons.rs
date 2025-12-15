@@ -44,6 +44,7 @@ impl IconCache {
         bundle!("user-trash-full-symbolic", 21);
         bundle!("document-export-symbolic", 21);
         bundle!("document-import-symbolic", 21);
+        bundle!("window-close-symbolic", 21);
         bundle!("qr-symbolic", 21);
 
         Self { cache }

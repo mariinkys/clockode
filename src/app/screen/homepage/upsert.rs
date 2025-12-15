@@ -7,9 +7,9 @@ use iced::{
     keyboard::{self, Key, Modifiers, key::Named},
     time::Instant,
     widget::{
-        button, column, container,
+        button, column, container, image,
         operation::{focus_next, focus_previous},
-        pick_list, row, scrollable, space, text, text_input,
+        pick_list, row, scrollable, space, stack, text, text_input,
     },
 };
 use rfd::{AsyncFileDialog, FileHandle};
@@ -26,6 +26,7 @@ use crate::{
 
 pub struct UpsertPage {
     entry: InputableClockodeEntry,
+    show_qr: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -46,6 +47,9 @@ pub enum Message {
     OpenQrFileSelection,
     /// Callback after selecting a QR file
     QrFileSelected(Option<FileHandle>),
+
+    /// Wants to show/hide the current entry qr code
+    ToggleShowQRCode,
 }
 
 pub enum Action {
@@ -82,12 +86,18 @@ impl UpsertPage {
     pub fn new(entry: Option<ClockodeEntry>) -> (Self, Task<Message>) {
         let entry = entry.map(InputableClockodeEntry::from).unwrap_or_default();
 
-        (Self { entry }, Task::none())
+        (
+            Self {
+                entry,
+                show_qr: false,
+            },
+            Task::none(),
+        )
     }
 
     pub fn view(&self, _now: Instant) -> iced::Element<'_, Message> {
         let header = header_view(&self.entry);
-        let content = upsert_entry_view(&self.entry);
+        let content = upsert_entry_view(&self.entry, self.show_qr);
 
         container(
             container(column![header, content])
@@ -206,6 +216,13 @@ impl UpsertPage {
                 }
                 Action::None
             }
+
+            Message::ToggleShowQRCode => {
+                if self.entry.uuid.is_some() {
+                    self.show_qr = !self.show_qr;
+                }
+                Action::None
+            }
         }
     }
 
@@ -221,6 +238,74 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
     } else {
         ("New Entry", "Add a new TOTP entry")
     };
+
+    let is_new_entry = entry.uuid.is_none();
+
+    let mut buttons = Vec::new();
+
+    if is_new_entry {
+        // Only for new entries
+        buttons.push(
+            button(
+                row![
+                    icons::get_icon("qr-symbolic", 21).style(|theme, _status| {
+                        let primary_style =
+                            button::primary(theme, iced::widget::button::Status::Active);
+                        iced::widget::svg::Style {
+                            color: Some(primary_style.text_color),
+                        }
+                    }),
+                    text("QR (File)").size(style::font_size::BODY)
+                ]
+                .spacing(style::spacing::TINY)
+                .align_y(iced::Alignment::Center),
+            )
+            .style(style::primary_button)
+            .padding(8)
+            .on_press(Message::OpenQrFileSelection)
+            .into(),
+        );
+    } else {
+        // Only for existing entries
+        buttons.extend([
+            button(
+                row![
+                    icons::get_icon("user-trash-full-symbolic", 21).style(|theme, _status| {
+                        let danger_style =
+                            button::danger(theme, iced::widget::button::Status::Active);
+                        iced::widget::svg::Style {
+                            color: Some(danger_style.text_color),
+                        }
+                    }),
+                    text("Delete").size(style::font_size::BODY)
+                ]
+                .spacing(style::spacing::TINY)
+                .align_y(iced::Alignment::Center),
+            )
+            .style(style::danger_button)
+            .padding(8)
+            .on_press(Message::Delete)
+            .into(),
+            button(
+                row![
+                    icons::get_icon("qr-symbolic", 21).style(|theme, _status| {
+                        let success_style =
+                            button::success(theme, iced::widget::button::Status::Active);
+                        iced::widget::svg::Style {
+                            color: Some(success_style.text_color),
+                        }
+                    }),
+                    text("Show QR").size(style::font_size::BODY)
+                ]
+                .spacing(style::spacing::TINY)
+                .align_y(iced::Alignment::Center),
+            )
+            .style(style::success_button)
+            .padding(8)
+            .on_press(Message::ToggleShowQRCode)
+            .into(),
+        ]);
+    }
 
     row![
         button(
@@ -242,40 +327,8 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
         ]
         .spacing(style::spacing::TINY),
         space().width(Length::Fill),
-        button(
-            row![
-                icons::get_icon("qr-symbolic", 21).style(|theme, _status| {
-                    let primary_style =
-                        button::primary(theme, iced::widget::button::Status::Active);
-                    iced::widget::svg::Style {
-                        color: Some(primary_style.text_color),
-                    }
-                }),
-                text("QR (File)").size(style::font_size::BODY)
-            ]
-            .spacing(style::spacing::TINY)
-            .align_y(iced::Alignment::Center)
-        )
-        .style(style::primary_button)
-        .padding(8)
-        .on_press_maybe(entry.uuid.is_none().then_some(Message::OpenQrFileSelection)),
-        button(
-            row![
-                icons::get_icon("user-trash-full-symbolic", 21).style(|theme, _status| {
-                    let danger_style = button::danger(theme, iced::widget::button::Status::Active);
-                    iced::widget::svg::Style {
-                        color: Some(danger_style.text_color),
-                    }
-                }),
-                text("Delete").size(style::font_size::BODY)
-            ]
-            .spacing(style::spacing::TINY)
-            .align_y(iced::Alignment::Center)
-        )
-        .style(style::danger_button)
-        .padding(8)
-        .on_press_maybe(entry.uuid.is_some().then_some(Message::Delete))
     ]
+    .extend(buttons)
     .spacing(style::spacing::LARGE)
     .padding(10)
     .align_y(iced::Alignment::Center)
@@ -283,7 +336,10 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
     .into()
 }
 
-fn upsert_entry_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
+fn upsert_entry_view<'a>(
+    entry: &'a InputableClockodeEntry,
+    show_qr_code: bool,
+) -> Element<'a, Message> {
     let button_text = if entry.uuid.is_some() {
         "Update Entry"
     } else {
@@ -402,9 +458,57 @@ fn upsert_entry_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Messa
     .padding(10)
     .max_width(600);
 
-    scrollable(container(form).center_x(Length::Fill))
+    let form_view = scrollable(container(form).center_x(Length::Fill))
         .width(Length::Fill)
-        .into()
+        .height(Length::Fill);
+
+    if show_qr_code {
+        // QR code content - either image or error message
+        let qr_content: Element<Message> = match &entry.get_qr_bytes() {
+            Ok(bytes) => image(image::Handle::from_bytes(bytes.to_owned()))
+                .width(Length::Fixed(400.0))
+                .height(Length::Fixed(400.0))
+                .into(),
+            Err(e) => column![
+                icons::get_icon("dialog-error-symbolic", 48),
+                text("Failed to generate QR code").size(style::font_size::TITLE),
+                text(e.to_string())
+                    .size(style::font_size::BODY)
+                    .style(style::muted_text),
+            ]
+            .spacing(style::spacing::MEDIUM)
+            .align_x(iced::Alignment::Center)
+            .into(),
+        };
+
+        // QR code overlay
+        let qr_modal = container(
+            column![
+                // Close button
+                button(
+                    row![
+                        icons::get_icon("window-close-symbolic", 21),
+                        text("Close").size(style::font_size::BODY)
+                    ]
+                    .spacing(style::spacing::TINY)
+                    .align_y(iced::Alignment::Center)
+                )
+                .on_press(Message::ToggleShowQRCode)
+                .padding(8)
+                .style(style::secondary_button),
+                // QR code image or error message
+                qr_content,
+            ]
+            .spacing(style::spacing::MEDIUM)
+            .padding(24),
+        )
+        .style(style::entry_card)
+        .center(Length::Fill);
+
+        stack![form_view, qr_modal].into()
+    } else {
+        form_view.into()
+    }
 }
 
 //

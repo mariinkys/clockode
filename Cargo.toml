@@ -21,7 +21,10 @@ keepass = { version = "0.8.16", features = [
     "save_kdbx4",
 ] } # KeePass DB Management
 rqrr = "0.10.0" # QR Detection
-totp-rs = { version = "5.7.0", features = ["otpauth"] } # TOTP Generation ...
+totp-rs = { version = "5.7.0", features = [
+    "otpauth",
+    "qr",
+] } # TOTP Generation ...
 arboard = { version = "3.6.1", features = [
     "wayland-data-control",
 ] } # Clipboard (https://github.com/bitwarden/clients/issues/6812)
@@ -37,7 +40,7 @@ image = { version = "0.25.9", default-features = false, features = [
     "png",
     "webp",
     "rayon",
-] }
+] } # needed for qr detection
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]

@@ -141,4 +141,30 @@ impl InputableClockodeEntry {
 
         true
     }
+
+    pub fn get_qr_bytes(&self) -> Result<Vec<u8>, anywho::Error> {
+        if !self.valid() {
+            return Err(anywho!("Invalid Entity"));
+        };
+
+        let secret_bytes: Vec<u8> = totp_rs::Secret::Encoded(self.secret.clone())
+            .to_bytes()
+            .map_err(|e| anywho!("Failed to decode TOTP secret from KeePass entry: {}", e))?;
+
+        let totp = TOTP {
+            algorithm: self.algorithm,
+            digits: self.digits,
+            skew: 1,
+            step: self.step,
+            secret: secret_bytes,
+            issuer: self.issuer.clone(),
+            account_name: self.account_name.clone(),
+        };
+
+        let qr = totp
+            .get_qr_png()
+            .map_err(|e| anywho!("Error generating the QR Code: {}", e))?;
+
+        Ok(qr)
+    }
 }
