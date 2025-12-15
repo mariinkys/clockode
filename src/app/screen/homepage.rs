@@ -7,13 +7,16 @@ use iced::{
     Length::{self},
     Subscription, Task,
     time::Instant,
-    widget::{Column, button, column, container, row, scrollable, text},
+    widget::{Column, button, column, container, row, scrollable, space, text},
 };
 
-use crate::app::{
-    core::{ClockodeDatabase, ClockodeEntry},
-    utils::get_time_until_next_totp_refresh,
-    widgets::Toast,
+use crate::{
+    app::{
+        core::{ClockodeDatabase, ClockodeEntry},
+        utils::{get_time_until_next_totp_refresh, style},
+        widgets::Toast,
+    },
+    icons,
 };
 
 mod settings;
@@ -210,10 +213,33 @@ impl HomePage {
 
 /// View of the header of this screen
 fn header_view<'a>() -> Element<'a, Message> {
-    row![button("Add").on_press(Message::OpenUpsertPage(None))]
-        .width(Length::Fill)
-        .height(Length::Fixed(30.))
-        .into()
+    row![
+        // Title section
+        column![
+            text("Clockode").size(style::font_size::TITLE),
+            text("Two-Factor Authentication")
+                .size(style::font_size::SMALL)
+                .style(style::muted_text),
+        ]
+        .spacing(style::spacing::TINY),
+        space().width(Length::Fill),
+        // Action buttons
+        row![
+            button(icons::get_icon("list-add-symbolic", 21))
+                .on_press(Message::OpenUpsertPage(None))
+                .padding(8)
+                .style(style::primary_button),
+            button(icons::get_icon("emblem-system-symbolic", 21))
+                .padding(8)
+                .style(style::secondary_button),
+        ]
+        .spacing(style::spacing::SMALL)
+    ]
+    .spacing(style::spacing::LARGE)
+    .padding(20)
+    .align_y(iced::Alignment::Center)
+    .width(Length::Fill)
+    .into()
 }
 
 /// View of the contents of this screen
@@ -221,17 +247,20 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
     if entries.is_empty() {
         container(
             column![
-                text("No TOTP entries found").size(24),
-                text("Add your first entry to get started").size(14),
+                text("No TOTP entries found").size(style::font_size::TITLE),
+                text("Add your first entry to get started").size(style::font_size::BODY),
             ]
             .align_x(Alignment::Center)
-            .spacing(10),
+            .spacing(style::spacing::MEDIUM),
         )
         .center(Length::Fill)
         .into()
     } else {
         let entries_list = entries.iter().fold(
-            Column::new().height(Length::Fill).spacing(12).padding(20),
+            Column::new()
+                .height(Length::Fill)
+                .spacing(style::spacing::MEDIUM)
+                .padding(20),
             |col, entry| {
                 let code = entry.totp.generate_current().unwrap_or_default();
                 let time_remaining = get_time_until_next_totp_refresh(entry.totp.step);
@@ -239,41 +268,36 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
                 let entry_view = container(
                     row![
                         column![
-                            text(&entry.name).size(18),
+                            text(&entry.name).size(style::font_size::LARGE),
                             text(format!(
                                 "{} digits · {}s",
                                 entry.totp.digits, time_remaining
                             ))
-                            .size(12)
-                            .style(|theme: &iced::Theme| {
-                                text::Style {
-                                    color: Some(theme.palette().text.scale_alpha(0.6)),
-                                }
-                            }),
+                            .size(style::font_size::SMALL)
+                            .style(style::muted_text),
                         ]
-                        .spacing(4)
+                        .spacing(style::spacing::TINY)
                         .width(Length::Fill),
-                        column![text(code).size(28).font(iced::Font::MONOSPACE)]
-                            .spacing(4)
-                            .align_x(iced::Alignment::End),
-                        button("Copy").padding(8),
-                        button("Edit")
+                        column![
+                            text(code)
+                                .size(style::font_size::HERO)
+                                .font(iced::Font::MONOSPACE)
+                        ]
+                        .spacing(style::spacing::TINY)
+                        .align_x(iced::Alignment::End),
+                        button(icons::get_icon("edit-copy-symbolic", 21))
+                            .padding(8)
+                            .style(style::primary_button),
+                        button(icons::get_icon("edit-symbolic", 21))
                             .on_press(Message::OpenUpsertPage(Some(entry.clone())))
-                            .padding(8),
+                            .padding(8)
+                            .style(style::secondary_button),
                     ]
-                    .spacing(20)
+                    .spacing(style::spacing::SMALL)
                     .padding(16)
                     .align_y(iced::Alignment::Center),
                 )
-                .style(|theme: &iced::Theme| container::Style {
-                    background: Some(theme.palette().background.into()),
-                    border: iced::Border {
-                        color: theme.palette().text.scale_alpha(0.1),
-                        width: 1.0,
-                        radius: 8.0.into(),
-                    },
-                    ..Default::default()
-                });
+                .style(style::entry_card);
 
                 col.push(entry_view)
             },

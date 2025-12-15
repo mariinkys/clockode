@@ -11,11 +11,14 @@ use iced::{
     widget::{
         button, column, container,
         operation::{focus_next, focus_previous},
-        text, text_input,
+        space, svg, text, text_input,
     },
 };
 
-use crate::app::{core::create_database, widgets::Toast};
+use crate::{
+    APP_ICON,
+    app::{core::create_database, utils::style, widgets::Toast},
+};
 
 pub struct CreateDatabase {
     inputs: PageInputs,
@@ -54,25 +57,81 @@ impl CreateDatabase {
     }
 
     pub fn view(&self, _now: Instant) -> iced::Element<'_, Message> {
+        let password_form = container(
+            column![
+                column![
+                    text("Password")
+                        .size(style::font_size::BODY)
+                        .style(style::label_text),
+                    text_input("Enter a strong password", &self.inputs.password)
+                        .secure(true)
+                        .on_input(Message::UpdatePassword)
+                        .on_submit_maybe(self.inputs.valid().then_some(Message::Submit))
+                        .padding(12)
+                        .size(style::font_size::MEDIUM)
+                ]
+                .spacing(style::spacing::TINY),
+                column![
+                    text("Confirm Password")
+                        .size(style::font_size::BODY)
+                        .style(style::label_text),
+                    text_input("Re-enter your password", &self.inputs.repeat_password)
+                        .secure(true)
+                        .on_input(Message::UpdateRepeatPassword)
+                        .on_submit_maybe(self.inputs.valid().then_some(Message::Submit))
+                        .padding(12)
+                        .size(style::font_size::MEDIUM)
+                ]
+                .spacing(style::spacing::TINY),
+                // Password strength hint
+                text("Choose a strong password. You'll need it to access your codes.")
+                    .size(style::font_size::SMALL)
+                    .width(Length::Fill)
+                    .align_x(Alignment::Center)
+                    .style(style::muted_text),
+                // Create button
+                button(
+                    text("Create Database")
+                        .size(style::font_size::MEDIUM)
+                        .width(Length::Fill)
+                        .align_x(Alignment::Center)
+                )
+                .on_press_maybe(self.inputs.valid().then_some(Message::Submit))
+                .padding(16)
+                .width(Length::Fill)
+                .style(style::primary_submit_button),
+            ]
+            .spacing(style::spacing::XLARGE),
+        )
+        .max_width(500)
+        .padding(32)
+        .style(style::card_container);
+
         let content = column![
-            container(text("Create Database").width(Length::Shrink))
+            // App icon
+            container(svg(svg::Handle::from_memory(APP_ICON)).width(80).height(80))
                 .width(Length::Fill)
                 .align_x(Alignment::Center),
-            text_input("Password", &self.inputs.password)
-                .secure(true)
-                .on_input(Message::UpdatePassword)
-                .on_submit_maybe(self.inputs.valid().then_some(Message::Submit)),
-            text_input("Repeat Password", &self.inputs.repeat_password)
-                .secure(true)
-                .on_input(Message::UpdateRepeatPassword)
-                .on_submit_maybe(self.inputs.valid().then_some(Message::Submit)),
-            button("Create")
-                .on_press_maybe(self.inputs.valid().then_some(Message::Submit))
-                .width(Length::Fill)
+            space().height(Length::Fixed(20.)),
+            // Welcome text
+            column![
+                text("Welcome to Clockode")
+                    .align_x(Alignment::Center)
+                    .size(style::font_size::HERO),
+                text("Create a password to secure your TOTP entries")
+                    .align_x(Alignment::Center)
+                    .size(style::font_size::BODY)
+                    .style(style::subtitle_text),
+            ]
+            .spacing(style::spacing::SMALL)
+            .align_x(Alignment::Center),
+            space().height(Length::Fixed(32.)),
+            password_form,
         ]
-        .spacing(3.);
+        .spacing(0)
+        .align_x(Alignment::Center);
 
-        container(content).center(Length::Fill).into()
+        container(content).center(Length::Fill).padding(20).into()
     }
 
     pub fn update(&mut self, message: Message, _now: Instant) -> Action {

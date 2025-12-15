@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 pub const ALL_ALGORITHMS: &[Algorithm] = &[Algorithm::SHA1, Algorithm::SHA256, Algorithm::SHA512];
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct InputableClockodeEntry {
     pub uuid: Option<Uuid>,
     pub name: String,
@@ -17,6 +17,21 @@ pub struct InputableClockodeEntry {
     pub secret: String,
     pub issuer: Option<String>,
     pub account_name: String,
+}
+
+impl Default for InputableClockodeEntry {
+    fn default() -> Self {
+        Self {
+            uuid: Default::default(),
+            name: Default::default(),
+            algorithm: Default::default(),
+            digits: 6,
+            step: 30,
+            secret: Default::default(),
+            issuer: Default::default(),
+            account_name: Default::default(),
+        }
+    }
 }
 
 impl From<ClockodeEntry> for InputableClockodeEntry {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use iced::{
-    Element,
+    Alignment, Element,
     Length::{self},
     Subscription, Task,
     time::Instant,
@@ -9,10 +9,13 @@ use iced::{
 };
 use totp_rs::Algorithm;
 
-use crate::app::{
-    core::ClockodeEntry,
-    utils::{ALL_ALGORITHMS, InputableClockodeEntry},
-    widgets::Toast,
+use crate::{
+    app::{
+        core::ClockodeEntry,
+        utils::{ALL_ALGORITHMS, InputableClockodeEntry, style},
+        widgets::Toast,
+    },
+    icons,
 };
 
 pub struct UpsertPage {
@@ -155,43 +158,172 @@ impl UpsertPage {
 
 /// View of the header of this screen
 fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
+    let title = if entry.uuid.is_some() {
+        "Edit Entry"
+    } else {
+        "New Entry"
+    };
+
     row![
-        button("Back").on_press(Message::Back),
+        // Back button
+        button(
+            row![
+                icons::get_icon("go-previous-symbolic", 21),
+                text("Back").size(style::font_size::BODY)
+            ]
+            .spacing(style::spacing::TINY)
+            .align_y(iced::Alignment::Center)
+        )
+        .on_press(Message::Back)
+        .padding(8)
+        .style(style::secondary_button),
         space().width(Length::Fill),
-        button("Delete")
-            .style(button::danger)
-            .on_press_maybe(entry.uuid.is_some().then_some(Message::Delete))
+        // Title
+        text(title).size(style::font_size::XLARGE),
+        space().width(Length::Fill),
+        // Delete button
+        button(
+            row![
+                icons::get_icon("user-trash-full-symbolic", 21).style(|theme, _status| {
+                    let danger_style = button::danger(theme, iced::widget::button::Status::Active);
+                    iced::widget::svg::Style {
+                        color: Some(danger_style.text_color),
+                    }
+                }),
+                text("Delete").size(style::font_size::BODY)
+            ]
+            .spacing(style::spacing::TINY)
+            .align_y(iced::Alignment::Center)
+        )
+        .style(style::danger_button)
+        .padding(8)
+        .on_press_maybe(entry.uuid.is_some().then_some(Message::Delete))
     ]
+    .spacing(style::spacing::LARGE)
+    .padding(20)
+    .align_y(iced::Alignment::Center)
     .width(Length::Fill)
-    .height(Length::Fixed(30.))
     .into()
 }
 
 fn upsert_entry_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
-    let button_content = if entry.uuid.is_some() {
-        String::from("Update")
+    let button_text = if entry.uuid.is_some() {
+        "Update Entry"
     } else {
-        String::from("Create")
+        "Create Entry"
     };
 
-    column![
-        text_input("Name", &entry.name)
-            .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateName(v))),
-        pick_list(ALL_ALGORITHMS, Some(&entry.algorithm), |v| {
-            Message::InputUpdated(TOTPEntryInput::UpdateAlgorithm(v))
-        }),
-        text_input("Digits", &entry.digits.to_string())
-            .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateDigits(v))),
-        text_input("Step", &entry.step.to_string())
-            .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateStep(v))),
-        text_input("Secret", &entry.secret)
-            .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateSecret(v))),
-        text_input("Issuer", entry.issuer.as_deref().unwrap_or(""))
-            .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateIssuer(v))),
-        text_input("Account Name", &entry.account_name.to_string())
-            .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateAccountName(v))),
-        button(text(button_content)).on_press(Message::Submit)
+    let form = column![
+        // Name field
+        column![
+            text("Name")
+                .size(style::font_size::BODY)
+                .style(style::label_text),
+            text_input("e.g., Google Account", &entry.name)
+                .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateName(v)))
+                .padding(12)
+                .size(style::font_size::MEDIUM)
+        ]
+        .spacing(style::spacing::TINY),
+        // Secret field
+        column![
+            text("Secret Key")
+                .size(style::font_size::BODY)
+                .style(style::label_text),
+            text_input("Secret", &entry.secret)
+                .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateSecret(v)))
+                .padding(12)
+                .size(style::font_size::MEDIUM)
+        ]
+        .spacing(style::spacing::TINY),
+        // Two column layout for Issuer and Account Name
+        row![
+            column![
+                text("Issuer (Optional)")
+                    .size(style::font_size::BODY)
+                    .style(style::label_text),
+                text_input("e.g., GitHub", entry.issuer.as_deref().unwrap_or(""))
+                    .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateIssuer(v)))
+                    .padding(12)
+                    .size(style::font_size::MEDIUM)
+            ]
+            .spacing(style::spacing::TINY)
+            .width(Length::FillPortion(1)),
+            column![
+                text("Account Name")
+                    .size(style::font_size::BODY)
+                    .style(style::label_text),
+                text_input("e.g., user@example.com", &entry.account_name)
+                    .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateAccountName(v)))
+                    .padding(12)
+                    .size(style::font_size::MEDIUM)
+            ]
+            .spacing(style::spacing::TINY)
+            .width(Length::FillPortion(1)),
+        ]
+        .spacing(style::spacing::MEDIUM),
+        // Advanced settings section
+        container(
+            column![
+                text("Advanced Settings").size(style::font_size::MEDIUM),
+                // Three column layout for algorithm, digits, and period
+                row![
+                    column![
+                        text("Algorithm")
+                            .size(style::font_size::BODY)
+                            .style(style::label_text),
+                        pick_list(ALL_ALGORITHMS, Some(&entry.algorithm), |v| {
+                            Message::InputUpdated(TOTPEntryInput::UpdateAlgorithm(v))
+                        })
+                        .width(Length::Fill)
+                        .padding(12)
+                    ]
+                    .spacing(style::spacing::TINY)
+                    .width(Length::FillPortion(1)),
+                    column![
+                        text("Digits")
+                            .size(style::font_size::BODY)
+                            .style(style::label_text),
+                        text_input("6 or 8", &entry.digits.to_string())
+                            .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateDigits(v)))
+                            .padding(12)
+                            .size(style::font_size::MEDIUM)
+                    ]
+                    .spacing(style::spacing::TINY)
+                    .width(Length::FillPortion(1)),
+                    column![
+                        text("Period (seconds)")
+                            .size(style::font_size::BODY)
+                            .style(style::label_text),
+                        text_input("30", &entry.step.to_string())
+                            .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateStep(v)))
+                            .padding(12)
+                            .size(style::font_size::MEDIUM)
+                    ]
+                    .spacing(style::spacing::TINY)
+                    .width(Length::FillPortion(1)),
+                ]
+                .spacing(style::spacing::MEDIUM),
+            ]
+            .spacing(style::spacing::MEDIUM)
+        )
+        .padding(16)
+        .style(style::entry_card),
+        // Submit button
+        button(
+            text(button_text)
+                .size(style::font_size::MEDIUM)
+                .width(Length::Fill)
+                .align_x(Alignment::Center)
+        )
+        .on_press_maybe(entry.valid().then_some(Message::Submit))
+        .padding(16)
+        .width(Length::Fill)
+        .style(style::primary_submit_button),
     ]
-    .spacing(3.)
-    .into()
+    .spacing(style::spacing::XLARGE)
+    .padding(20)
+    .max_width(600);
+
+    container(form).center_x(Length::Fill).into()
 }

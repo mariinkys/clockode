@@ -11,13 +11,17 @@ use iced::{
     widget::{
         button, column, container,
         operation::{focus_next, focus_previous},
-        text, text_input,
+        space, svg, text, text_input,
     },
 };
 
-use crate::app::{
-    core::{ClockodeDatabase, unlock_database},
-    widgets::Toast,
+use crate::{
+    APP_ICON,
+    app::{
+        core::{ClockodeDatabase, unlock_database},
+        utils::style,
+        widgets::Toast,
+    },
 };
 
 pub struct UnlockDatabase {
@@ -58,21 +62,60 @@ impl UnlockDatabase {
     }
 
     pub fn view(&self, _now: Instant) -> iced::Element<'_, Message> {
+        let unlock_form = container(
+            column![
+                column![
+                    text("Password")
+                        .size(style::font_size::BODY)
+                        .style(style::label_text),
+                    text_input("Enter your password", &self.inputs.password)
+                        .secure(true)
+                        .on_input(Message::UpdatePassword)
+                        .on_submit_maybe(self.inputs.valid().then_some(Message::Submit))
+                        .padding(12)
+                        .size(style::font_size::MEDIUM)
+                ]
+                .spacing(style::spacing::TINY),
+                button(
+                    text("Unlock Database")
+                        .size(style::font_size::MEDIUM)
+                        .width(Length::Fill)
+                        .align_x(Alignment::Center)
+                )
+                .on_press_maybe(self.inputs.valid().then_some(Message::Submit))
+                .padding(16)
+                .width(Length::Fill)
+                .style(style::primary_submit_button),
+            ]
+            .spacing(style::spacing::XLARGE),
+        )
+        .max_width(500)
+        .padding(32)
+        .style(style::card_container);
+
         let content = column![
-            container(text("Unlock Database").width(Length::Shrink))
+            container(svg(svg::Handle::from_memory(APP_ICON)).width(80).height(80))
                 .width(Length::Fill)
                 .align_x(Alignment::Center),
-            text_input("Password", &self.inputs.password)
-                .secure(true)
-                .on_input(Message::UpdatePassword)
-                .on_submit_maybe(self.inputs.valid().then_some(Message::Submit)),
-            button("Unlock")
-                .on_press_maybe(self.inputs.valid().then_some(Message::Submit))
-                .width(Length::Fill)
+            space().height(Length::Fixed(20.)),
+            column![
+                text("Welcome Back")
+                    .align_x(Alignment::Center)
+                    .size(style::font_size::HERO),
+                text("Enter your password to unlock your TOTP codes")
+                    .align_x(Alignment::Center)
+                    .size(style::font_size::BODY)
+                    .style(style::subtitle_text),
+            ]
+            .spacing(style::spacing::SMALL)
+            .align_x(Alignment::Center),
+            space().height(Length::Fixed(32.)),
+            unlock_form,
         ]
-        .spacing(3.);
+        .spacing(0)
+        .align_x(Alignment::Center);
 
-        container(content).center(Length::Fill).into()
+        container(content).center(Length::Fill).padding(20).into()
     }
 
     pub fn update(&mut self, message: Message, _now: Instant) -> Action {

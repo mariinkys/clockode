@@ -7,6 +7,7 @@ mod app;
 mod icons;
 
 const APP_ID: &str = "dev.mariinkys.Clockode";
+const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg");
 
 fn main() -> iced::Result {
     // Init the icon cache
