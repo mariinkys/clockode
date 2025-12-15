@@ -80,6 +80,25 @@ impl TryFrom<InputableClockodeEntry> for ClockodeEntry {
     }
 }
 
+impl TryFrom<String> for InputableClockodeEntry {
+    type Error = anywho::Error;
+
+    fn try_from(value: String) -> Result<Self, anywho::Error> {
+        let totp = totp_rs::TOTP::from_url_unchecked(value)?;
+
+        Ok(Self {
+            uuid: None,
+            name: totp.account_name.clone(),
+            algorithm: totp.algorithm,
+            digits: totp.digits,
+            step: totp.step,
+            secret: totp.get_secret_base32(),
+            issuer: totp.issuer,
+            account_name: totp.account_name,
+        })
+    }
+}
+
 impl InputableClockodeEntry {
     /// Returns true if the entry is ready for submission
     pub fn valid(&self) -> bool {

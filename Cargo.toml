@@ -32,6 +32,12 @@ serde = { version = "1.0.228", features = [
     "derive",
 ] } # Needed for config serializing and deserializing
 ron = "0.12.0" # Needed for config serializing and deserializing
+image = { version = "0.25.9", default-features = false, features = [
+    "jpeg",
+    "png",
+    "webp",
+    "rayon",
+] }
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]

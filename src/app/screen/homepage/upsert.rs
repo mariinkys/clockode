@@ -12,12 +12,13 @@ use iced::{
         pick_list, row, scrollable, space, text, text_input,
     },
 };
+use rfd::{AsyncFileDialog, FileHandle};
 use totp_rs::Algorithm;
 
 use crate::{
     app::{
         core::ClockodeEntry,
-        utils::{ALL_ALGORITHMS, InputableClockodeEntry, style},
+        utils::{ALL_ALGORITHMS, InputableClockodeEntry, read_qr_from_file, style},
         widgets::Toast,
     },
     icons,
@@ -40,6 +41,11 @@ pub enum Message {
     Submit,
     /// Delete the currently editing entry
     Delete,
+
+    /// Opens the dialog to select a QR file
+    OpenQrFileSelection,
+    /// Callback after selecting a QR file
+    QrFileSelected(Option<FileHandle>),
 }
 
 pub enum Action {
@@ -164,6 +170,42 @@ impl UpsertPage {
                     Action::None
                 }
             }
+
+            Message::OpenQrFileSelection => {
+                if self.entry.uuid.is_none() {
+                    Action::Run(Task::perform(
+                        async move {
+                            AsyncFileDialog::new()
+                                .add_filter("Image Files", &["png", "jpeg", "jpg", "webp"])
+                                .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                                .pick_file()
+                                .await
+                        },
+                        Message::QrFileSelected,
+                    ))
+                } else {
+                    Action::None
+                }
+            }
+            Message::QrFileSelected(handle) => {
+                if let Some(file_handle) = handle {
+                    let result = read_qr_from_file(file_handle.path().to_path_buf());
+                    return match result {
+                        Ok(value) => {
+                            let conv_result = InputableClockodeEntry::try_from(value);
+                            match conv_result {
+                                Ok(entry) => {
+                                    self.entry = entry;
+                                    Action::None
+                                }
+                                Err(e) => Action::AddToast(Toast::error_toast(e)),
+                            }
+                        }
+                        Err(e) => Action::AddToast(Toast::error_toast(e)),
+                    };
+                }
+                Action::None
+            }
         }
     }
 
@@ -200,6 +242,23 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
         ]
         .spacing(style::spacing::TINY),
         space().width(Length::Fill),
+        button(
+            row![
+                icons::get_icon("qr-symbolic", 21).style(|theme, _status| {
+                    let primary_style =
+                        button::primary(theme, iced::widget::button::Status::Active);
+                    iced::widget::svg::Style {
+                        color: Some(primary_style.text_color),
+                    }
+                }),
+                text("QR (File)").size(style::font_size::BODY)
+            ]
+            .spacing(style::spacing::TINY)
+            .align_y(iced::Alignment::Center)
+        )
+        .style(style::primary_button)
+        .padding(8)
+        .on_press_maybe(entry.uuid.is_none().then_some(Message::OpenQrFileSelection)),
         button(
             row![
                 icons::get_icon("user-trash-full-symbolic", 21).style(|theme, _status| {

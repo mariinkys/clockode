@@ -782,6 +782,7 @@ dependencies = [
  "arboard",
  "dirs",
  "iced",
+ "image",
  "keepass",
  "rfd",
  "ron",
