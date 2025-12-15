@@ -44,6 +44,16 @@
                 https://raw.githubusercontent.com/mariinkys/clockode/main/screenshots/main-dark.png</image>
             <caption>Main Page (Dark)</caption>
         </screenshot>
+        <screenshot type="default" xml:lang="en">
+            <image>
+                https://raw.githubusercontent.com/mariinkys/clockode/main/screenshots/add-light.png</image>
+            <caption>New Entry Page (Light)</caption>
+        </screenshot>
+        <screenshot xml:lang="en">
+            <image>
+                https://raw.githubusercontent.com/mariinkys/clockode/main/screenshots/add-dark.png</image>
+            <caption>New Entry Page (Dark)</caption>
+        </screenshot>
     </screenshots>
 
     <branding>
@@ -71,7 +81,12 @@
     <releases>
         <release version="0.2.0" date="2025-12-16">
             <description>
-                <p>TODO</p>
+                <p>Full application rewrite</p>
+                <p>Real support for the standard TOTP formats, compatible with Aegis...</p>
+                <p>No more hand-rolled vault encryption, use of standard keepass format</p>
+                <p>Brand new UI and UX</p>
+                <p>Various QR-related operations have been added</p>
+                <p>Updated dependencies and much more</p>
             </description>
         </release>
         <release version="0.1.4" date="2025-09-20">
