@@ -18,7 +18,7 @@ use crate::{
     app::{
         core::{ClockodeDatabase, ClockodeEntry},
         utils::{get_time_until_next_totp_refresh, style},
-        widgets::Toast,
+        widgets::{Toast, dot},
     },
     config::Config,
     icons,
@@ -368,12 +368,17 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
                     row![
                         column![
                             text(&entry.name).size(style::font_size::LARGE),
-                            text(format!(
-                                "{} digits · {}s",
-                                entry.totp.digits, time_remaining
-                            ))
-                            .size(style::font_size::SMALL)
-                            .style(style::muted_text),
+                            row![
+                                text(format!(
+                                    "{} digits · {}s",
+                                    entry.totp.digits, time_remaining
+                                ))
+                                .size(style::font_size::SMALL)
+                                .style(style::muted_text),
+                                dot(time_remaining)
+                            ]
+                            .align_y(Alignment::Start)
+                            .spacing(style::spacing::SMALL),
                         ]
                         .spacing(style::spacing::TINY)
                         .width(Length::Fill),
