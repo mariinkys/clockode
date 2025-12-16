@@ -40,6 +40,7 @@ fn main() -> iced::Result {
         Clockode::subscription,
         Clockode::view,
     )
+    .title("Clockode")
     .theme(Clockode::theme)
     .window_size(iced::Size {
         width: 1100.,
