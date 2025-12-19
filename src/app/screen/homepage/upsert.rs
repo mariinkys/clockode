@@ -257,17 +257,32 @@ impl UpsertPage {
 
                 match scan_qr_page.update(message, now) {
                     scan_qr::Action::None => Action::None,
-                    scan_qr::Action::Back => Action::Back,
-                    scan_qr::Action::Run(task) => Action::Run(task.map(Message::ScanQrPage)),
+                    scan_qr::Action::Back => {
+                        self.subscreen = SubScreen::UpsertPage;
+                        Action::None
+                    }
                     scan_qr::Action::AddToast(toast) => Action::AddToast(toast),
+                    scan_qr::Action::EntryDetected(entry) => {
+                        self.entry = entry;
+                        self.subscreen = SubScreen::UpsertPage;
+                        Action::AddToast(Toast::success_toast(format!(
+                            "Code detected correctly for: {}",
+                            &self.entry.account_name
+                        )))
+                    }
                 }
             }
             #[cfg(unix)]
-            Message::OpenScanQrPage => {
-                let (scan_qr_page, task) = scan_qr::QrScanPage::new();
-                self.subscreen = SubScreen::ScanQrPage(scan_qr_page);
-                Action::Run(task.map(Message::ScanQrPage))
-            }
+            Message::OpenScanQrPage => match scan_qr::QrScanPage::new() {
+                Ok((scan_qr_page, task)) => {
+                    self.subscreen = SubScreen::ScanQrPage(scan_qr_page);
+                    Action::Run(task.map(Message::ScanQrPage))
+                }
+                Err(e) => {
+                    eprintln!("{e}");
+                    Action::AddToast(Toast::error_toast(format!("Failed to open camera: {}", e)))
+                }
+            },
         }
     }
 
