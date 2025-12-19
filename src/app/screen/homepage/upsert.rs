@@ -24,9 +24,19 @@ use crate::{
     icons,
 };
 
+#[cfg(unix)]
+mod scan_qr;
+
 pub struct UpsertPage {
     entry: InputableClockodeEntry,
     show_qr: bool,
+    subscreen: SubScreen,
+}
+
+pub enum SubScreen {
+    UpsertPage,
+    #[cfg(unix)]
+    ScanQrPage(scan_qr::QrScanPage),
 }
 
 #[derive(Debug, Clone)]
@@ -50,6 +60,14 @@ pub enum Message {
 
     /// Wants to show/hide the current entry qr code
     ToggleShowQRCode,
+
+    /// Messages of the [`ScanQrPage`]
+    #[cfg(unix)]
+    ScanQrPage(scan_qr::Message),
+
+    /// Ask to open the [`ScanQrPage`]
+    #[cfg(unix)]
+    OpenScanQrPage,
 }
 
 pub enum Action {
@@ -90,26 +108,33 @@ impl UpsertPage {
             Self {
                 entry,
                 show_qr: false,
+                subscreen: SubScreen::UpsertPage,
             },
             Task::none(),
         )
     }
 
-    pub fn view(&self, _now: Instant) -> iced::Element<'_, Message> {
-        let header = header_view(&self.entry);
-        let content = upsert_entry_view(&self.entry, self.show_qr);
+    pub fn view(&self, now: Instant) -> iced::Element<'_, Message> {
+        match &self.subscreen {
+            SubScreen::UpsertPage => {
+                let header = header_view(&self.entry);
+                let content = upsert_entry_view(&self.entry, self.show_qr);
 
-        container(
-            container(column![header, content])
-                .padding(5.)
-                .width(Length::Fill)
-                .height(Length::Fill),
-        )
-        .center(Length::Fill)
-        .into()
+                container(
+                    container(column![header, content])
+                        .padding(5.)
+                        .width(Length::Fill)
+                        .height(Length::Fill),
+                )
+                .center(Length::Fill)
+                .into()
+            }
+            #[cfg(unix)]
+            SubScreen::ScanQrPage(qr_scan_page) => qr_scan_page.view(now).map(Message::ScanQrPage),
+        }
     }
 
-    pub fn update(&mut self, message: Message, _now: Instant) -> Action {
+    pub fn update(&mut self, message: Message, now: Instant) -> Action {
         match message {
             Message::Hotkey(hotkey) => match hotkey {
                 Hotkey::Tab(modifiers) => {
@@ -223,11 +248,37 @@ impl UpsertPage {
                 }
                 Action::None
             }
+
+            #[cfg(unix)]
+            Message::ScanQrPage(message) => {
+                let SubScreen::ScanQrPage(scan_qr_page) = &mut self.subscreen else {
+                    return Action::None;
+                };
+
+                match scan_qr_page.update(message, now) {
+                    scan_qr::Action::None => Action::None,
+                    scan_qr::Action::Back => Action::Back,
+                    scan_qr::Action::Run(task) => Action::Run(task.map(Message::ScanQrPage)),
+                    scan_qr::Action::AddToast(toast) => Action::AddToast(toast),
+                }
+            }
+            #[cfg(unix)]
+            Message::OpenScanQrPage => {
+                let (scan_qr_page, task) = scan_qr::QrScanPage::new();
+                self.subscreen = SubScreen::ScanQrPage(scan_qr_page);
+                Action::Run(task.map(Message::ScanQrPage))
+            }
         }
     }
 
-    pub fn subscription(&self, _now: Instant) -> Subscription<Message> {
-        event::listen_with(handle_event)
+    pub fn subscription(&self, now: Instant) -> Subscription<Message> {
+        match &self.subscreen {
+            SubScreen::UpsertPage => event::listen_with(handle_event),
+            #[cfg(unix)]
+            SubScreen::ScanQrPage(qr_scan_page) => {
+                qr_scan_page.subscription(now).map(Message::ScanQrPage)
+            }
+        }
     }
 }
 
@@ -263,6 +314,28 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
             .style(style::primary_button)
             .padding(8)
             .on_press(Message::OpenQrFileSelection)
+            .into(),
+        );
+
+        #[cfg(unix)]
+        buttons.push(
+            button(
+                row![
+                    icons::get_icon("qr-symbolic", 21).style(|theme, _status| {
+                        let primary_style =
+                            button::primary(theme, iced::widget::button::Status::Active);
+                        iced::widget::svg::Style {
+                            color: Some(primary_style.text_color),
+                        }
+                    }),
+                    text("QR (Camera)").size(style::font_size::BODY)
+                ]
+                .spacing(style::spacing::TINY)
+                .align_y(iced::Alignment::Center),
+            )
+            .style(style::primary_button)
+            .padding(8)
+            .on_press(Message::OpenScanQrPage)
             .into(),
         );
     } else {

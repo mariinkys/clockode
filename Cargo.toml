@@ -42,6 +42,11 @@ image = { version = "0.25.9", default-features = false, features = [
     "rayon",
 ] } # needed for qr detection
 
+[target.'cfg(unix)'.dependencies] # gstreamer dependencies for qr detection with camera (Unix-like systems)
+gstreamer = "0.24.4"
+gstreamer-app = "0.24.4"
+gstreamer-video = "0.24.4"
+
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]
 opt-level = 1
