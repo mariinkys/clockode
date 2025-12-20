@@ -14,12 +14,7 @@ use iced::{
     widget::{button, column, container, image, stack, text},
 };
 use smol::channel;
-use std::{
-    error::Error,
-    fmt,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::{error::Error, fmt};
 
 use crate::{
     app::{
@@ -30,9 +25,10 @@ use crate::{
 };
 
 pub struct QrScanPage {
-    display_frame: Arc<Mutex<Option<image::Handle>>>,
+    display_frame: Option<image::Handle>,
     pipeline: gst::Pipeline,
     frame_rx: channel::Receiver<FrameData>,
+    display_rx: channel::Receiver<image::Handle>,
 }
 
 impl Drop for QrScanPage {
@@ -54,8 +50,8 @@ pub enum Message {
     Back,
     /// Callback after a QR is detected with the QR contents
     QrDetected(String),
-    /// Used to refresh iced view and show the camera feed
-    Tick,
+    /// Updates the frame to be displayed
+    UpdateDisplayFrame(image::Handle),
 }
 
 pub enum Action {
@@ -123,8 +119,7 @@ impl QrScanPage {
         ));
 
         let (frame_tx, frame_rx) = channel::bounded::<FrameData>(1);
-        let display_frame = Arc::new(Mutex::new(None));
-        let display_frame_clone = display_frame.clone();
+        let (display_tx, display_rx) = channel::bounded::<image::Handle>(1);
 
         appsink.set_callbacks(
             gst_app::AppSinkCallbacks::builder()
@@ -142,15 +137,14 @@ impl QrScanPage {
                     let data = map.to_vec();
 
                     // Update display frame
-                    if let Ok(mut frame) = display_frame_clone.lock() {
-                        let mut rgba = Vec::with_capacity((w * h * 4) as usize);
-                        for &gray in &data {
-                            rgba.extend_from_slice(&[gray, gray, gray, 255]);
-                        }
-                        *frame = Some(image::Handle::from_rgba(w, h, rgba));
+                    let mut rgba = Vec::with_capacity((w * h * 4) as usize);
+                    for &gray in &data {
+                        rgba.extend_from_slice(&[gray, gray, gray, 255]);
                     }
+                    let handle = image::Handle::from_rgba(w, h, rgba);
+                    let _ = display_tx.try_send(handle);
 
-                    // Send to QR decoder
+                    // Send grayscale data to QR decoder
                     let _ = frame_tx.try_send(FrameData {
                         width: w,
                         height: h,
@@ -168,9 +162,10 @@ impl QrScanPage {
 
         Ok((
             Self {
-                display_frame,
+                display_frame: None,
                 pipeline,
                 frame_rx,
+                display_rx,
             },
             Task::none(),
         ))
@@ -191,21 +186,65 @@ impl QrScanPage {
                     "QR Detected but it could not be decoded into an entry",
                 )),
             },
-            Message::Tick => Action::None,
+            Message::UpdateDisplayFrame(handle) => {
+                self.display_frame = Some(handle);
+                Action::None
+            }
         }
     }
 
     pub fn subscription(&self, _now: Instant) -> Subscription<Message> {
         Subscription::batch([
-            iced::time::every(Duration::from_millis(66)).map(|_| Message::Tick),
-            Self::qr_detection_subscription(self.frame_rx.clone()),
+            Self::qr_detection(self.frame_rx.clone()),
+            Self::update_camera_feed(self.display_rx.clone()),
         ])
+    }
+
+    fn update_camera_feed(display_rx: channel::Receiver<image::Handle>) -> Subscription<Message> {
+        use iced::futures::sink::SinkExt;
+
+        #[derive(Hash, Clone, Copy)]
+        struct DisplayUpdaterId;
+
+        #[derive(Clone)]
+        struct DisplayData {
+            id: DisplayUpdaterId,
+            display_rx: channel::Receiver<image::Handle>,
+        }
+
+        impl std::hash::Hash for DisplayData {
+            fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                // We only hash the ID. We ignore the Receiver because
+                // the identity of the subscription is tied to this ID.
+                self.id.hash(state);
+            }
+        }
+
+        let data = DisplayData {
+            id: DisplayUpdaterId,
+            display_rx,
+        };
+
+        Subscription::run_with(data, |data| {
+            let display_rx = data.display_rx.clone();
+
+            iced::stream::channel(
+                10,
+                move |mut output: iced::futures::channel::mpsc::Sender<Message>| async move {
+                    while let Ok(handle) = display_rx.recv().await {
+                        let _ = output.send(Message::UpdateDisplayFrame(handle)).await;
+                    }
+
+                    smol::future::pending::<()>().await;
+                },
+            )
+        })
     }
 }
 
 /// QR Helper Functions
 impl QrScanPage {
-    fn qr_detection_subscription(frame_rx: channel::Receiver<FrameData>) -> Subscription<Message> {
+    fn qr_detection(frame_rx: channel::Receiver<FrameData>) -> Subscription<Message> {
         use iced::futures::sink::SinkExt;
 
         #[derive(Hash, Clone, Copy)]
@@ -272,10 +311,10 @@ impl QrScanPage {
     }
 }
 
-fn qr_scan_view<'a>(display_frame: &'a Arc<Mutex<Option<image::Handle>>>) -> Element<'a, Message> {
-    let camera_display = if let Some(handle) = display_frame.lock().unwrap().clone() {
+fn qr_scan_view<'a>(display_frame: &'a Option<image::Handle>) -> Element<'a, Message> {
+    let camera_display = if let Some(handle) = display_frame {
         container(
-            image(handle)
+            image(handle.clone())
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .content_fit(iced::ContentFit::Contain),
