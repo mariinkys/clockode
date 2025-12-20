@@ -1,0 +1,40 @@
+app-id: dev.mariinkys.Clockode
+# Note: No additional GStreamer plugins needed - app uses pipewiresrc which is
+# included in org.freedesktop.Platform via PipeWire's gst-plugin-pipewire
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: clockode
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  # - --device=dri
+  # Webcam access (currently no better option than this)
+  # https://docs.flatpak.org/en/latest/sandbox-permissions.html#device-access
+  # Automatically includes GPU support since "dri" is part of "all"
+  - --device=all
+  # PipeWire access for camera and audio (needed for QR scanning with the camera)
+  - --filesystem=xdg-run/pipewire-0:ro
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+modules:
+  - name: clockode
+    buildsystem: simple
+    build-options:
+      env:
+        CARGO_HOME: /run/build/clockode/cargo
+    build-commands:
+      - cargo --offline fetch --manifest-path Cargo.toml --verbose
+      - cargo --offline build --release --verbose
+      - install -Dm0755 ./target/release/clockode /app/bin/clockode
+      - install -Dm0644 ./resources/dev.mariinkys.Clockode.desktop /app/share/applications/dev.mariinkys.Clockode.desktop
+      - install -Dm0644 ./resources/dev.mariinkys.Clockode.metainfo.xml /app/share/metainfo/dev.mariinkys.Clockode.metainfo.xml
+      - install -Dm0644 ./resources/icons/hicolor/256x256/apps/icon.png /app/share/icons/hicolor/256x256/apps/dev.mariinkys.Clockode.png
+      - install -Dm0644 ./resources/icons/hicolor/scalable/apps/icon.svg /app/share/icons/hicolor/scalable/apps/dev.mariinkys.Clockode.svg
+    sources:
+      - type: dir
+        path: .
+      - cargo-sources.json

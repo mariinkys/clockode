@@ -23,8 +23,8 @@
             <li>Offline-first, no internet access required</li>
             <li>Minimal and user-friendly interface</li>
             <li>Quick code copying and auto-refresh</li>
-            <li>Support for multiple accounts and labels</li>
-            <li>Backup and import functionality (standard format, works between apps)</li>
+            <li>Entry importing via QR (Camera or File)</li>
+            <li>Backup and import functionality (standard format, works between apps, like Aegis...)</li>
         </ul>
     </description>
 
@@ -79,6 +79,14 @@
     </keywords>
 
     <releases>
+        <release version="0.2.1" date="2025-12-20">
+            <description>
+                <p>Added small colored dot to show how much time is left to refresh an entry</p>
+                <p>Added the ability to add entries scanning a QR code with the Camera</p>
+                <p>Memory usage has been reduced</p>
+                <p>Updated dependencies</p>
+            </description>
+        </release>
         <release version="0.2.0" date="2025-12-16">
             <description>
                 <p>Full application rewrite</p>

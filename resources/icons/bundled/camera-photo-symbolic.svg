@@ -1,0 +1,12 @@
+<svg enable-background='new' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'>
+    <defs>
+        <filter color-interpolation-filters='sRGB' height='1' id='a' width='1' x='0' y='0'>
+            <feBlend in2='BackgroundImage' mode='darken' />
+        </filter>
+    </defs>
+    <g filter='url(#a)' transform='translate(-581 247)'>
+        <path
+            d='M584-245v1h-1c-.554 0-1 .446-1 1v9c0 .554.446 1 1 1h12c.554 0 1-.446 1-1v-9c0-.554-.446-1-1-1h-8v-1zm1 3a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm5 1a3 3 0 1 1 0 6 3 3 0 0 1 0-6z'
+            fill='#232323' />
+    </g>
+</svg>

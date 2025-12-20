@@ -2,7 +2,7 @@
 name = "clockode"
 description = "TOTP client made with Iced"
 authors = ["mariinkys <kysdev.owjga@aleeas.com>"]
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 license = "GPL-3.0"
 repository = "https://github.com/mariinkys/clockode"
@@ -41,6 +41,11 @@ image = { version = "0.25.9", default-features = false, features = [
     "webp",
     "rayon",
 ] } # needed for qr detection
+
+[target.'cfg(unix)'.dependencies] # gstreamer dependencies for qr detection with camera (Unix-like systems)
+gstreamer = "0.24.4"
+gstreamer-app = "0.24.4"
+gstreamer-video = "0.24.4"
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]
