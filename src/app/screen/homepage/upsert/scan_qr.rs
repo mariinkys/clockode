@@ -2,10 +2,7 @@
 
 use gstreamer::{
     self as gst,
-    glib::{
-        self,
-        object::{Cast, ObjectExt},
-    },
+    glib::{self, object::Cast},
     prelude::{ElementExt, GstBinExtManual},
 };
 use gstreamer_app as gst_app;
@@ -35,6 +32,7 @@ use crate::{
 pub struct QrScanPage {
     display_frame: Arc<Mutex<Option<image::Handle>>>,
     pipeline: gst::Pipeline,
+    frame_rx: Arc<Mutex<channel::Receiver<FrameData>>>,
 }
 
 impl Drop for QrScanPage {
@@ -115,46 +113,47 @@ impl QrScanPage {
 
         let appsink = sink
             .dynamic_cast::<gst_app::AppSink>()
-            .map_err(|_| QrScanError::ElementCreation("appsink (cast failed)"))?;
-        appsink.set_property("drop", true);
-        appsink.set_property("max-buffers", 1u32);
+            .map_err(|_| QrScanError::ElementCreation("appsink cast failed"))?;
         appsink.set_caps(Some(
             &gst::Caps::builder("video/x-raw")
-                .field("format", "RGBA")
+                .field("format", "GRAY8")
+                .field("width", 640i32)
+                .field("height", 480i32)
                 .build(),
         ));
 
-        let display_frame = Arc::new(std::sync::Mutex::new(None));
-        let display_frame_clone = display_frame.clone();
-
         let (frame_tx, frame_rx) = channel::bounded::<FrameData>(1);
+        let display_frame = Arc::new(Mutex::new(None));
+        let display_frame_clone = display_frame.clone();
 
         appsink.set_callbacks(
             gst_app::AppSinkCallbacks::builder()
-                .new_sample(move |appsink| {
-                    let sample = appsink.pull_sample().map_err(|_| gst::FlowError::Error)?;
+                .new_sample(move |sink| {
+                    let sample = sink.pull_sample().map_err(|_| gst::FlowError::Error)?;
                     let buffer = sample.buffer().ok_or(gst::FlowError::Error)?;
                     let map = buffer.map_readable().map_err(|_| gst::FlowError::Error)?;
-
                     let caps = sample.caps().ok_or(gst::FlowError::Error)?;
                     let s = caps.structure(0).ok_or(gst::FlowError::Error)?;
-                    let width = s.get::<i32>("width").map_err(|_| gst::FlowError::Error)? as u32;
-                    let height = s.get::<i32>("height").map_err(|_| gst::FlowError::Error)? as u32;
+                    let (w, h) = (
+                        s.get::<i32>("width").map_err(|_| gst::FlowError::Error)? as u32,
+                        s.get::<i32>("height").map_err(|_| gst::FlowError::Error)? as u32,
+                    );
 
-                    let data = map.as_slice().to_vec();
+                    let data = map.to_vec();
 
-                    // Update display
                     if let Ok(mut frame) = display_frame_clone.lock() {
-                        *frame = Some(image::Handle::from_rgba(width, height, data.clone()));
+                        let mut rgba = Vec::with_capacity((w * h * 4) as usize);
+                        for &gray in &data {
+                            rgba.extend_from_slice(&[gray, gray, gray, 255]);
+                        }
+                        *frame = Some(image::Handle::from_rgba(w, h, rgba));
                     }
 
-                    let frame_data = FrameData {
-                        width,
-                        height,
+                    let _ = frame_tx.try_send(FrameData {
+                        width: w,
+                        height: h,
                         data,
-                    };
-                    // Send to QR processor
-                    drop(frame_tx.try_send(frame_data));
+                    });
 
                     Ok(gst::FlowSuccess::Ok)
                 })
@@ -165,16 +164,13 @@ impl QrScanPage {
             .set_state(gst::State::Playing)
             .map_err(QrScanError::StateChange)?;
 
-        let qr_task = Task::perform(Self::qr_processing_loop(frame_rx), |result| {
-            result.map(Message::QrDetected).unwrap_or(Message::Tick)
-        });
-
         Ok((
             Self {
                 display_frame,
                 pipeline,
+                frame_rx: Arc::new(Mutex::new(frame_rx)),
             },
-            qr_task,
+            Task::none(),
         ))
     }
 
@@ -198,67 +194,90 @@ impl QrScanPage {
     }
 
     pub fn subscription(&self, _now: Instant) -> Subscription<Message> {
-        iced::time::every(Duration::from_millis(66)).map(|_| Message::Tick)
+        Subscription::batch([
+            iced::time::every(Duration::from_millis(66)).map(|_| Message::Tick),
+            Self::qr_detection_subscription(self.frame_rx.clone()),
+        ])
     }
 }
 
 /// QR Helper Functions
 impl QrScanPage {
-    async fn qr_processing_loop(frame_rx: channel::Receiver<FrameData>) -> Result<String, ()> {
-        const INTERVAL: Duration = Duration::from_millis(300);
-        let mut last_check = smol::Timer::after(Duration::ZERO).await;
+    fn qr_detection_subscription(
+        frame_rx: Arc<Mutex<channel::Receiver<FrameData>>>,
+    ) -> Subscription<Message> {
+        use iced::futures::sink::SinkExt;
 
-        loop {
-            match frame_rx.recv().await {
-                Ok(frame) => {
-                    // Check if enough time has passed
-                    if last_check.elapsed() < INTERVAL {
-                        continue; // Skip frame
-                    }
+        #[derive(Hash, Clone, Copy)]
+        struct QrScannerId;
 
-                    last_check = smol::Timer::after(Duration::ZERO).await;
+        struct ScannerData {
+            id: QrScannerId,
+            frame_rx: Arc<Mutex<channel::Receiver<FrameData>>>,
+        }
 
-                    if let Some(qr_data) = smol::unblock(move || Self::decode_qr(frame)).await {
-                        return Ok(qr_data);
-                    }
-                }
-                Err(_) => return Err(()),
+        impl std::hash::Hash for ScannerData {
+            fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                // We only hash the ID. We ignore the Arc/Mutex because
+                // the identity of the subscription is tied to this ID.
+                self.id.hash(state);
             }
         }
+
+        let data = ScannerData {
+            id: QrScannerId,
+            frame_rx,
+        };
+
+        Subscription::run_with(data, |data| {
+            let frame_rx = data.frame_rx.clone();
+
+            iced::stream::channel(
+                10,
+                move |mut output: iced::futures::channel::mpsc::Sender<Message>| {
+                    let frame_rx = frame_rx.clone();
+
+                    async move {
+                        let rx = {
+                            let guard = frame_rx.lock().expect("Scanner lock failed");
+                            guard.clone()
+                        };
+
+                        let mut last_check = std::time::Instant::now();
+                        let interval = std::time::Duration::from_millis(300);
+
+                        while let Ok(frame) = rx.recv().await {
+                            if last_check.elapsed() >= interval {
+                                let frame_to_decode = frame.clone();
+
+                                let res =
+                                    smol::unblock(move || Self::decode_qr(frame_to_decode)).await;
+
+                                if let Some(content) = res {
+                                    let _ = output.send(Message::QrDetected(content)).await;
+                                    last_check = std::time::Instant::now();
+                                }
+                            }
+                        }
+
+                        smol::future::pending::<()>().await;
+                    }
+                },
+            )
+        })
     }
 
     fn decode_qr(frame: FrameData) -> Option<String> {
-        let scale = 2;
-        let new_width = frame.width / scale;
-        let new_height = frame.height / scale;
-
-        // Convert to grayscale with downsampling
-        let gray: Vec<u8> = (0..new_height * new_width)
-            .map(|i| {
-                let x = (i % new_width) * scale;
-                let y = (i / new_width) * scale;
-                let idx = ((y * frame.width + x) * 4) as usize;
-
-                if idx + 2 < frame.data.len() {
-                    ((frame.data[idx] as f32 * 0.299)
-                        + (frame.data[idx + 1] as f32 * 0.587)
-                        + (frame.data[idx + 2] as f32 * 0.114)) as u8
-                } else {
-                    0
-                }
-            })
-            .collect();
-
         let mut img = rqrr::PreparedImage::prepare_from_greyscale(
-            new_width as usize,
-            new_height as usize,
-            |x, y| gray[y * new_width as usize + x],
+            frame.width as usize,
+            frame.height as usize,
+            |x, y| frame.data[y * frame.width as usize + x],
         );
 
         img.detect_grids()
             .first()
             .and_then(|grid| grid.decode().ok())
-            .map(|(_, content)| String::from_utf8_lossy(content.as_bytes()).to_string())
+            .map(|(_, content)| content)
     }
 }
 
@@ -304,7 +323,6 @@ fn qr_scan_view<'a>(display_frame: &'a Arc<Mutex<Option<image::Handle>>>) -> Ele
     ])
     .width(Length::Fill)
     .height(Length::Fill)
-    .style(style::entry_card)
     .padding(10);
 
     column![camera_with_button]
