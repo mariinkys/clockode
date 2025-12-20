@@ -267,10 +267,10 @@ fn qr_scan_view<'a>(display_frame: &'a Arc<Mutex<Option<image::Handle>>>) -> Ele
         container(
             image(handle)
                 .width(Length::Fill)
+                .height(Length::Fill)
                 .content_fit(iced::ContentFit::Contain),
         )
-        .width(Length::Fill)
-        .height(Length::Fill)
+        .padding(40.)
         .center(Length::Fill)
     } else {
         container(
@@ -284,8 +284,6 @@ fn qr_scan_view<'a>(display_frame: &'a Arc<Mutex<Option<image::Handle>>>) -> Ele
             .spacing(style::spacing::MEDIUM)
             .align_x(iced::Alignment::Center),
         )
-        .width(Length::Fill)
-        .height(Length::Fill)
         .center(Length::Fill)
     };
 
@@ -298,20 +296,18 @@ fn qr_scan_view<'a>(display_frame: &'a Arc<Mutex<Option<image::Handle>>>) -> Ele
                 .style(style::secondary_button)
         )
         .align_x(iced::alignment::Horizontal::Left)
-        .align_y(iced::alignment::Vertical::Top)
+        .align_y(iced::alignment::Vertical::Top),
+        container(text("Point camera at QR code").size(style::font_size::TITLE))
+            .width(Length::Fill)
+            .align_x(iced::alignment::Horizontal::Center)
+            .align_y(iced::alignment::Vertical::Top)
     ])
     .width(Length::Fill)
     .height(Length::Fill)
     .style(style::entry_card)
     .padding(10);
 
-    let status = container(text("Point camera at QR code").size(style::font_size::MEDIUM))
-        .padding(16)
-        .width(Length::Fill)
-        .center_x(Length::Fill)
-        .style(style::entry_card);
-
-    column![camera_with_button, status,]
+    column![camera_with_button]
         .spacing(style::spacing::MEDIUM)
         .padding(10)
         .width(Length::Fill)
