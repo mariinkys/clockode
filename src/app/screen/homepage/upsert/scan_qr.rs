@@ -25,7 +25,7 @@ use crate::{
 };
 
 pub struct QrScanPage {
-    display_frame: Option<image::Handle>,
+    display_frame: Option<Box<image::Handle>>,
     pipeline: gst::Pipeline,
     frame_rx: channel::Receiver<FrameData>,
     display_rx: channel::Receiver<image::Handle>,
@@ -51,7 +51,7 @@ pub enum Message {
     /// Callback after a QR is detected with the QR contents
     QrDetected(String),
     /// Updates the frame to be displayed
-    UpdateDisplayFrame(image::Handle),
+    UpdateDisplayFrame(Box<image::Handle>),
 }
 
 pub enum Action {
@@ -232,7 +232,9 @@ impl QrScanPage {
                 10,
                 move |mut output: iced::futures::channel::mpsc::Sender<Message>| async move {
                     while let Ok(handle) = display_rx.recv().await {
-                        let _ = output.send(Message::UpdateDisplayFrame(handle)).await;
+                        let _ = output
+                            .send(Message::UpdateDisplayFrame(Box::new(handle)))
+                            .await;
                     }
 
                     smol::future::pending::<()>().await;
@@ -311,10 +313,10 @@ impl QrScanPage {
     }
 }
 
-fn qr_scan_view<'a>(display_frame: &'a Option<image::Handle>) -> Element<'a, Message> {
+fn qr_scan_view<'a>(display_frame: &'a Option<Box<image::Handle>>) -> Element<'a, Message> {
     let camera_display = if let Some(handle) = display_frame {
         container(
-            image(handle.clone())
+            image(handle.as_ref().clone())
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .content_fit(iced::ContentFit::Contain),
