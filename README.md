@@ -59,6 +59,7 @@ sudo just install
 > Application Icon from [SVGRepo](https://www.svgrepo.com/svg/408420/lock-security-open) made by [Tolu Arowoselu](https://www.svgrepo.com/author/Tolu%20Arowoselu/) (colors modified by myself).
 
 ## Development Notes
+
 In order to build the Flatpak, first you need to create the 'cargo-sources.json' file, for that we'll use [this python script, from flatpak-builder-tools](https://github.com/flatpak/flatpak-builder-tools/tree/master/cargo), remember that the 'tomlkit' and 'aiohttp' python modules are needed (they can be installed with pip).
 
 Once you have that, with the python script in the root of the project, you can start with:
@@ -68,14 +69,19 @@ python3 flatpak-cargo-generator.py Cargo.lock -o cargo-sources.json
 This will create the needed 'cargo-sources.json' file. 
 Then you already can build and install the Flatpak with:
 ```
-flatpak-builder --user --install --force-clean build-dir dev.mariinkys.Clockode.json
+flatpak-builder --user --install --force-clean build-dir dev.mariinkys.Clockode.yaml
 ```
 You can also build the Flatpak and not install it with:
 ```
-flatpak-builder --force-clean build-dir dev.mariinkys.Clockode.json
+flatpak-builder --force-clean build-dir dev.mariinkys.Clockode.yaml
 ```
 Useful resources include:
 [Flatpak Docs](https://docs.flatpak.org/en/latest/first-build.html). Remember that whenever the dependencies change/are updated the 'cargo-sources.json' file needs to be rebuilt.
+
+### Dependencies
+
+All of [iced dependencies](https://github.com/iced-rs/iced/blob/master/DEPENDENCIES.md) and
+- GStreamer 1.0 with plugins (base, good, bad, ugly)
 
 ## About me
 
