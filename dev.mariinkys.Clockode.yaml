@@ -16,7 +16,7 @@ finish-args:
   # https://docs.flatpak.org/en/latest/sandbox-permissions.html#device-access
   # Automatically includes GPU support since "dri" is part of "all"
   - --device=all
-  # PipeWire access for camera and audio
+  # PipeWire access for camera and audio (needed for QR scanning with the camera)
   - --filesystem=xdg-run/pipewire-0:ro
 build-options:
   append-path: /usr/lib/sdk/rust-stable/bin
