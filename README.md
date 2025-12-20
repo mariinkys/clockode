@@ -24,10 +24,12 @@
 
 Key features are:
 
-- Storage for all your 2FA and OTP tokens
-- Automatic TOTP code generation
-- Data is encrypted on your device using battle-tested software (libraries)
-- Backup and import functionality (standard format)
+- Storage for all your 2FA and OTP tokens with automatic TOTP code generation
+- Data is encrypted on your device using battle-tested software libraries
+- Entry importing via QR (Camera or File)
+- Minimal and user-friendly interface
+- Quick code copying and auto-refresh
+- Backup and import functionality (standard format that works between apps like Aegis...)
 
 If you want to sync your vault you will have to do it yourself using tools like Syncthing...
 

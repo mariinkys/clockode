@@ -24,7 +24,8 @@
             <li>Minimal and user-friendly interface</li>
             <li>Quick code copying and auto-refresh</li>
             <li>Entry importing via QR (Camera or File)</li>
-            <li>Backup and import functionality (standard format, works between apps, like Aegis...)</li>
+            <li>Backup and import functionality (standard format that works between apps like
+                Aegis...)</li>
         </ul>
     </description>
 
