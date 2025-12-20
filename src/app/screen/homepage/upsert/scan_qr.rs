@@ -32,7 +32,7 @@ use crate::{
 pub struct QrScanPage {
     display_frame: Arc<Mutex<Option<image::Handle>>>,
     pipeline: gst::Pipeline,
-    frame_rx: Arc<Mutex<channel::Receiver<FrameData>>>,
+    frame_rx: channel::Receiver<FrameData>,
 }
 
 impl Drop for QrScanPage {
@@ -141,6 +141,7 @@ impl QrScanPage {
 
                     let data = map.to_vec();
 
+                    // Update display frame
                     if let Ok(mut frame) = display_frame_clone.lock() {
                         let mut rgba = Vec::with_capacity((w * h * 4) as usize);
                         for &gray in &data {
@@ -149,6 +150,7 @@ impl QrScanPage {
                         *frame = Some(image::Handle::from_rgba(w, h, rgba));
                     }
 
+                    // Send to QR decoder
                     let _ = frame_tx.try_send(FrameData {
                         width: w,
                         height: h,
@@ -168,7 +170,7 @@ impl QrScanPage {
             Self {
                 display_frame,
                 pipeline,
-                frame_rx: Arc::new(Mutex::new(frame_rx)),
+                frame_rx,
             },
             Task::none(),
         ))
@@ -203,22 +205,21 @@ impl QrScanPage {
 
 /// QR Helper Functions
 impl QrScanPage {
-    fn qr_detection_subscription(
-        frame_rx: Arc<Mutex<channel::Receiver<FrameData>>>,
-    ) -> Subscription<Message> {
+    fn qr_detection_subscription(frame_rx: channel::Receiver<FrameData>) -> Subscription<Message> {
         use iced::futures::sink::SinkExt;
 
         #[derive(Hash, Clone, Copy)]
         struct QrScannerId;
 
+        #[derive(Clone)]
         struct ScannerData {
             id: QrScannerId,
-            frame_rx: Arc<Mutex<channel::Receiver<FrameData>>>,
+            frame_rx: channel::Receiver<FrameData>,
         }
 
         impl std::hash::Hash for ScannerData {
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                // We only hash the ID. We ignore the Arc/Mutex because
+                // We only hash the ID. We ignore the Receiver because
                 // the identity of the subscription is tied to this ID.
                 self.id.hash(state);
             }
@@ -234,34 +235,24 @@ impl QrScanPage {
 
             iced::stream::channel(
                 10,
-                move |mut output: iced::futures::channel::mpsc::Sender<Message>| {
-                    let frame_rx = frame_rx.clone();
+                move |mut output: iced::futures::channel::mpsc::Sender<Message>| async move {
+                    let mut last_check = std::time::Instant::now();
+                    let interval = std::time::Duration::from_millis(300);
 
-                    async move {
-                        let rx = {
-                            let guard = frame_rx.lock().expect("Scanner lock failed");
-                            guard.clone()
-                        };
+                    while let Ok(frame) = frame_rx.recv().await {
+                        if last_check.elapsed() >= interval {
+                            let frame_to_decode = frame.clone();
 
-                        let mut last_check = std::time::Instant::now();
-                        let interval = std::time::Duration::from_millis(300);
+                            let res = smol::unblock(move || Self::decode_qr(frame_to_decode)).await;
 
-                        while let Ok(frame) = rx.recv().await {
-                            if last_check.elapsed() >= interval {
-                                let frame_to_decode = frame.clone();
-
-                                let res =
-                                    smol::unblock(move || Self::decode_qr(frame_to_decode)).await;
-
-                                if let Some(content) = res {
-                                    let _ = output.send(Message::QrDetected(content)).await;
-                                    last_check = std::time::Instant::now();
-                                }
+                            if let Some(content) = res {
+                                let _ = output.send(Message::QrDetected(content)).await;
+                                last_check = std::time::Instant::now();
                             }
                         }
-
-                        smol::future::pending::<()>().await;
                     }
+
+                    smol::future::pending::<()>().await;
                 },
             )
         })
