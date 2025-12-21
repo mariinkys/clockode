@@ -15,7 +15,7 @@ desktop-dst := clean(rootdir / prefix) / 'share' / 'applications' / desktop
 
 appdata := appid + '.metainfo.xml'
 appdata-src := 'resources' / appdata
-appdata-dst := clean(rootdir / prefix) / 'share' / 'appdata' / appdata
+appdata-dst := clean(rootdir / prefix) / 'share' / 'metainfo' / appdata
 
 icons-src := 'resources' / 'icons' / 'hicolor'
 icons-dst := clean(rootdir / prefix) / 'share' / 'icons' / 'hicolor'
