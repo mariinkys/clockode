@@ -46,6 +46,7 @@ image = { version = "0.25.9", default-features = false, features = [
 gstreamer = "0.24.4"
 gstreamer-app = "0.24.4"
 gstreamer-video = "0.24.4"
+ashpd = { version = "0.12.0", default-features = false, features = ["tokio"] }
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]

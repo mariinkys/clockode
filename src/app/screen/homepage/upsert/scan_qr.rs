@@ -14,7 +14,11 @@ use iced::{
     widget::{button, column, container, image, stack, text},
 };
 use smol::channel;
-use std::{error::Error, fmt};
+use std::{
+    error::Error,
+    fmt,
+    os::fd::{AsRawFd, OwnedFd},
+};
 
 use crate::{
     app::{
@@ -29,6 +33,7 @@ pub struct QrScanPage {
     pipeline: gst::Pipeline,
     frame_rx: channel::Receiver<FrameData>,
     display_rx: channel::Receiver<image::Handle>,
+    _camera_fd: Option<OwnedFd>, // we need to keep fd alive
 }
 
 impl Drop for QrScanPage {
@@ -71,6 +76,7 @@ pub enum QrScanError {
     ElementCreation(&'static str),
     PipelineSetup(glib::BoolError),
     StateChange(gst::StateChangeError),
+    PortalAccess(ashpd::Error),
 }
 
 impl fmt::Display for QrScanError {
@@ -80,6 +86,7 @@ impl fmt::Display for QrScanError {
             QrScanError::ElementCreation(name) => write!(f, "Failed to create element: {}", name),
             QrScanError::PipelineSetup(e) => write!(f, "Failed to setup pipeline: {}", e),
             QrScanError::StateChange(e) => write!(f, "Failed to start pipeline: {}", e),
+            QrScanError::PortalAccess(e) => write!(f, "Failed to access camera portal: {}", e),
         }
     }
 }
@@ -90,11 +97,14 @@ impl QrScanPage {
     pub fn new() -> Result<(Self, Task<Message>), QrScanError> {
         gstreamer::init().map_err(QrScanError::GStreamerInit)?;
 
+        let camera_fd =
+            smol::block_on(Self::request_camera_access()).map_err(QrScanError::PortalAccess)?;
+
         let pipeline = gst::Pipeline::new();
-        let src = gst::ElementFactory::make("v4l2src")
+        let src = gst::ElementFactory::make("pipewiresrc")
+            .property("fd", camera_fd.as_raw_fd())
             .build()
-            .or_else(|_| gst::ElementFactory::make("autovideosrc").build())
-            .map_err(|_| QrScanError::ElementCreation("video source"))?;
+            .map_err(|_| QrScanError::ElementCreation("pipewiresrc"))?;
         let convert = gst::ElementFactory::make("videoconvert")
             .build()
             .map_err(|_| QrScanError::ElementCreation("videoconvert"))?;
@@ -166,6 +176,7 @@ impl QrScanPage {
                 pipeline,
                 frame_rx,
                 display_rx,
+                _camera_fd: Some(camera_fd),
             },
             Task::none(),
         ))
@@ -198,6 +209,15 @@ impl QrScanPage {
             Self::qr_detection(self.frame_rx.clone()),
             Self::update_camera_feed(self.display_rx.clone()),
         ])
+    }
+
+    /// Request camera access through the XDG Camera portal
+    async fn request_camera_access() -> ashpd::Result<OwnedFd> {
+        use ashpd::desktop::camera::Camera;
+
+        let proxy = Camera::new().await?;
+        proxy.request_access().await?;
+        proxy.open_pipe_wire_remote().await
     }
 
     fn update_camera_feed(display_rx: channel::Receiver<image::Handle>) -> Subscription<Message> {

@@ -301,6 +301,19 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/ashpd/ashpd-0.12.0.crate",
+        "sha256": "da0986d5b4f0802160191ad75f8d33ada000558757db3defb70299ca95d9fcbd",
+        "dest": "cargo/vendor/ashpd-0.12.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"da0986d5b4f0802160191ad75f8d33ada000558757db3defb70299ca95d9fcbd\", \"files\": {}}",
+        "dest": "cargo/vendor/ashpd-0.12.0",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/async-broadcast/async-broadcast-0.7.2.crate",
         "sha256": "435a87a52755b8f27fcf321ac4f04b2802e337c8c4872923137471ec39c37532",
         "dest": "cargo/vendor/async-broadcast-0.7.2"
@@ -3460,6 +3473,19 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/mio/mio-1.1.1.crate",
+        "sha256": "a69bcab0ad47271a0234d9422b131806bf3968021e5dc9328caf2d4cd58557fc",
+        "dest": "cargo/vendor/mio-1.1.1"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"a69bcab0ad47271a0234d9422b131806bf3968021e5dc9328caf2d4cd58557fc\", \"files\": {}}",
+        "dest": "cargo/vendor/mio-1.1.1",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/moxcms/moxcms-0.7.11.crate",
         "sha256": "ac9557c559cd6fc9867e122e20d2cbefc9ca29d80d027a8e39310920ed2f0a97",
         "dest": "cargo/vendor/moxcms-0.7.11"
@@ -5444,6 +5470,19 @@
         "type": "inline",
         "contents": "{\"package\": \"dd538fb6910ac1099850255cf94a94df6551fbdd602454387d0adb2d1ca6dead\", \"files\": {}}",
         "dest": "cargo/vendor/smol_str-0.2.2",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/socket2/socket2-0.6.1.crate",
+        "sha256": "17129e116933cf371d018bb80ae557e889637989d8638274fb25622827b03881",
+        "dest": "cargo/vendor/socket2-0.6.1"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"17129e116933cf371d018bb80ae557e889637989d8638274fb25622827b03881\", \"files\": {}}",
+        "dest": "cargo/vendor/socket2-0.6.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
