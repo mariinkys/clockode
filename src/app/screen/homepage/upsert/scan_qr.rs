@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
+use anywho::anywho;
 use gstreamer::{
     self as gst,
     glib::{self, object::Cast},
@@ -116,7 +117,16 @@ impl QrScanPage {
                 state: State::AskingPermission,
             },
             Task::perform(
-                async { Self::request_camera_access().await.map(Arc::new) },
+                async {
+                    smol::future::or(
+                        async { Self::request_camera_access().await.map(Arc::new) },
+                        async {
+                            smol::Timer::after(std::time::Duration::from_secs(30)).await;
+                            Err(anywho!("Permission request timed out"))
+                        },
+                    )
+                    .await
+                },
                 Message::PermissionCallback,
             ),
         ))
