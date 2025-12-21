@@ -10,7 +10,7 @@ use iced::{
     Length::{self},
     Subscription, Task, Theme,
     time::Instant,
-    widget::{button, column, container, pick_list, row, scrollable, space, text},
+    widget::{button, column, container, mouse_area, pick_list, row, scrollable, space, text},
 };
 use rfd::{AsyncFileDialog, FileHandle};
 
@@ -41,6 +41,8 @@ pub enum Message {
     ImportPathSelected(Option<FileHandle>),
     /// Export Path Selected Callback (after dialog)
     ExportPathSelected(Option<FileHandle>),
+    /// Opens the given URL in the browser
+    LaunchUrl(String),
 }
 
 pub enum Action {
@@ -127,6 +129,15 @@ impl SettingsPage {
             Message::ExportPathSelected(handle) => {
                 if let Some(file_handle) = handle {
                     return Action::ExportContent(file_handle.path().to_path_buf());
+                }
+                Action::None
+            }
+            Message::LaunchUrl(url) => {
+                match open::that_detached(&url) {
+                    Ok(()) => {}
+                    Err(err) => {
+                        eprintln!("failed to open {url:?}: {err}");
+                    }
                 }
                 Action::None
             }
@@ -246,9 +257,28 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
                 .height(Length::Fill),
             // App version at the bottom
             container(
-                text(format!("Version {}", env!("CARGO_PKG_VERSION")))
-                    .size(style::font_size::SMALL)
-                    .style(style::muted_text)
+                row![
+                    mouse_area(
+                        text(format!("Version {}", env!("CARGO_PKG_VERSION")))
+                            .size(style::font_size::SMALL)
+                            .style(style::link_text)
+                    )
+                    .on_press(Message::LaunchUrl(String::from(
+                        "https://github.com/mariinkys/clockode/releases"
+                    ))),
+                    text(" - ")
+                        .size(style::font_size::SMALL)
+                        .style(style::muted_text),
+                    mouse_area(
+                        text("Donate")
+                            .size(style::font_size::SMALL)
+                            .style(style::link_text)
+                    )
+                    .on_press(Message::LaunchUrl(String::from(
+                        "https://buymeacoffee.com/mariinkys"
+                    )))
+                ]
+                .spacing(style::spacing::SMALL)
             )
             .width(Length::Fill)
             .align_x(Alignment::Center)

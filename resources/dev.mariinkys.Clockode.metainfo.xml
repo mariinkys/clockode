@@ -83,6 +83,8 @@
         <release version="0.2.2" date="2025-12-21">
             <description>
                 <p>Remove the need for the Flatpak to have pipewire and all devices permissions</p>
+                <p>Add tiny link to releases page in Settings</p>
+                <p>Add tiny link to donations page in Settings</p>
             </description>
         </release>
         <release version="0.2.1" date="2025-12-20">
