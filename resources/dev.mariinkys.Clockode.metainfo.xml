@@ -80,6 +80,11 @@
     </keywords>
 
     <releases>
+        <release version="0.2.2" date="2025-12-21">
+            <description>
+                <p>Remove the need for the Flatpak to have pipewire and all devices permissions</p>
+            </description>
+        </release>
         <release version="0.2.1" date="2025-12-20">
             <description>
                 <p>Added small colored dot to show how much time is left to refresh an entry</p>

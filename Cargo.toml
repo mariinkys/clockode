@@ -2,7 +2,7 @@
 name = "clockode"
 description = "TOTP client made with Iced"
 authors = ["mariinkys <kysdev.owjga@aleeas.com>"]
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 license = "GPL-3.0"
 repository = "https://github.com/mariinkys/clockode"
