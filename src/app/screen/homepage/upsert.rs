@@ -262,6 +262,10 @@ impl UpsertPage {
                         Action::None
                     }
                     scan_qr::Action::AddToast(toast) => Action::AddToast(toast),
+                    scan_qr::Action::AddToastAndBack(toast) => {
+                        self.subscreen = SubScreen::UpsertPage;
+                        Action::AddToast(toast)
+                    }
                     scan_qr::Action::EntryDetected(entry) => {
                         self.entry = entry;
                         self.subscreen = SubScreen::UpsertPage;
