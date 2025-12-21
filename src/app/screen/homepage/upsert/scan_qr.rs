@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
+use anywho::anywho;
 use gstreamer::{
     self as gst,
     glib::{self, object::Cast},
@@ -14,7 +15,12 @@ use iced::{
     widget::{button, column, container, image, stack, text},
 };
 use smol::channel;
-use std::{error::Error, fmt};
+use std::{
+    error::Error,
+    fmt,
+    os::fd::{AsRawFd, OwnedFd},
+    sync::Arc,
+};
 
 use crate::{
     app::{
@@ -25,15 +31,27 @@ use crate::{
 };
 
 pub struct QrScanPage {
+    state: State,
+}
+
+enum State {
+    AskingPermission,
+    Permitted(Box<PermittedState>),
+}
+
+pub struct PermittedState {
     display_frame: Option<Box<image::Handle>>,
     pipeline: gst::Pipeline,
     frame_rx: channel::Receiver<FrameData>,
     display_rx: channel::Receiver<image::Handle>,
+    _camera_fd: Option<Arc<OwnedFd>>, // we need to keep fd alive
 }
 
 impl Drop for QrScanPage {
     fn drop(&mut self) {
-        let _ = self.pipeline.set_state(gst::State::Null);
+        if let State::Permitted(state) = &mut self.state {
+            let _ = state.pipeline.set_state(gst::State::Null);
+        }
     }
 }
 
@@ -48,6 +66,8 @@ struct FrameData {
 pub enum Message {
     /// Go back a screen
     Back,
+    /// Callback after asking for camera permission
+    PermissionCallback(Result<Arc<OwnedFd>, anywho::Error>),
     /// Callback after a QR is detected with the QR contents
     QrDetected(String),
     /// Updates the frame to be displayed
@@ -61,6 +81,8 @@ pub enum Action {
     Back,
     /// Add a new [`Toast`] to show
     AddToast(Toast),
+    /// Add a new [`Toast`] to show and goes back
+    AddToastAndBack(Toast),
     /// Callback after an entry has been detected
     EntryDetected(InputableClockodeEntry),
 }
@@ -88,13 +110,92 @@ impl Error for QrScanError {}
 
 impl QrScanPage {
     pub fn new() -> Result<(Self, Task<Message>), QrScanError> {
-        gstreamer::init().map_err(QrScanError::GStreamerInit)?;
+        gst::init().map_err(QrScanError::GStreamerInit)?;
 
+        Ok((
+            Self {
+                state: State::AskingPermission,
+            },
+            Task::perform(
+                async {
+                    smol::future::or(
+                        async { Self::request_camera_access().await.map(Arc::new) },
+                        async {
+                            smol::Timer::after(std::time::Duration::from_secs(30)).await;
+                            Err(anywho!("Permission request timed out"))
+                        },
+                    )
+                    .await
+                },
+                Message::PermissionCallback,
+            ),
+        ))
+    }
+
+    pub fn view(&self, _now: Instant) -> iced::Element<'_, Message> {
+        let content = match &self.state {
+            State::AskingPermission => container(text("Asking for camera permission..."))
+                .center(Length::Fill)
+                .into(),
+            State::Permitted(state) => qr_scan_view(&state.display_frame),
+        };
+
+        container(content).padding(5.).center(Length::Fill).into()
+    }
+
+    pub fn update(&mut self, message: Message, _now: Instant) -> Action {
+        match message {
+            Message::Back => Action::Back,
+            Message::PermissionCallback(res) => match res {
+                Ok(fd) => match Self::init_gstreamer(fd) {
+                    Ok(state) => {
+                        self.state = state;
+                        Action::None
+                    }
+                    Err(err) => Action::AddToastAndBack(Toast::error_toast(err)),
+                },
+                Err(err) => Action::AddToastAndBack(Toast::error_toast(err)),
+            },
+            Message::QrDetected(data) => match InputableClockodeEntry::try_from(data) {
+                Ok(entry) => Action::EntryDetected(entry),
+                Err(_) => Action::AddToast(Toast::warning_toast(
+                    "QR Detected but it could not be decoded into an entry",
+                )),
+            },
+            Message::UpdateDisplayFrame(handle) => {
+                if let State::Permitted(state) = &mut self.state {
+                    state.display_frame = Some(handle);
+                }
+                Action::None
+            }
+        }
+    }
+
+    pub fn subscription(&self, _now: Instant) -> Subscription<Message> {
+        match &self.state {
+            State::AskingPermission => Subscription::none(),
+            State::Permitted(state) => Subscription::batch([
+                Self::qr_detection(state.frame_rx.clone()),
+                Self::update_camera_feed(state.display_rx.clone()),
+            ]),
+        }
+    }
+
+    /// Request camera access through the XDG Camera portal
+    async fn request_camera_access() -> Result<OwnedFd, anywho::Error> {
+        use ashpd::desktop::camera::Camera;
+
+        let proxy = Camera::new().await?;
+        proxy.request_access().await?;
+        Ok(proxy.open_pipe_wire_remote().await?)
+    }
+
+    fn init_gstreamer(camera_fd: Arc<OwnedFd>) -> Result<State, QrScanError> {
         let pipeline = gst::Pipeline::new();
-        let src = gst::ElementFactory::make("v4l2src")
+        let src = gst::ElementFactory::make("pipewiresrc")
+            .property("fd", camera_fd.as_raw_fd())
             .build()
-            .or_else(|_| gst::ElementFactory::make("autovideosrc").build())
-            .map_err(|_| QrScanError::ElementCreation("video source"))?;
+            .map_err(|_| QrScanError::ElementCreation("pipewiresrc"))?;
         let convert = gst::ElementFactory::make("videoconvert")
             .build()
             .map_err(|_| QrScanError::ElementCreation("videoconvert"))?;
@@ -160,44 +261,13 @@ impl QrScanPage {
             .set_state(gst::State::Playing)
             .map_err(QrScanError::StateChange)?;
 
-        Ok((
-            Self {
-                display_frame: None,
-                pipeline,
-                frame_rx,
-                display_rx,
-            },
-            Task::none(),
-        ))
-    }
-
-    pub fn view(&self, _now: Instant) -> iced::Element<'_, Message> {
-        let content = qr_scan_view(&self.display_frame);
-
-        container(content).padding(5.).center(Length::Fill).into()
-    }
-
-    pub fn update(&mut self, message: Message, _now: Instant) -> Action {
-        match message {
-            Message::Back => Action::Back,
-            Message::QrDetected(data) => match InputableClockodeEntry::try_from(data) {
-                Ok(entry) => Action::EntryDetected(entry),
-                Err(_) => Action::AddToast(Toast::warning_toast(
-                    "QR Detected but it could not be decoded into an entry",
-                )),
-            },
-            Message::UpdateDisplayFrame(handle) => {
-                self.display_frame = Some(handle);
-                Action::None
-            }
-        }
-    }
-
-    pub fn subscription(&self, _now: Instant) -> Subscription<Message> {
-        Subscription::batch([
-            Self::qr_detection(self.frame_rx.clone()),
-            Self::update_camera_feed(self.display_rx.clone()),
-        ])
+        Ok(State::Permitted(Box::new(PermittedState {
+            display_frame: None,
+            pipeline,
+            frame_rx,
+            display_rx,
+            _camera_fd: Some(camera_fd),
+        })))
     }
 
     fn update_camera_feed(display_rx: channel::Receiver<image::Handle>) -> Subscription<Message> {

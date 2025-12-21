@@ -121,6 +121,13 @@ pub fn muted_text(theme: &Theme) -> text::Style {
     }
 }
 
+/// Link text style (for clickable urls...)
+pub fn link_text(theme: &Theme) -> text::Style {
+    text::Style {
+        color: Some(theme.palette().primary.scale_alpha(0.8)),
+    }
+}
+
 /// Subtitle text style (slightly muted)
 pub fn subtitle_text(theme: &Theme) -> text::Style {
     text::Style {
