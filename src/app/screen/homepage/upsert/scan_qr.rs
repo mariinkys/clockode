@@ -10,7 +10,8 @@ use gstreamer_app as gst_app;
 use iced::{
     Element,
     Length::{self},
-    Subscription, Task,
+    Subscription, Task, event,
+    keyboard::{self, Key, key::Named},
     time::Instant,
     widget::{button, column, container, image, stack, text},
 };
@@ -66,6 +67,8 @@ struct FrameData {
 pub enum Message {
     /// Go back a screen
     Back,
+    /// Callback after pressing a [`Hotkey`] of this page
+    Hotkey(Hotkey),
     /// Callback after asking for camera permission
     PermissionCallback(Result<Arc<OwnedFd>, anywho::Error>),
     /// Callback after a QR is detected with the QR contents
@@ -146,6 +149,9 @@ impl QrScanPage {
     pub fn update(&mut self, message: Message, _now: Instant) -> Action {
         match message {
             Message::Back => Action::Back,
+            Message::Hotkey(hotkey) => match hotkey {
+                Hotkey::Esc => Action::Back,
+            },
             Message::PermissionCallback(res) => match res {
                 Ok(fd) => match Self::init_gstreamer(fd) {
                     Ok(state) => {
@@ -177,6 +183,7 @@ impl QrScanPage {
             State::Permitted(state) => Subscription::batch([
                 Self::qr_detection(state.frame_rx.clone()),
                 Self::update_camera_feed(state.display_rx.clone()),
+                event::listen_with(handle_event),
             ]),
         }
     }
@@ -433,4 +440,26 @@ fn qr_scan_view<'a>(display_frame: &'a Option<Box<image::Handle>>) -> Element<'a
         .width(Length::Fill)
         .height(Length::Fill)
         .into()
+}
+
+//
+// SUBSCRIPTIONS
+//
+
+#[derive(Debug, Clone)]
+pub enum Hotkey {
+    Esc,
+}
+
+fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> Option<Message> {
+    #[allow(clippy::collapsible_match)]
+    match event {
+        event::Event::Keyboard(keyboard::Event::KeyPressed {
+            key, modifiers: _, ..
+        }) => match key {
+            Key::Named(Named::Escape) => Some(Message::Hotkey(Hotkey::Esc)),
+            _ => None,
+        },
+        _ => None,
+    }
 }

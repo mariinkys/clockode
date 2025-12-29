@@ -144,6 +144,7 @@ impl UpsertPage {
                         Action::Run(focus_next())
                     }
                 }
+                Hotkey::Esc => Action::Back,
             },
             Message::Back => Action::Back,
 
@@ -610,6 +611,7 @@ fn upsert_entry_view<'a>(
 #[derive(Debug, Clone)]
 pub enum Hotkey {
     Tab(Modifiers),
+    Esc,
 }
 
 fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> Option<Message> {
@@ -617,6 +619,7 @@ fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> O
     match event {
         event::Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => match key {
             Key::Named(Named::Tab) => Some(Message::Hotkey(Hotkey::Tab(modifiers))),
+            Key::Named(Named::Escape) => Some(Message::Hotkey(Hotkey::Esc)),
             _ => None,
         },
         _ => None,

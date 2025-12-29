@@ -8,7 +8,8 @@ use std::{
 use iced::{
     Alignment, Element,
     Length::{self},
-    Subscription, Task, Theme,
+    Subscription, Task, Theme, event,
+    keyboard::{self, Key, key::Named},
     time::Instant,
     widget::{button, column, container, mouse_area, pick_list, row, scrollable, space, text},
 };
@@ -29,6 +30,8 @@ pub struct SettingsPage {
 pub enum Message {
     /// Go back a screen
     Back,
+    /// Callback after pressing a [`Hotkey`] of this page
+    Hotkey(Hotkey),
     /// Callback after the user changes the current theme
     ChangedTheme(ColockodeTheme),
     /// Configuration Saved
@@ -82,6 +85,9 @@ impl SettingsPage {
     pub fn update(&mut self, message: Message, _now: Instant) -> Action {
         match message {
             Message::Back => Action::Back,
+            Message::Hotkey(hotkey) => match hotkey {
+                Hotkey::Esc => Action::Back,
+            },
             Message::ChangedTheme(colockode_theme) => {
                 if let Ok(mut cfg) = self.config.lock() {
                     cfg.theme = colockode_theme.clone();
@@ -145,7 +151,7 @@ impl SettingsPage {
     }
 
     pub fn subscription(&self, _now: Instant) -> Subscription<Message> {
-        Subscription::none()
+        event::listen_with(handle_event)
     }
 }
 
@@ -289,4 +295,26 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
     .width(Length::Fill)
     .height(Length::Fill)
     .into()
+}
+
+//
+// SUBSCRIPTIONS
+//
+
+#[derive(Debug, Clone)]
+pub enum Hotkey {
+    Esc,
+}
+
+fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> Option<Message> {
+    #[allow(clippy::collapsible_match)]
+    match event {
+        event::Event::Keyboard(keyboard::Event::KeyPressed {
+            key, modifiers: _, ..
+        }) => match key {
+            Key::Named(Named::Escape) => Some(Message::Hotkey(Hotkey::Esc)),
+            _ => None,
+        },
+        _ => None,
+    }
 }
