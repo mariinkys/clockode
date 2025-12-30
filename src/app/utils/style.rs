@@ -54,6 +54,19 @@ pub fn entry_card(theme: &Theme) -> container::Style {
     }
 }
 
+/// Entry card style - for currently focused TOTP entry item
+pub fn entry_card_focused(theme: &Theme) -> container::Style {
+    container::Style {
+        background: Some(theme.palette().background.into()),
+        border: Border {
+            color: theme.palette().primary.scale_alpha(0.8),
+            width: 1.0,
+            radius: radius::MEDIUM.into(),
+        },
+        ..Default::default()
+    }
+}
+
 /// Primary submit button style
 pub fn primary_submit_button(theme: &Theme, status: button::Status) -> button::Style {
     button::Style {
