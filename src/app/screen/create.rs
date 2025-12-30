@@ -144,6 +144,13 @@ impl CreateDatabase {
                         Action::Run(focus_next())
                     }
                 }
+                Hotkey::Submit => {
+                    if self.inputs.valid() {
+                        submit_form(&self.inputs)
+                    } else {
+                        Action::None
+                    }
+                }
             },
 
             Message::UpdatePassword(v) => {
@@ -154,10 +161,13 @@ impl CreateDatabase {
                 self.inputs.repeat_password = v;
                 Action::None
             }
-            Message::Submit => Action::Run(Task::perform(
-                create_database(self.inputs.password.clone().into()),
-                Message::DatabaseCreated,
-            )),
+            Message::Submit => {
+                if self.inputs.valid() {
+                    submit_form(&self.inputs)
+                } else {
+                    Action::None
+                }
+            }
 
             Message::DatabaseCreated(result) => match result {
                 Ok(db_path) => Action::OpenUnlockDatabase(db_path),
@@ -194,6 +204,7 @@ impl PageInputs {
 #[derive(Debug, Clone)]
 pub enum Hotkey {
     Tab(Modifiers),
+    Submit,
 }
 
 fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> Option<Message> {
@@ -201,8 +212,18 @@ fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> O
     match event {
         event::Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => match key {
             Key::Named(Named::Tab) => Some(Message::Hotkey(Hotkey::Tab(modifiers))),
+            Key::Named(Named::Enter) => Some(Message::Hotkey(Hotkey::Submit)),
             _ => None,
         },
         _ => None,
     }
+}
+
+// HELPERS
+
+fn submit_form(inputs: &PageInputs) -> Action {
+    Action::Run(Task::perform(
+        create_database(inputs.password.clone().into()),
+        Message::DatabaseCreated,
+    ))
 }

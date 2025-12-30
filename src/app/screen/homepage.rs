@@ -9,9 +9,13 @@ use arboard::Clipboard;
 use iced::{
     Alignment, Element,
     Length::{self},
-    Subscription, Task,
+    Subscription, Task, event,
+    keyboard::{self, Key, Modifiers, key::Named},
     time::Instant,
-    widget::{Column, button, column, container, row, scrollable, space, text},
+    widget::{
+        self, Column, button, column, container, mouse_area, operation, row, scrollable, space,
+        text,
+    },
 };
 
 use crate::{
@@ -40,19 +44,27 @@ pub enum State {
 }
 
 pub enum SubScreen {
-    Home { entries: Vec<ClockodeEntry> },
+    Home {
+        entries: Vec<ClockodeEntry>,
+        focused_index: Option<usize>,
+        scroll_id: iced::widget::Id,
+    },
     UpsertPage(upsert::UpsertPage),
     SettingsPage(settings::SettingsPage),
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    /// Callback after pressing a [`Hotkey`] of this page
+    Hotkey(Hotkey),
     /// Attempt to copy some [`String`] to the user clipboard
     CopyToClipboard(String),
     /// Ask to load the [`ClockodeEntry`]s to list on the page
     LoadEntries,
     /// Callback after asking to load [`ClockodeEntry`]s, set's the entries on the state if Ok
     EntriesLoaded(Result<Vec<ClockodeEntry>, anywho::Error>),
+    /// Callbach when the user clikcs on a [`ClockodeEntry`] to focus it
+    FocusEntry(Option<usize>),
 
     /// Messages of the [`UpsertPage`]
     UpsertPage(upsert::Message),
@@ -110,9 +122,13 @@ impl HomePage {
         let content: Element<Message> = match &self.state {
             State::Loading => text("Loading...").into(),
             State::Ready { subscreen } => match subscreen {
-                SubScreen::Home { entries } => {
+                SubScreen::Home {
+                    entries,
+                    focused_index,
+                    scroll_id,
+                } => {
                     let header = header_view(entries.len());
-                    let content = content_view(entries);
+                    let content = content_view(entries, focused_index, scroll_id);
 
                     container(column![header, content])
                         .padding(5.)
@@ -134,6 +150,7 @@ impl HomePage {
 
     pub fn update(&mut self, message: Message, now: Instant) -> Action {
         match message {
+            Message::Hotkey(hotkey) => self.handle_hotkey(hotkey),
             Message::CopyToClipboard(value) => {
                 if let Some(clipboard) = &mut self.clipboard {
                     let res = &clipboard.set_text(value);
@@ -160,7 +177,11 @@ impl HomePage {
             Message::EntriesLoaded(result) => match result {
                 Ok(entries) => {
                     self.state = State::Ready {
-                        subscreen: SubScreen::Home { entries },
+                        subscreen: SubScreen::Home {
+                            entries,
+                            focused_index: None,
+                            scroll_id: widget::Id::unique(),
+                        },
                     };
                     Action::None
                 }
@@ -169,6 +190,17 @@ impl HomePage {
                     Action::AddToast(Toast::error_toast(err))
                 }
             },
+            Message::FocusEntry(index) => {
+                let State::Ready { subscreen } = &mut self.state else {
+                    return Action::None;
+                };
+
+                if let SubScreen::Home { focused_index, .. } = subscreen {
+                    *focused_index = index;
+                }
+
+                Action::None
+            }
 
             Message::UpsertPage(message) => {
                 let State::Ready { subscreen } = &mut self.state else {
@@ -207,15 +239,7 @@ impl HomePage {
                     }
                 }
             }
-            Message::OpenUpsertPage(entry) => {
-                let State::Ready { subscreen, .. } = &mut self.state else {
-                    return Action::None;
-                };
-
-                let (upsert_page, task) = upsert::UpsertPage::new(entry);
-                *subscreen = SubScreen::UpsertPage(upsert_page);
-                Action::Run(task.map(Message::UpsertPage))
-            }
+            Message::OpenUpsertPage(entry) => self.open_upsert(entry),
             Message::EntryUpserted(result) => match result {
                 Ok(_) => self.update(Message::LoadEntries, now),
                 Err(err) => {
@@ -261,15 +285,7 @@ impl HomePage {
                     }
                 }
             }
-            Message::OpenSettingsPage => {
-                let State::Ready { subscreen, .. } = &mut self.state else {
-                    return Action::None;
-                };
-
-                let (settings_page, task) = settings::SettingsPage::new(Arc::clone(&self.config));
-                *subscreen = SubScreen::SettingsPage(settings_page);
-                Action::Run(task.map(Message::SettingsPage))
-            }
+            Message::OpenSettingsPage => self.open_settings(),
 
             Message::RefreshCodes => {
                 // This forces a re-render every second
@@ -285,11 +301,14 @@ impl HomePage {
         };
 
         match subscreen {
-            SubScreen::Home { entries } => {
+            SubScreen::Home { entries, .. } => {
                 if entries.is_empty() {
-                    Subscription::none()
+                    event::listen_with(handle_event)
                 } else {
-                    iced::time::every(Duration::from_secs(1)).map(|_| Message::RefreshCodes)
+                    Subscription::batch([
+                        iced::time::every(Duration::from_secs(1)).map(|_| Message::RefreshCodes),
+                        event::listen_with(handle_event),
+                    ])
                 }
             }
             SubScreen::UpsertPage(upsert_page) => {
@@ -299,6 +318,122 @@ impl HomePage {
                 settings_page.subscription(now).map(Message::SettingsPage)
             }
         }
+    }
+
+    fn open_settings_static(subscreen: &mut SubScreen, config: Arc<Mutex<Config>>) -> Action {
+        let (settings_page, task) = settings::SettingsPage::new(config);
+        *subscreen = SubScreen::SettingsPage(settings_page);
+        Action::Run(task.map(Message::SettingsPage))
+    }
+
+    fn open_settings(&mut self) -> Action {
+        let State::Ready { subscreen, .. } = &mut self.state else {
+            return Action::None;
+        };
+        Self::open_settings_static(subscreen, Arc::clone(&self.config))
+    }
+
+    fn open_upsert(&mut self, entry: Option<ClockodeEntry>) -> Action {
+        let State::Ready { subscreen, .. } = &mut self.state else {
+            return Action::None;
+        };
+        Self::open_upsert_static(subscreen, entry)
+    }
+
+    fn open_upsert_static(subscreen: &mut SubScreen, entry: Option<ClockodeEntry>) -> Action {
+        let (upsert_page, task) = upsert::UpsertPage::new(entry);
+        *subscreen = SubScreen::UpsertPage(upsert_page);
+        Action::Run(task.map(Message::UpsertPage))
+    }
+
+    fn handle_hotkey(&mut self, hotkey: Hotkey) -> Action {
+        let State::Ready { subscreen } = &mut self.state else {
+            return Action::None;
+        };
+
+        if let SubScreen::Home {
+            entries,
+            focused_index,
+            scroll_id,
+        } = subscreen
+        {
+            match hotkey {
+                Hotkey::Tab(modifiers) => {
+                    let new_index = if modifiers.shift() {
+                        // Focus previous
+                        if let Some(current) = *focused_index {
+                            if current == 0 {
+                                entries.len() - 1
+                            } else {
+                                current - 1
+                            }
+                        } else if !entries.is_empty() {
+                            entries.len() - 1
+                        } else {
+                            return Action::None;
+                        }
+                    } else {
+                        // Focus next
+                        if let Some(current) = *focused_index {
+                            (current + 1) % entries.len()
+                        } else if !entries.is_empty() {
+                            0
+                        } else {
+                            return Action::None;
+                        }
+                    };
+
+                    *focused_index = Some(new_index);
+
+                    let entry_height = 70.0; // Adjust based on your entry height
+                    let spacing = style::spacing::MEDIUM;
+                    let padding = 10.0;
+                    let offset = padding + (entry_height + spacing) * new_index as f32;
+
+                    return Action::Run(operation::scroll_to(
+                        scroll_id.to_owned(),
+                        scrollable::AbsoluteOffset { x: 0.0, y: offset },
+                    ));
+                }
+                Hotkey::Esc => {
+                    *focused_index = None;
+                }
+                Hotkey::Copy =>
+                {
+                    #[allow(clippy::collapsible_if)]
+                    if let Some(index) = *focused_index {
+                        if let Some(entry) = entries.get(index) {
+                            let code = entry.totp.generate_current().unwrap_or_default();
+                            if let Some(clipboard) = &mut self.clipboard {
+                                let res = &clipboard.set_text(code);
+                                match res {
+                                    Ok(_) => {
+                                        return Action::AddToast(Toast::success_toast(
+                                            "Copied to clipboard",
+                                        ));
+                                    }
+                                    Err(err) => {
+                                        eprintln!("{err}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Hotkey::Edit => {
+                    let entry_to_edit = focused_index.and_then(|index| entries.get(index)).cloned();
+                    if let Some(entry) = entry_to_edit {
+                        return Self::open_upsert_static(subscreen, Some(entry));
+                    }
+                }
+                Hotkey::Add => return Self::open_upsert_static(subscreen, None),
+                Hotkey::Settings => {
+                    let config = Arc::clone(&self.config);
+                    return Self::open_settings_static(subscreen, config);
+                }
+            }
+        }
+        Action::None
     }
 }
 
@@ -342,7 +477,11 @@ fn header_view<'a>(entry_count: usize) -> Element<'a, Message> {
 }
 
 /// View of the contents of this screen
-fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
+fn content_view<'a>(
+    entries: &'a [ClockodeEntry],
+    focused_index: &'a Option<usize>,
+    scroll_id: &'a widget::Id,
+) -> Element<'a, Message> {
     if entries.is_empty() {
         container(
             column![
@@ -355,59 +494,104 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
         .center(Length::Fill)
         .into()
     } else {
-        let entries_list = entries.iter().fold(
+        let entries_list = entries.iter().enumerate().fold(
             Column::new()
                 .height(Length::Fill)
                 .spacing(style::spacing::MEDIUM)
                 .padding(10),
-            |col, entry| {
+            |col, (index, entry)| {
                 let code = entry.totp.generate_current().unwrap_or_default();
                 let time_remaining = get_time_until_next_totp_refresh(entry.totp.step);
+                let is_focused = focused_index == &Some(index);
 
-                let entry_view = container(
-                    row![
-                        column![
-                            text(&entry.name).size(style::font_size::LARGE),
-                            row![
-                                text(format!(
-                                    "{} digits · {}s",
-                                    entry.totp.digits, time_remaining
-                                ))
-                                .size(style::font_size::SMALL)
-                                .style(style::muted_text),
-                                dot(time_remaining)
+                let entry_view = mouse_area(
+                    container(
+                        row![
+                            column![
+                                text(&entry.name).size(style::font_size::LARGE),
+                                row![
+                                    text(format!(
+                                        "{} digits · {}s",
+                                        entry.totp.digits, time_remaining
+                                    ))
+                                    .size(style::font_size::SMALL)
+                                    .style(style::muted_text),
+                                    dot(time_remaining)
+                                ]
+                                .align_y(Alignment::Start)
+                                .spacing(style::spacing::SMALL),
                             ]
-                            .align_y(Alignment::Start)
-                            .spacing(style::spacing::SMALL),
+                            .spacing(style::spacing::TINY)
+                            .width(Length::Fill),
+                            column![
+                                text(code.clone())
+                                    .size(style::font_size::HERO)
+                                    .font(iced::Font::MONOSPACE)
+                            ]
+                            .spacing(style::spacing::TINY)
+                            .align_x(iced::Alignment::End),
+                            button(icons::get_icon("edit-copy-symbolic", 21))
+                                .on_press(Message::CopyToClipboard(code))
+                                .padding(8)
+                                .style(style::primary_button),
+                            button(icons::get_icon("edit-symbolic", 21))
+                                .on_press(Message::OpenUpsertPage(Some(entry.clone())))
+                                .padding(8)
+                                .style(style::secondary_button),
                         ]
-                        .spacing(style::spacing::TINY)
-                        .width(Length::Fill),
-                        column![
-                            text(code.clone())
-                                .size(style::font_size::HERO)
-                                .font(iced::Font::MONOSPACE)
-                        ]
-                        .spacing(style::spacing::TINY)
-                        .align_x(iced::Alignment::End),
-                        button(icons::get_icon("edit-copy-symbolic", 21))
-                            .on_press(Message::CopyToClipboard(code))
-                            .padding(8)
-                            .style(style::primary_button),
-                        button(icons::get_icon("edit-symbolic", 21))
-                            .on_press(Message::OpenUpsertPage(Some(entry.clone())))
-                            .padding(8)
-                            .style(style::secondary_button),
-                    ]
-                    .spacing(style::spacing::SMALL)
-                    .padding(16)
-                    .align_y(iced::Alignment::Center),
+                        .spacing(style::spacing::SMALL)
+                        .padding(16)
+                        .align_y(iced::Alignment::Center),
+                    )
+                    .style(if is_focused {
+                        style::entry_card_focused
+                    } else {
+                        style::entry_card
+                    }),
                 )
-                .style(style::entry_card);
+                .on_press(Message::FocusEntry(Some(index)))
+                .on_right_press(Message::FocusEntry(None));
 
                 col.push(entry_view)
             },
         );
 
-        scrollable(entries_list).height(Length::Fill).into()
+        scrollable(entries_list)
+            .id(scroll_id.to_owned())
+            .height(Length::Fill)
+            .into()
+    }
+}
+
+//
+// SUBSCRIPTIONS
+//
+
+#[derive(Debug, Clone)]
+pub enum Hotkey {
+    Tab(Modifiers),
+    Esc,
+    Copy,
+    Edit,
+    Add,
+    Settings,
+}
+
+fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> Option<Message> {
+    #[allow(clippy::collapsible_match)]
+    match event {
+        event::Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => match key {
+            Key::Named(Named::Tab) => Some(Message::Hotkey(Hotkey::Tab(modifiers))),
+            Key::Named(Named::Escape) => Some(Message::Hotkey(Hotkey::Esc)),
+            Key::Character(c) => match c.as_str() {
+                "c" => Some(Message::Hotkey(Hotkey::Copy)),
+                "e" => Some(Message::Hotkey(Hotkey::Edit)),
+                "a" => Some(Message::Hotkey(Hotkey::Add)),
+                "s" => Some(Message::Hotkey(Hotkey::Settings)),
+                _ => None,
+            },
+            _ => None,
+        },
+        _ => None,
     }
 }

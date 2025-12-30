@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use iced::{
     Alignment,
@@ -128,16 +128,26 @@ impl UnlockDatabase {
                         Action::Run(focus_next())
                     }
                 }
+                Hotkey::Submit => {
+                    if self.inputs.valid() {
+                        submit_form(&self.inputs, &self.db_path)
+                    } else {
+                        Action::None
+                    }
+                }
             },
 
             Message::UpdatePassword(v) => {
                 self.inputs.password = v;
                 Action::None
             }
-            Message::Submit => Action::Run(Task::perform(
-                unlock_database(self.db_path.clone(), self.inputs.password.clone().into()),
-                |res| Message::DatabaseUnlocked(Box::from(res)),
-            )),
+            Message::Submit => {
+                if self.inputs.valid() {
+                    submit_form(&self.inputs, &self.db_path)
+                } else {
+                    Action::None
+                }
+            }
             Message::DatabaseUnlocked(res) => match *res {
                 Ok(db) => Action::OpenHomePage(Box::from(db)),
                 Err(err) => Action::AddToast(Toast::error_toast(err)),
@@ -170,6 +180,7 @@ impl PageInputs {
 #[derive(Debug, Clone)]
 pub enum Hotkey {
     Tab(Modifiers),
+    Submit,
 }
 
 fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> Option<Message> {
@@ -177,8 +188,18 @@ fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> O
     match event {
         event::Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => match key {
             Key::Named(Named::Tab) => Some(Message::Hotkey(Hotkey::Tab(modifiers))),
+            Key::Named(Named::Enter) => Some(Message::Hotkey(Hotkey::Submit)),
             _ => None,
         },
         _ => None,
     }
+}
+
+// HELPERS
+
+fn submit_form(inputs: &PageInputs, db_path: &Path) -> Action {
+    Action::Run(Task::perform(
+        unlock_database(db_path.to_path_buf(), inputs.password.clone().into()),
+        |res| Message::DatabaseUnlocked(Box::from(res)),
+    ))
 }
