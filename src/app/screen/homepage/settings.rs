@@ -87,6 +87,8 @@ impl SettingsPage {
             Message::Back => Action::Back,
             Message::Hotkey(hotkey) => match hotkey {
                 Hotkey::Esc => Action::Back,
+                Hotkey::Export => open_export_dialog(),
+                Hotkey::Import => open_import_dialog(),
             },
             Message::ChangedTheme(colockode_theme) => {
                 if let Ok(mut cfg) = self.config.lock() {
@@ -106,26 +108,8 @@ impl SettingsPage {
                 Ok(_) => Action::None,
                 Err(e) => Action::AddToast(Toast::error_toast(e)),
             },
-            Message::OpenImportDialog => Action::Run(Task::perform(
-                async move {
-                    AsyncFileDialog::new()
-                        .add_filter("txt", &["txt"])
-                        .set_directory(dirs::download_dir().unwrap_or("/".into()))
-                        .pick_file()
-                        .await
-                },
-                Message::ImportPathSelected,
-            )),
-            Message::OpenExportDialog => Action::Run(Task::perform(
-                async move {
-                    AsyncFileDialog::new()
-                        .set_file_name("export.txt")
-                        .set_directory(dirs::download_dir().unwrap_or("/".into()))
-                        .save_file()
-                        .await
-                },
-                Message::ExportPathSelected,
-            )),
+            Message::OpenImportDialog => open_import_dialog(),
+            Message::OpenExportDialog => open_export_dialog(),
             Message::ImportPathSelected(handle) => {
                 if let Some(file_handle) = handle {
                     return Action::ImportContent(file_handle.path().to_path_buf());
@@ -304,6 +288,8 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
 #[derive(Debug, Clone)]
 pub enum Hotkey {
     Esc,
+    Export,
+    Import,
 }
 
 fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> Option<Message> {
@@ -313,8 +299,41 @@ fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> O
             key, modifiers: _, ..
         }) => match key {
             Key::Named(Named::Escape) => Some(Message::Hotkey(Hotkey::Esc)),
+            Key::Character(c) => match c.as_str() {
+                "i" => Some(Message::Hotkey(Hotkey::Import)),
+                "e" => Some(Message::Hotkey(Hotkey::Export)),
+                _ => None,
+            },
             _ => None,
         },
         _ => None,
     }
+}
+
+// HELPERS
+
+fn open_import_dialog() -> Action {
+    Action::Run(Task::perform(
+        async move {
+            AsyncFileDialog::new()
+                .add_filter("txt", &["txt"])
+                .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                .pick_file()
+                .await
+        },
+        Message::ImportPathSelected,
+    ))
+}
+
+fn open_export_dialog() -> Action {
+    Action::Run(Task::perform(
+        async move {
+            AsyncFileDialog::new()
+                .set_file_name("export.txt")
+                .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                .save_file()
+                .await
+        },
+        Message::ExportPathSelected,
+    ))
 }
