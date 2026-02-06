@@ -367,7 +367,9 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
                 let entry_view = container(
                     row![
                         column![
-                            text(&entry.name).size(style::font_size::LARGE),
+                            text(&entry.name)
+                                .wrapping(text::Wrapping::Glyph)
+                                .size(style::font_size::LARGE),
                             row![
                                 text(format!(
                                     "{} digits · {}s",

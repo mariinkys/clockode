@@ -304,128 +304,155 @@ impl UpsertPage {
 
 /// View of the header of this screen
 fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
-    let (title, subtitle) = if entry.uuid.is_some() {
-        ("Edit Entry", "Modify your TOTP entry")
-    } else {
-        ("New Entry", "Add a new TOTP entry")
-    };
+    iced::widget::responsive(move |size| {
+        let (title, subtitle) = if entry.uuid.is_some() {
+            ("Edit Entry", "Modify your TOTP entry")
+        } else {
+            ("New Entry", "Add a new TOTP entry")
+        };
 
-    let is_new_entry = entry.uuid.is_none();
+        let mobile_view = size.width < 400.0; // Threshold for stacked/horizontally alligned buttons
+        let buttons_width = if mobile_view {
+            Length::Fill
+        } else {
+            Length::Shrink
+        };
 
-    let mut buttons = Vec::new();
+        let is_new_entry = entry.uuid.is_none();
 
-    if is_new_entry {
-        // Only for new entries
-        buttons.push(
+        let mut buttons: Vec<Element<Message>> = Vec::new();
+
+        if is_new_entry {
+            // Only for new entries
+            buttons.push(
+                button(
+                    row![
+                        icons::get_icon("qr-symbolic", 21).style(|theme, _status| {
+                            let primary_style =
+                                button::primary(theme, iced::widget::button::Status::Active);
+                            iced::widget::svg::Style {
+                                color: Some(primary_style.text_color),
+                            }
+                        }),
+                        text("File").size(style::font_size::BODY)
+                    ]
+                    .spacing(style::spacing::TINY)
+                    .align_y(iced::Alignment::Center),
+                )
+                .width(buttons_width)
+                .style(style::primary_button)
+                .padding(8)
+                .on_press(Message::OpenQrFileSelection)
+                .into(),
+            );
+
+            #[cfg(unix)]
+            buttons.push(
+                button(
+                    row![
+                        icons::get_icon("qr-symbolic", 21).style(|theme, _status| {
+                            let primary_style =
+                                button::primary(theme, iced::widget::button::Status::Active);
+                            iced::widget::svg::Style {
+                                color: Some(primary_style.text_color),
+                            }
+                        }),
+                        text("Camera").size(style::font_size::BODY)
+                    ]
+                    .spacing(style::spacing::TINY)
+                    .align_y(iced::Alignment::Center),
+                )
+                .width(buttons_width)
+                .style(style::primary_button)
+                .padding(8)
+                .on_press(Message::OpenScanQrPage)
+                .into(),
+            );
+        } else {
+            // Only for existing entries
+            buttons.extend([
+                button(
+                    row![
+                        icons::get_icon("user-trash-full-symbolic", 21).style(|theme, _status| {
+                            let danger_style =
+                                button::danger(theme, iced::widget::button::Status::Active);
+                            iced::widget::svg::Style {
+                                color: Some(danger_style.text_color),
+                            }
+                        }),
+                        text("Delete").size(style::font_size::BODY)
+                    ]
+                    .spacing(style::spacing::TINY)
+                    .align_y(iced::Alignment::Center),
+                )
+                .width(buttons_width)
+                .style(style::danger_button)
+                .padding(8)
+                .on_press(Message::Delete)
+                .into(),
+                button(
+                    row![
+                        icons::get_icon("qr-symbolic", 21).style(|theme, _status| {
+                            let success_style =
+                                button::success(theme, iced::widget::button::Status::Active);
+                            iced::widget::svg::Style {
+                                color: Some(success_style.text_color),
+                            }
+                        }),
+                        text("Show QR").size(style::font_size::BODY)
+                    ]
+                    .spacing(style::spacing::TINY)
+                    .align_y(iced::Alignment::Center),
+                )
+                .width(buttons_width)
+                .style(style::success_button)
+                .padding(8)
+                .on_press(Message::ToggleShowQRCode)
+                .into(),
+            ]);
+        }
+
+        let buttons_layout: Element<Message> = if mobile_view && buttons.len() > 1 {
+            // buttons vertically on narrow screens
+            column(buttons).spacing(style::spacing::SMALL).into()
+        } else {
+            // buttons horizontal on wide screens
+            row(buttons).spacing(style::spacing::LARGE).into()
+        };
+
+        row![
             button(
                 row![
-                    icons::get_icon("qr-symbolic", 21).style(|theme, _status| {
-                        let primary_style =
-                            button::primary(theme, iced::widget::button::Status::Active);
-                        iced::widget::svg::Style {
-                            color: Some(primary_style.text_color),
-                        }
-                    }),
-                    text("QR (File)").size(style::font_size::BODY)
+                    icons::get_icon("go-previous-symbolic", 21),
+                    text("Back").size(style::font_size::BODY)
                 ]
                 .spacing(style::spacing::TINY)
-                .align_y(iced::Alignment::Center),
+                .align_y(iced::Alignment::Center)
             )
-            .style(style::primary_button)
+            .on_press(Message::Back)
             .padding(8)
-            .on_press(Message::OpenQrFileSelection)
-            .into(),
-        );
-
-        #[cfg(unix)]
-        buttons.push(
-            button(
-                row![
-                    icons::get_icon("qr-symbolic", 21).style(|theme, _status| {
-                        let primary_style =
-                            button::primary(theme, iced::widget::button::Status::Active);
-                        iced::widget::svg::Style {
-                            color: Some(primary_style.text_color),
-                        }
-                    }),
-                    text("QR (Camera)").size(style::font_size::BODY)
-                ]
-                .spacing(style::spacing::TINY)
-                .align_y(iced::Alignment::Center),
-            )
-            .style(style::primary_button)
-            .padding(8)
-            .on_press(Message::OpenScanQrPage)
-            .into(),
-        );
-    } else {
-        // Only for existing entries
-        buttons.extend([
-            button(
-                row![
-                    icons::get_icon("user-trash-full-symbolic", 21).style(|theme, _status| {
-                        let danger_style =
-                            button::danger(theme, iced::widget::button::Status::Active);
-                        iced::widget::svg::Style {
-                            color: Some(danger_style.text_color),
-                        }
-                    }),
-                    text("Delete").size(style::font_size::BODY)
-                ]
-                .spacing(style::spacing::TINY)
-                .align_y(iced::Alignment::Center),
-            )
-            .style(style::danger_button)
-            .padding(8)
-            .on_press(Message::Delete)
-            .into(),
-            button(
-                row![
-                    icons::get_icon("qr-symbolic", 21).style(|theme, _status| {
-                        let success_style =
-                            button::success(theme, iced::widget::button::Status::Active);
-                        iced::widget::svg::Style {
-                            color: Some(success_style.text_color),
-                        }
-                    }),
-                    text("Show QR").size(style::font_size::BODY)
-                ]
-                .spacing(style::spacing::TINY)
-                .align_y(iced::Alignment::Center),
-            )
-            .style(style::success_button)
-            .padding(8)
-            .on_press(Message::ToggleShowQRCode)
-            .into(),
-        ]);
-    }
-
-    row![
-        button(
-            row![
-                icons::get_icon("go-previous-symbolic", 21),
-                text("Back").size(style::font_size::BODY)
+            .style(style::secondary_button),
+            column![
+                text(title).size(style::font_size::TITLE),
+                text(subtitle)
+                    .size(style::font_size::SMALL)
+                    .style(style::muted_text),
             ]
-            .spacing(style::spacing::TINY)
-            .align_y(iced::Alignment::Center)
-        )
-        .on_press(Message::Back)
-        .padding(8)
-        .style(style::secondary_button),
-        column![
-            text(title).size(style::font_size::TITLE),
-            text(subtitle)
-                .size(style::font_size::SMALL)
-                .style(style::muted_text),
+            .spacing(style::spacing::TINY),
+            space().width(if mobile_view {
+                Length::Shrink
+            } else {
+                Length::Fill
+            }),
+            buttons_layout
         ]
-        .spacing(style::spacing::TINY),
-        space().width(Length::Fill),
-    ]
-    .extend(buttons)
-    .spacing(style::spacing::LARGE)
-    .padding(10)
-    .align_y(iced::Alignment::Center)
-    .width(Length::Fill)
+        .spacing(style::spacing::LARGE)
+        .padding(10)
+        .align_y(iced::Alignment::Center)
+        .width(Length::Fill)
+        .into()
+    })
+    .height(Length::Shrink)
     .into()
 }
 
@@ -518,7 +545,7 @@ fn upsert_entry_view<'a>(
                     .spacing(style::spacing::TINY)
                     .width(Length::FillPortion(1)),
                     column![
-                        text("Period (seconds)")
+                        text("Period")
                             .size(style::font_size::BODY)
                             .style(style::label_text),
                         text_input("30", &entry.step.to_string())

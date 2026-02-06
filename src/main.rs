@@ -71,7 +71,7 @@ fn main() -> iced::Result {
     })
     .window(iced::window::Settings {
         min_size: Some(iced::Size {
-            width: 450.,
+            width: 360.,
             height: 500.,
         }),
         icon: app_icon.ok(),
