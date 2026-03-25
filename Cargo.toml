@@ -25,9 +25,6 @@ totp-rs = { version = "5.7.1", features = [
     "otpauth",
     "qr",
 ] } # TOTP Generation ...
-arboard = { version = "3.6.1", features = [
-    "wayland-data-control",
-] } # Clipboard (https://github.com/bitwarden/clients/issues/6812)
 rfd = "0.17.2" # File System Dialogs
 secrecy = "0.10.3" # Provides us with SecretString
 uuid = "1.22.0" # Allows us to identify entries
