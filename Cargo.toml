@@ -40,6 +40,9 @@ image = { version = "0.25.10", default-features = false, features = [
 ] } # needed for qr detection
 open = "5.3.3" # needed for opening the default browser
 
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+
 [target.'cfg(unix)'.dependencies] # gstreamer dependencies for qr detection with camera (Unix-like systems)
 gstreamer = "0.25.0"
 gstreamer-app = "0.25.0"

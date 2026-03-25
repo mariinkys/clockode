@@ -7,6 +7,7 @@ pub mod unlock;
 pub use create::CreateDatabase;
 pub use homepage::HomePage;
 use iced::Task;
+use tracing::info;
 pub use unlock::UnlockDatabase;
 
 pub enum Screen {
@@ -33,7 +34,7 @@ impl Screen {
     ///
     /// # Parameters
     ///
-    /// - `response`: The result of a database check, returned by `check_database()`.  
+    /// - `response`: The result of a database check, returned by `check_database()`.
     ///
     /// # Returns
     ///
@@ -49,6 +50,7 @@ impl Screen {
         match response {
             Ok(maybe_db) => match maybe_db {
                 Some(db_path) => {
+                    info!("DB found, loading Unlock Screen");
                     let (unlock_database, task) = UnlockDatabase::new(db_path);
                     (
                         crate::app::screen::Screen::UnlockDatabase(unlock_database),
@@ -56,6 +58,7 @@ impl Screen {
                     )
                 }
                 None => {
+                    info!("No DB found, loading CreateDatabase Screen");
                     let (create_database, task) = CreateDatabase::new();
                     (
                         crate::app::screen::Screen::CreateDatabase(create_database),

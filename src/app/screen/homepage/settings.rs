@@ -14,6 +14,7 @@ use iced::{
     widget::{button, column, container, mouse_area, pick_list, row, scrollable, space, text},
 };
 use rfd::{AsyncFileDialog, FileHandle};
+use tracing::error;
 
 use crate::{
     APP_ID,
@@ -98,7 +99,7 @@ impl SettingsPage {
                         Message::ConfigurationSaved,
                     ));
                 } else {
-                    eprintln!("Warning: config mutex poisoned. Cannot change theme.");
+                    error!("Warning: config mutex poisoned. Cannot change theme.");
                 }
                 Action::None
             }
@@ -142,7 +143,7 @@ impl SettingsPage {
                 match open::that_detached(&url) {
                     Ok(()) => {}
                     Err(err) => {
-                        eprintln!("failed to open {url:?}: {err}");
+                        error!("failed to open {url:?}: {err}");
                     }
                 }
                 Action::None

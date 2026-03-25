@@ -1,6 +1,7 @@
 use anywho::anywho;
 use keepass::db::{Entry, Value};
 use totp_rs::{Algorithm, Secret, TOTP};
+use tracing::error;
 use uuid::Uuid;
 
 // These constants define the names of the custom fields used to store TOTP parameters within a generic KeePass entry.
@@ -84,7 +85,7 @@ impl TryFrom<Entry> for ClockodeEntry {
             "SHA256" => Algorithm::SHA256,
             "SHA512" => Algorithm::SHA512,
             _ => {
-                eprintln!("Falling back to SHA1 for entry: {}", &name);
+                error!("Falling back to SHA1 for entry: {}", &name);
                 Algorithm::SHA1
             }
         };

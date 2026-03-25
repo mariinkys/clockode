@@ -7,6 +7,7 @@ use keepass::{
 };
 use secrecy::{ExposeSecret, SecretString};
 use std::{path::PathBuf, sync::Arc, sync::Mutex};
+use tracing::warn;
 
 use crate::{APP_ID, app::core::entry::ClockodeEntry};
 
@@ -286,7 +287,7 @@ impl ClockodeDatabase {
                     self.add_entry(entry).await?;
                 }
                 Err(e) => {
-                    eprintln!("Warning: Failed to parse TOTP URL '{}': {}", line, e);
+                    warn!("Warning: Failed to parse TOTP URL '{}': {}", line, e);
                 }
             }
         }

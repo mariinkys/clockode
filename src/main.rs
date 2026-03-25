@@ -30,6 +30,13 @@ mod malloc {
 }
 
 fn main() -> iced::Result {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
+        .init();
+
     // Prevents glibc from hoarding memory via memory fragmentation.
     #[cfg(target_env = "gnu")]
     malloc::limit_mmap_threshold();

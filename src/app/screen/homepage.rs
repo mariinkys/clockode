@@ -12,6 +12,7 @@ use iced::{
     time::Instant,
     widget::{Column, button, column, container, row, scrollable, space, text},
 };
+use tracing::error;
 
 use crate::{
     app::{
@@ -135,7 +136,7 @@ impl HomePage {
             Message::ClipboardResult(result) => match result {
                 Ok(_) => Action::AddToast(Toast::success_toast("Copied to clipboard")),
                 Err(err) => {
-                    eprintln!("{:?}", err);
+                    error!("{:?}", err);
                     Action::None
                 }
             },
@@ -156,7 +157,7 @@ impl HomePage {
                     Action::None
                 }
                 Err(err) => {
-                    eprintln!("{}", err);
+                    error!("{}", err);
                     Action::AddToast(Toast::error_toast(err))
                 }
             },

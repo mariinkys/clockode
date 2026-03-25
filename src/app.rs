@@ -7,6 +7,7 @@ use iced::{
     time::Instant,
     widget::{container, text},
 };
+use tracing::{error, info};
 
 use crate::{
     APP_ID,
@@ -48,6 +49,8 @@ pub enum Message {
 
 impl Clockode {
     pub fn new() -> (Self, Task<Message>) {
+        info!("Starting app");
+
         let (screen, task) = Screen::from_database_check(check_database());
         (
             Self {
@@ -67,10 +70,11 @@ impl Clockode {
             Message::ConfigLoaded(res) => {
                 match res {
                     Ok(config) => {
+                        info!("Config loaded successfully");
                         self.config = Arc::new(Mutex::from(config));
                     }
                     Err(err) => {
-                        eprintln!("Error loading config: {err}");
+                        error!("Error loading config: {err}");
                     }
                 }
                 Task::none()

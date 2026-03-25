@@ -14,6 +14,7 @@ use iced::{
 };
 use rfd::{AsyncFileDialog, FileHandle};
 use totp_rs::Algorithm;
+use tracing::error;
 
 use crate::{
     app::{
@@ -284,7 +285,7 @@ impl UpsertPage {
                     Action::Run(task.map(Message::ScanQrPage))
                 }
                 Err(e) => {
-                    eprintln!("{e}");
+                    error!("{e}");
                     Action::AddToast(Toast::error_toast(format!("Failed to open camera: {}", e)))
                 }
             },
