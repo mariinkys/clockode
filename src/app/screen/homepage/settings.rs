@@ -240,13 +240,15 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
                 .size(style::font_size::BODY)
                 .style(style::label_text),
             pick_list(
-                Theme::ALL,
-                Some::<Theme>({
+                {
                     let cfg = config.lock().map(|c| c.theme.clone()).unwrap_or_default();
-                    cfg.into()
-                }),
-                |t| { Message::ChangedTheme(ColockodeTheme::try_from(&t).unwrap_or_default()) }
+                    let theme: Theme = cfg.into();
+                    Some(theme)
+                },
+                Theme::ALL,
+                |t: &Theme| t.to_string(),
             )
+            .on_select(|t| Message::ChangedTheme(ColockodeTheme::try_from(&t).unwrap_or_default()))
             .width(Length::Fill)
             .padding(12)
         ]

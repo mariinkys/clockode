@@ -31,9 +31,9 @@ pub mod font_size {
 /// Card container style - used for entry cards, form containers, etc.
 pub fn card_container(theme: &Theme) -> container::Style {
     container::Style {
-        background: Some(theme.palette().background.into()),
+        background: Some(theme.palette().background.base.color.into()),
         border: Border {
-            color: theme.palette().text.scale_alpha(0.1),
+            color: theme.palette().primary.base.text.scale_alpha(0.1),
             width: 1.0,
             radius: radius::LARGE.into(),
         },
@@ -44,9 +44,9 @@ pub fn card_container(theme: &Theme) -> container::Style {
 /// Entry card style - for TOTP entry items
 pub fn entry_card(theme: &Theme) -> container::Style {
     container::Style {
-        background: Some(theme.palette().background.into()),
+        background: Some(theme.palette().background.base.color.into()),
         border: Border {
-            color: theme.palette().text.scale_alpha(0.1),
+            color: theme.palette().primary.base.text.scale_alpha(0.1),
             width: 1.0,
             radius: radius::MEDIUM.into(),
         },
@@ -110,27 +110,27 @@ pub fn success_button(theme: &Theme, status: button::Status) -> button::Style {
 /// Label text style (subdued color)
 pub fn label_text(theme: &Theme) -> text::Style {
     text::Style {
-        color: Some(theme.palette().text.scale_alpha(0.8)),
+        color: Some(theme.palette().primary.base.text.scale_alpha(0.8)),
     }
 }
 
 /// Muted text style (for hints, subtitles, etc.)
 pub fn muted_text(theme: &Theme) -> text::Style {
     text::Style {
-        color: Some(theme.palette().text.scale_alpha(0.6)),
+        color: Some(theme.palette().primary.base.text.scale_alpha(0.6)),
     }
 }
 
 /// Link text style (for clickable urls...)
 pub fn link_text(theme: &Theme) -> text::Style {
     text::Style {
-        color: Some(theme.palette().primary.scale_alpha(0.8)),
+        color: Some(theme.palette().primary.base.text.scale_alpha(0.8)),
     }
 }
 
 /// Subtitle text style (slightly muted)
 pub fn subtitle_text(theme: &Theme) -> text::Style {
     text::Style {
-        color: Some(theme.palette().text.scale_alpha(0.7)),
+        color: Some(theme.palette().primary.base.text.scale_alpha(0.7)),
     }
 }

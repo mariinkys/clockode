@@ -525,9 +525,9 @@ fn upsert_entry_view<'a>(
                         text("Algorithm")
                             .size(style::font_size::BODY)
                             .style(style::label_text),
-                        pick_list(ALL_ALGORITHMS, Some(&entry.algorithm), |v| {
-                            Message::InputUpdated(TOTPEntryInput::UpdateAlgorithm(v))
-                        })
+                        pick_list(Some(&entry.algorithm), ALL_ALGORITHMS, |v: &_| v
+                            .to_string())
+                        .on_select(|v| Message::InputUpdated(TOTPEntryInput::UpdateAlgorithm(v)))
                         .width(Length::Fill)
                         .padding(12)
                     ]

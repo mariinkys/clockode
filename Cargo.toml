@@ -8,7 +8,7 @@ license = "GPL-3.0"
 repository = "https://github.com/mariinkys/clockode"
 
 [dependencies]
-iced = { version = "0.14.0", default-features = true, features = [
+iced = { git = "https://github.com/iced-rs/iced", default-features = true, features = [
     "tokio",
     "image",
     "advanced",
@@ -17,11 +17,11 @@ iced = { version = "0.14.0", default-features = true, features = [
 anywho = "0.1.2"
 dirs = "6.0.0"
 smol = "2.0.2"
-keepass = { version = "0.8.18", features = [
+keepass = { version = "0.10.4", features = [
     "save_kdbx4",
 ] } # KeePass DB Management
 rqrr = "0.10.1" # QR Detection
-totp-rs = { version = "5.7.0", features = [
+totp-rs = { version = "5.7.1", features = [
     "otpauth",
     "qr",
 ] } # TOTP Generation ...
@@ -30,12 +30,12 @@ arboard = { version = "3.6.1", features = [
 ] } # Clipboard (https://github.com/bitwarden/clients/issues/6812)
 rfd = "0.17.2" # File System Dialogs
 secrecy = "0.10.3" # Provides us with SecretString
-uuid = "1.20.0" # Allows us to identify entries
+uuid = "1.22.0" # Allows us to identify entries
 serde = { version = "1.0.228", features = [
     "derive",
 ] } # Needed for config serializing and deserializing
 ron = "0.12.0" # Needed for config serializing and deserializing
-image = { version = "0.25.9", default-features = false, features = [
+image = { version = "0.25.10", default-features = false, features = [
     "jpeg",
     "png",
     "webp",
@@ -44,10 +44,10 @@ image = { version = "0.25.9", default-features = false, features = [
 open = "5.3.3" # needed for opening the default browser
 
 [target.'cfg(unix)'.dependencies] # gstreamer dependencies for qr detection with camera (Unix-like systems)
-gstreamer = "0.24.4"
-gstreamer-app = "0.24.4"
-gstreamer-video = "0.24.4"
-ashpd = { version = "0.12.0", default-features = false, features = ["tokio"] }
+gstreamer = "0.25.0"
+gstreamer-app = "0.25.0"
+gstreamer-video = "0.25.0"
+ashpd = { version = "0.13.9", default-features = false, features = ["tokio", "camera"] }
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]
