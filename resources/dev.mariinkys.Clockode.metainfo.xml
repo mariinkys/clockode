@@ -7,6 +7,7 @@
     <url type="homepage">https://github.com/mariinkys/clockode</url>
     <url type="bugtracker">https://github.com/mariinkys/clockode/issues</url>
     <url type="donation">https://buymeacoffee.com/mariinkys</url>
+    <url type="vcs-browser">https://github.com/mariinkys/clockode</url>
 
     <name>Clockode</name>
     <summary>TOTP Client</summary>
