@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <component type="desktop-application">
     <id>dev.mariinkys.Clockode</id>
     <developer id="dev.mariinkys">
@@ -15,7 +15,8 @@
     <project_license>GPL-3.0-only</project_license>
 
     <description>
-        <p>Clockode is a TOTP code generator that stores your authentication secrets in an encrypted
+        <p
+        >Clockode is a TOTP code generator that stores your authentication secrets in an encrypted
             local vault, keeping your two-factor codes private and accessible without needing an
             internet connection.</p>
         <ul>
@@ -24,7 +25,8 @@
             <li>Minimal and user-friendly interface</li>
             <li>Quick code copying and auto-refresh</li>
             <li>Entry importing via QR (Camera or File)</li>
-            <li>Backup and import functionality (standard format that works between apps like
+            <li
+            >Backup and import functionality (standard format that works between apps like
                 Aegis...)</li>
         </ul>
     </description>
@@ -80,17 +82,34 @@
     </keywords>
 
     <releases>
+        <release version="0.2.4" date="2025-03-25">
+            <description>
+                <p>Updated to iced master branch</p>
+                <p>Updated dependencies</p>
+                <p>Bug fixes and improvments</p>
+            </description>
+        </release>
+        <release version="0.2.3" date="2025-02-07">
+            <description>
+                <p>Improved mobile layout</p>
+                <p>Added Esc keyboard shortcut to go back</p>
+                <p>Updated dependencies</p>
+            </description>
+        </release>
         <release version="0.2.2" date="2025-12-21">
             <description>
-                <p>Remove the need for the Flatpak to have pipewire and all devices permissions</p>
+                <p
+                >Remove the need for the Flatpak to have pipewire and all devices permissions</p>
                 <p>Add tiny link to releases page in Settings</p>
                 <p>Add tiny link to donations page in Settings</p>
             </description>
         </release>
         <release version="0.2.1" date="2025-12-20">
             <description>
-                <p>Added small colored dot to show how much time is left to refresh an entry</p>
-                <p>Added the ability to add entries scanning a QR code with the Camera</p>
+                <p
+                >Added small colored dot to show how much time is left to refresh an entry</p>
+                <p
+                >Added the ability to add entries scanning a QR code with the Camera</p>
                 <p>Memory usage has been reduced</p>
                 <p>Updated dependencies</p>
             </description>
@@ -98,8 +117,10 @@
         <release version="0.2.0" date="2025-12-16">
             <description>
                 <p>Full application rewrite</p>
-                <p>Real support for the standard TOTP formats, compatible with Aegis...</p>
-                <p>No more hand-rolled vault encryption, use of standard keepass format</p>
+                <p
+                >Real support for the standard TOTP formats, compatible with Aegis...</p>
+                <p
+                >No more hand-rolled vault encryption, use of standard keepass format</p>
                 <p>Brand new UI and UX</p>
                 <p>Various QR-related operations have been added</p>
                 <p>Updated dependencies and much more</p>
@@ -107,7 +128,8 @@
         </release>
         <release version="0.1.4" date="2025-09-20">
             <description>
-                <p>Add support for Standard Backup Format (Compatible with Aegis...)</p>
+                <p
+                >Add support for Standard Backup Format (Compatible with Aegis...)</p>
                 <p>Add number of total entries to vault screen</p>
                 <p>Updated Flatpak runtime to 25.08</p>
                 <p>Updated dependencies</p>
@@ -129,7 +151,8 @@
         <release version="0.1.1" date="2025-05-09">
             <description>
                 <p>Add file-picker support on all supported platforms</p>
-                <p>Fixed bug that prevented vault from being exported on Flatpak</p>
+                <p
+                >Fixed bug that prevented vault from being exported on Flatpak</p>
             </description>
         </release>
         <release version="0.1.0" date="2025-05-08">
