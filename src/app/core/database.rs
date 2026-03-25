@@ -55,7 +55,7 @@ pub async fn create_database(password: SecretString) -> Result<PathBuf, anywho::
         db.meta.database_name = Some(String::from("Clockode Database"));
         let group = Group::new("Default Group");
 
-        db.root.add_child(group);
+        db.root.groups.push(group);
 
         db.save(
             &mut std::fs::File::create(&path)?,
@@ -114,22 +114,13 @@ impl ClockodeDatabase {
 
             let entries = db
                 .root
-                .children
-                .iter()
-                .find_map(|node| {
-                    if let keepass::db::Node::Group(g) = node
-                        && g.name == "Default Group"
-                    {
-                        return Some(g.entries());
-                    }
-                    None
-                })
-                .map(|entries_iter| {
-                    let mut v = entries_iter
-                        .into_iter()
+                .group_by_name("Default Group")
+                .map(|g| {
+                    let mut v = g
+                        .entries
+                        .iter()
                         .map(|e| ClockodeEntry::try_from(e.to_owned()))
                         .collect::<Result<Vec<_>, _>>()?;
-
                     v.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
                     Ok::<Vec<ClockodeEntry>, anywho::Error>(v)
                 })
@@ -161,19 +152,10 @@ impl ClockodeDatabase {
 
             let target_group = db
                 .root
-                .children
-                .iter_mut()
-                .find_map(|node| {
-                    if let keepass::db::Node::Group(g) = node
-                        && g.name == "Default Group"
-                    {
-                        return Some(g);
-                    }
-                    None
-                })
+                .group_by_name_mut("Default Group")
                 .ok_or_else(|| anywho!("Default Group not found"))?;
 
-            target_group.add_child(keepass_entry);
+            target_group.entries.push(keepass_entry);
 
             db.save(
                 &mut std::fs::File::create(&*path)?,
@@ -207,30 +189,14 @@ impl ClockodeDatabase {
 
             let target_group = db
                 .root
-                .children
-                .iter_mut()
-                .find_map(|node| {
-                    if let keepass::db::Node::Group(g) = node
-                        && g.name == "Default Group"
-                    {
-                        return Some(g);
-                    }
-                    None
-                })
+                .group_by_name_mut("Default Group")
                 .ok_or_else(|| anywho!("Default Group not found"))?;
 
             // Find and update the entry
             let entry_found = target_group
-                .children
+                .entries
                 .iter_mut()
-                .find_map(|node| {
-                    if let keepass::db::Node::Entry(e) = node
-                        && e.get_uuid() == &entry_id
-                    {
-                        return Some(e);
-                    }
-                    None
-                })
+                .find(|e| e.uuid == entry_id)
                 .ok_or_else(|| anywho!("Entry with UUID {} not found", entry_id))?;
 
             let updated_keepass_entry = Entry::from(entry);
@@ -266,30 +232,16 @@ impl ClockodeDatabase {
 
             let target_group = db
                 .root
-                .children
-                .iter_mut()
-                .find_map(|node| {
-                    if let keepass::db::Node::Group(g) = node
-                        && g.name == "Default Group"
-                    {
-                        return Some(g);
-                    }
-                    None
-                })
+                .group_by_name_mut("Default Group")
                 .ok_or_else(|| anywho!("Default Group not found"))?;
 
             let entry_index = target_group
-                .children
+                .entries
                 .iter()
-                .position(|node| {
-                    if let keepass::db::Node::Entry(e) = node {
-                        return e.get_uuid() == &entry_id;
-                    }
-                    false
-                })
+                .position(|e| e.uuid == entry_id)
                 .ok_or_else(|| anywho!("Entry with UUID {} not found", entry_id))?;
 
-            target_group.children.remove(entry_index);
+            target_group.entries.remove(entry_index);
 
             db.save(
                 &mut std::fs::File::create(&*path)?,

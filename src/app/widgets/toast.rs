@@ -10,7 +10,7 @@ use iced::advanced::layout::{self, Layout};
 use iced::advanced::overlay;
 use iced::advanced::renderer;
 use iced::advanced::widget::{self, Operation, Tree};
-use iced::advanced::{Clipboard, Shell, Widget};
+use iced::advanced::{Shell, Widget};
 use iced::mouse;
 use iced::time::{self, Duration, Instant};
 use iced::widget::{button, container, row, text};
@@ -263,7 +263,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
         layout: Layout<'_>,
         cursor: mouse::Cursor,
         renderer: &Renderer,
-        clipboard: &mut dyn Clipboard,
         shell: &mut Shell<'_, Message>,
         viewport: &Rectangle,
     ) {
@@ -273,7 +272,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
             layout,
             cursor,
             renderer,
-            clipboard,
             shell,
             viewport,
         );
@@ -396,7 +394,6 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
         layout: Layout<'_>,
         cursor: mouse::Cursor,
         renderer: &Renderer,
-        clipboard: &mut dyn Clipboard,
         shell: &mut Shell<'_, Message>,
     ) {
         if let Event::Window(window::Event::RedrawRequested(now)) = &event {
@@ -436,7 +433,6 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
                 layout,
                 cursor,
                 renderer,
-                clipboard,
                 &mut local_shell,
                 &viewport,
             );

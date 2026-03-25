@@ -5,11 +5,10 @@ use std::{
     time::Duration,
 };
 
-use arboard::Clipboard;
 use iced::{
     Alignment, Element,
     Length::{self},
-    Subscription, Task,
+    Subscription, Task, clipboard,
     time::Instant,
     widget::{Column, button, column, container, row, scrollable, space, text},
 };
@@ -29,7 +28,6 @@ mod upsert;
 
 pub struct HomePage {
     config: Arc<Mutex<Config>>,
-    clipboard: Option<Clipboard>,
     database: Arc<ClockodeDatabase>,
     state: State,
 }
@@ -49,6 +47,8 @@ pub enum SubScreen {
 pub enum Message {
     /// Attempt to copy some [`String`] to the user clipboard
     CopyToClipboard(String),
+    /// Callback after attempting to copy something to the clipboard
+    ClipboardResult(Result<(), iced::clipboard::Error>),
     /// Ask to load the [`ClockodeEntry`]s to list on the page
     LoadEntries,
     /// Callback after asking to load [`ClockodeEntry`]s, set's the entries on the state if Ok
@@ -87,15 +87,10 @@ impl HomePage {
         config: Arc<Mutex<Config>>,
     ) -> (Self, Task<Message>) {
         let db_clone = Arc::clone(&database);
-        let clipboard = Clipboard::new();
-        if let Err(clip_err) = &clipboard {
-            eprintln!("{clip_err}");
-        };
 
         (
             Self {
                 config,
-                clipboard: clipboard.ok(),
                 database,
                 state: State::Loading,
             },
@@ -135,19 +130,15 @@ impl HomePage {
     pub fn update(&mut self, message: Message, now: Instant) -> Action {
         match message {
             Message::CopyToClipboard(value) => {
-                if let Some(clipboard) = &mut self.clipboard {
-                    let res = &clipboard.set_text(value);
-                    match res {
-                        Ok(_) => {
-                            return Action::AddToast(Toast::success_toast("Copied to clipboard"));
-                        }
-                        Err(err) => {
-                            eprintln!("{err}");
-                        }
-                    }
-                }
-                Action::None
+                Action::Run(clipboard::write(value).map(Message::ClipboardResult))
             }
+            Message::ClipboardResult(result) => match result {
+                Ok(_) => Action::AddToast(Toast::success_toast("Copied to clipboard")),
+                Err(err) => {
+                    eprintln!("{:?}", err);
+                    Action::None
+                }
+            },
             Message::LoadEntries => {
                 self.state = State::Loading;
 

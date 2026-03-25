@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
+use iced::advanced::Shell;
 use iced::advanced::layout::{self, Layout};
 use iced::advanced::renderer::{self, Renderer as _};
 use iced::advanced::widget::{self, Tree, Widget};
-use iced::advanced::{Clipboard, Shell};
 use iced::mouse;
 use iced::{Border, Color, Element, Event, Length, Rectangle, Renderer, Size, Theme};
 
@@ -22,11 +22,11 @@ impl Dot {
         let palette = theme.palette();
 
         if self.timer > 10 {
-            palette.success
+            palette.success.base.color
         } else if self.timer > 5 {
-            palette.warning
+            palette.warning.base.color
         } else {
-            palette.danger
+            palette.danger.base.color
         }
     }
 }
@@ -96,7 +96,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Dot {
         _layout: Layout<'_>,
         _cursor: mouse::Cursor,
         _renderer: &Renderer,
-        _clipboard: &mut dyn Clipboard,
         _shell: &mut Shell<'_, Message>,
         _viewport: &Rectangle,
     ) {

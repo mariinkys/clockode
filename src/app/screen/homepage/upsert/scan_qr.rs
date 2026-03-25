@@ -190,11 +190,13 @@ impl QrScanPage {
 
     /// Request camera access through the XDG Camera portal
     async fn request_camera_access() -> Result<OwnedFd, anywho::Error> {
-        use ashpd::desktop::camera::Camera;
+        use ashpd::desktop::camera::{Camera, CameraAccessOptions, OpenPipeWireRemoteOptions};
 
         let proxy = Camera::new().await?;
-        proxy.request_access().await?;
-        Ok(proxy.open_pipe_wire_remote().await?)
+        proxy.request_access(CameraAccessOptions::default()).await?;
+        Ok(proxy
+            .open_pipe_wire_remote(OpenPipeWireRemoteOptions::default())
+            .await?)
     }
 
     fn init_gstreamer(camera_fd: Arc<OwnedFd>) -> Result<State, QrScanError> {

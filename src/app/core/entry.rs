@@ -66,7 +66,7 @@ impl TryFrom<Entry> for ClockodeEntry {
     type Error = anywho::Error;
 
     fn try_from(value: Entry) -> Result<Self, anywho::Error> {
-        let id = value.get_uuid();
+        let id = value.uuid;
 
         let name = value
             .get_title()
@@ -124,7 +124,7 @@ impl TryFrom<Entry> for ClockodeEntry {
         };
 
         Ok(ClockodeEntry {
-            id: Some(*id),
+            id: Some(id),
             name,
             totp: totp_result,
         })
@@ -142,7 +142,7 @@ impl From<ClockodeEntry> for Entry {
         let secret_b32_string = value.totp.get_secret_base32().to_string();
         entry.fields.insert(
             CUSTOM_SECRET_KEY.to_string(),
-            Value::Protected(secret_b32_string.into()),
+            Value::Protected(secrecy::SecretBox::new(Box::new(secret_b32_string))),
         );
 
         entry.fields.insert(
