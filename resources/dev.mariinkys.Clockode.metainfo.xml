@@ -83,14 +83,14 @@
     </keywords>
 
     <releases>
-        <release version="0.2.4" date="2025-03-25">
+        <release version="0.2.4" date="2026-03-25">
             <description>
                 <p>Updated to iced master branch</p>
                 <p>Updated dependencies</p>
                 <p>Bug fixes and improvments</p>
             </description>
         </release>
-        <release version="0.2.3" date="2025-02-07">
+        <release version="0.2.3" date="2026-02-07">
             <description>
                 <p>Improved mobile layout</p>
                 <p>Added Esc keyboard shortcut to go back</p>
