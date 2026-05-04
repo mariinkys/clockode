@@ -57,7 +57,8 @@ impl UnlockDatabase {
                 db_path,
                 inputs: PageInputs::default(),
             },
-            Task::none(),
+            // Focus the password field automatically on startup
+            focus_next(),
         )
     }
 
