@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use anywho::anywho;
-use keepass::{
-    Database, DatabaseKey,
-    db::{Entry, Group},
-};
+use keepass::{Database, DatabaseKey};
 use secrecy::{ExposeSecret, SecretString};
 use std::{path::PathBuf, sync::Arc, sync::Mutex};
-use tracing::warn;
+use tracing::{info, warn};
 
-use crate::{APP_ID, app::core::entry::ClockodeEntry};
+use crate::{
+    APP_ID,
+    app::core::entry::{ClockodeEntry, update_clockode_entry_in_keepass},
+};
 
 /// Checks whether the application database already exists.
 ///
@@ -32,6 +32,8 @@ pub fn check_database() -> Result<Option<PathBuf>, anywho::Error> {
         .join(APP_ID)
         .join("database.kdbx");
 
+    info!("DATABASE_PATH {:?}", &path);
+
     if path.exists() {
         Ok(Some(path))
     } else {
@@ -52,11 +54,12 @@ pub async fn create_database(password: SecretString) -> Result<PathBuf, anywho::
             .ok_or_else(|| anywho!("Database path has no parent directory"))?;
         std::fs::create_dir_all(dir_path)?;
 
-        let mut db = Database::new(Default::default());
+        let mut db = Database::new();
         db.meta.database_name = Some(String::from("Clockode Database"));
-        let group = Group::new("Default Group");
 
-        db.root.groups.push(group);
+        let mut root = db.root_mut();
+        let mut group = root.add_group();
+        group.name = String::from("Default Group");
 
         db.save(
             &mut std::fs::File::create(&path)?,
@@ -114,15 +117,14 @@ impl ClockodeDatabase {
             drop(file); // this should't be needed here because we only read, I just added it for consistency
 
             let entries = db
-                .root
+                .root()
                 .group_by_name("Default Group")
                 .map(|g| {
                     let mut v = g
-                        .entries
-                        .iter()
+                        .entries()
                         .map(|e| ClockodeEntry::try_from(e.to_owned()))
                         .collect::<Result<Vec<_>, _>>()?;
-                    v.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+                    v.sort_by_key(|a| a.name.to_lowercase());
                     Ok::<Vec<ClockodeEntry>, anywho::Error>(v)
                 })
                 .transpose()?
@@ -149,14 +151,13 @@ impl ClockodeDatabase {
             let mut db = Database::open(&mut file, key)?;
             drop(file);
 
-            let keepass_entry = Entry::from(entry);
-
-            let target_group = db
-                .root
+            let mut root = db.root_mut();
+            let mut target_group = root
                 .group_by_name_mut("Default Group")
                 .ok_or_else(|| anywho!("Default Group not found"))?;
+            let mut keepass_entry = target_group.add_entry();
 
-            target_group.entries.push(keepass_entry);
+            update_clockode_entry_in_keepass(entry, &mut keepass_entry);
 
             db.save(
                 &mut std::fs::File::create(&*path)?,
@@ -188,22 +189,21 @@ impl ClockodeDatabase {
                 .id
                 .ok_or_else(|| anywho!("Cannot update entry without UUID"))?;
 
-            let target_group = db
-                .root
+            let mut root = db.root_mut();
+            let mut target_group = root
                 .group_by_name_mut("Default Group")
                 .ok_or_else(|| anywho!("Default Group not found"))?;
 
             // Find and update the entry
-            let entry_found = target_group
-                .entries
-                .iter_mut()
-                .find(|e| e.uuid == entry_id)
+            let entry_id = target_group
+                .entry_ids()
+                .find(|e| e.uuid() == entry_id)
+                .ok_or_else(|| anywho!("Entry with UUID {} not found", entry_id))?;
+            let mut entry_found = target_group
+                .entry_mut(entry_id)
                 .ok_or_else(|| anywho!("Entry with UUID {} not found", entry_id))?;
 
-            let updated_keepass_entry = Entry::from(entry);
-
-            // Update all fields from the new entry
-            entry_found.fields = updated_keepass_entry.fields;
+            update_clockode_entry_in_keepass(entry, &mut entry_found);
 
             db.save(
                 &mut std::fs::File::create(&*path)?,
@@ -231,18 +231,20 @@ impl ClockodeDatabase {
             let mut db = Database::open(&mut file, key)?;
             drop(file);
 
-            let target_group = db
-                .root
+            let mut root = db.root_mut();
+            let mut target_group = root
                 .group_by_name_mut("Default Group")
                 .ok_or_else(|| anywho!("Default Group not found"))?;
 
-            let entry_index = target_group
-                .entries
-                .iter()
-                .position(|e| e.uuid == entry_id)
+            let entry_id = target_group
+                .entry_ids()
+                .find(|e| e.uuid() == entry_id)
+                .ok_or_else(|| anywho!("Entry with UUID {} not found", entry_id))?;
+            let entry_found = target_group
+                .entry_mut(entry_id)
                 .ok_or_else(|| anywho!("Entry with UUID {} not found", entry_id))?;
 
-            target_group.entries.remove(entry_index);
+            entry_found.remove();
 
             db.save(
                 &mut std::fs::File::create(&*path)?,

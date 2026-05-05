@@ -1,5 +1,5 @@
 use anywho::anywho;
-use keepass::db::{Entry, Value};
+use keepass::db::{Entry, EntryMut, Value};
 use totp_rs::{Algorithm, Secret, TOTP};
 use tracing::error;
 use uuid::Uuid;
@@ -19,55 +19,11 @@ pub struct ClockodeEntry {
     pub totp: TOTP,
 }
 
-impl ClockodeEntry {
-    /// Returns true if the entry is ready for submission
-    pub fn valid(&self) -> bool {
-        // Validate name is not empty
-        if self.name.trim().is_empty() {
-            return false;
-        }
-
-        // Validate digits
-        if self.totp.digits != 6 && self.totp.digits != 8 {
-            return false;
-        }
-
-        // Validate period is reasonable (between 1 and 300 seconds)
-        if self.totp.step == 0 || self.totp.step > 300 {
-            return false;
-        }
-
-        // Validate algorithm is one of the supported types
-        match self.totp.algorithm {
-            Algorithm::SHA1 | Algorithm::SHA256 | Algorithm::SHA512 => {}
-        }
-
-        // Validate secret has reasonable length
-        // TOTP secrets are typically 16-32 bytes (128-256 bits)
-        let secret_len = self.totp.secret.len();
-        if !(10..=64).contains(&secret_len) {
-            return false;
-        }
-
-        // Validate account name is not empty
-        if self.totp.account_name.trim().is_empty() {
-            return false;
-        }
-
-        // Validate issuer does not contain colon
-        if self.totp.issuer.as_deref().is_some_and(|x| x.contains(":")) {
-            return false;
-        }
-
-        true
-    }
-}
-
 impl TryFrom<Entry> for ClockodeEntry {
     type Error = anywho::Error;
 
     fn try_from(value: Entry) -> Result<Self, anywho::Error> {
-        let id = value.uuid;
+        let id = value.id().uuid();
 
         let name = value
             .get_title()
@@ -132,45 +88,83 @@ impl TryFrom<Entry> for ClockodeEntry {
     }
 }
 
-impl From<ClockodeEntry> for Entry {
-    fn from(value: ClockodeEntry) -> Self {
-        let mut entry = Entry::new();
+pub fn update_clockode_entry_in_keepass(value: ClockodeEntry, entry: &mut EntryMut) {
+    entry
+        .fields
+        .insert("Title".to_string(), Value::Unprotected(value.name.clone()));
 
-        entry
-            .fields
-            .insert("Title".to_string(), Value::Unprotected(value.name.clone()));
+    let secret_b32_string = value.totp.get_secret_base32().to_string();
 
-        let secret_b32_string = value.totp.get_secret_base32().to_string();
-        entry.fields.insert(
-            CUSTOM_SECRET_KEY.to_string(),
-            Value::Protected(secrecy::SecretBox::new(Box::new(secret_b32_string))),
-        );
+    entry.fields.insert(
+        CUSTOM_SECRET_KEY.to_string(),
+        Value::Protected(secrecy::SecretBox::new(Box::new(secret_b32_string))),
+    );
 
-        entry.fields.insert(
-            CUSTOM_ALGORITHM_KEY.to_string(),
-            Value::Unprotected(value.totp.algorithm.to_string()),
-        );
+    entry.fields.insert(
+        CUSTOM_ALGORITHM_KEY.to_string(),
+        Value::Unprotected(value.totp.algorithm.to_string()),
+    );
 
-        entry.fields.insert(
-            CUSTOM_PERIOD_KEY.to_string(),
-            Value::Unprotected(value.totp.step.to_string()),
-        );
+    entry.fields.insert(
+        CUSTOM_PERIOD_KEY.to_string(),
+        Value::Unprotected(value.totp.step.to_string()),
+    );
 
-        entry.fields.insert(
-            CUSTOM_DIGITS_KEY.to_string(),
-            Value::Unprotected(value.totp.digits.to_string()),
-        );
+    entry.fields.insert(
+        CUSTOM_DIGITS_KEY.to_string(),
+        Value::Unprotected(value.totp.digits.to_string()),
+    );
 
-        entry.fields.insert(
-            CUSTOM_ISSUER_KEY.to_string(),
-            Value::Unprotected(value.totp.issuer.unwrap_or(value.name)),
-        );
+    entry.fields.insert(
+        CUSTOM_ISSUER_KEY.to_string(),
+        Value::Unprotected(value.totp.issuer.unwrap_or(value.name)),
+    );
 
-        entry.fields.insert(
-            CUSTOM_ACCOUNTNAME_KEY.to_string(),
-            Value::Unprotected(value.totp.account_name),
-        );
-
-        entry
-    }
+    entry.fields.insert(
+        CUSTOM_ACCOUNTNAME_KEY.to_string(),
+        Value::Unprotected(value.totp.account_name),
+    );
 }
+
+// impl From<ClockodeEntry> for Entry {
+//     fn from(value: ClockodeEntry) -> Self {
+//         let mut entry = Entry::new();
+
+//         entry
+//             .fields
+//             .insert("Title".to_string(), Value::Unprotected(value.name.clone()));
+
+//         let secret_b32_string = value.totp.get_secret_base32().to_string();
+//         entry.fields.insert(
+//             CUSTOM_SECRET_KEY.to_string(),
+//             Value::Protected(secrecy::SecretBox::new(Box::new(secret_b32_string))),
+//         );
+
+//         entry.fields.insert(
+//             CUSTOM_ALGORITHM_KEY.to_string(),
+//             Value::Unprotected(value.totp.algorithm.to_string()),
+//         );
+
+//         entry.fields.insert(
+//             CUSTOM_PERIOD_KEY.to_string(),
+//             Value::Unprotected(value.totp.step.to_string()),
+//         );
+
+//         entry.fields.insert(
+//             CUSTOM_DIGITS_KEY.to_string(),
+//             Value::Unprotected(value.totp.digits.to_string()),
+//         );
+
+//         entry.fields.insert(
+//             CUSTOM_ISSUER_KEY.to_string(),
+//             Value::Unprotected(value.totp.issuer.unwrap_or(value.name)),
+//         );
+
+//         entry.fields.insert(
+//             CUSTOM_ACCOUNTNAME_KEY.to_string(),
+//             Value::Unprotected(value.totp.account_name),
+//         );
+
+//         entry
+//     }
+// }

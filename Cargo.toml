@@ -2,7 +2,7 @@
 name = "clockode"
 description = "TOTP client made with Iced"
 authors = ["mariinkys <kysdev.owjga@aleeas.com>"]
-version = "0.2.4"
+version = "0.2.5"
 edition = "2024"
 license = "GPL-3.0"
 repository = "https://github.com/mariinkys/clockode"
@@ -17,7 +17,7 @@ iced = { git = "https://github.com/iced-rs/iced", default-features = true, featu
 anywho = "0.1.2"
 dirs = "6.0.0"
 smol = "2.0.2"
-keepass = { version = "0.10.4", features = [
+keepass = { version = "0.12.4", features = [
     "save_kdbx4",
 ] } # KeePass DB Management
 rqrr = "0.10.1" # QR Detection
@@ -27,27 +27,27 @@ totp-rs = { version = "5.7.1", features = [
 ] } # TOTP Generation ...
 rfd = "0.17.2" # File System Dialogs
 secrecy = "0.10.3" # Provides us with SecretString
-uuid = "1.22.0" # Allows us to identify entries
+uuid = "1.23.1" # Allows us to identify entries
 serde = { version = "1.0.228", features = [
     "derive",
 ] } # Needed for config serializing and deserializing
-ron = "0.12.0" # Needed for config serializing and deserializing
+ron = "0.12.1" # Needed for config serializing and deserializing
 image = { version = "0.25.10", default-features = false, features = [
     "jpeg",
     "png",
     "webp",
     "rayon",
 ] } # needed for qr detection
-open = "5.3.3" # needed for opening the default browser
+open = "5.3.4" # needed for opening the default browser
 
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 
 [target.'cfg(unix)'.dependencies] # gstreamer dependencies for qr detection with camera (Unix-like systems)
-gstreamer = "0.25.0"
+gstreamer = "0.25.1"
 gstreamer-app = "0.25.0"
 gstreamer-video = "0.25.0"
-ashpd = { version = "0.13.9", default-features = false, features = ["tokio", "camera"] }
+ashpd = { version = "0.13.10", default-features = false, features = ["tokio", "camera"] }
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]

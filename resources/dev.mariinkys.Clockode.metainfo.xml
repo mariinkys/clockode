@@ -83,6 +83,12 @@
     </keywords>
 
     <releases>
+        <release version="0.2.5" date="2026-05-05">
+            <description>
+                <p>Fixed issue with text color in some themes</p>
+                <p>Updated dependencies</p>
+            </description>
+        </release>
         <release version="0.2.4" date="2026-03-25">
             <description>
                 <p>Updated to iced master branch</p>
