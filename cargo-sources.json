@@ -3262,14 +3262,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/keepass/keepass-0.12.4.crate",
-        "sha256": "19f275288db9133c4ad53d193bec0f35596927465f7e910905d4eb98e8d5fd78",
-        "dest": "cargo/vendor/keepass-0.12.4"
+        "url": "https://static.crates.io/crates/keepass/keepass-0.12.8.crate",
+        "sha256": "1992e0fd08e28ac434d0fdd4dfc1a46cb4df9b2d8367dc6572bb526fe41c5258",
+        "dest": "cargo/vendor/keepass-0.12.8"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"19f275288db9133c4ad53d193bec0f35596927465f7e910905d4eb98e8d5fd78\", \"files\": {}}",
-        "dest": "cargo/vendor/keepass-0.12.4",
+        "contents": "{\"package\": \"1992e0fd08e28ac434d0fdd4dfc1a46cb4df9b2d8367dc6572bb526fe41c5258\", \"files\": {}}",
+        "dest": "cargo/vendor/keepass-0.12.8",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -4328,14 +4328,14 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
-        "url": "https://static.crates.io/crates/open/open-5.3.4.crate",
-        "sha256": "9f3bab717c29a857abf75fcef718d441ec7cb2725f937343c734740a985d37fd",
-        "dest": "cargo/vendor/open-5.3.4"
+        "url": "https://static.crates.io/crates/open/open-5.3.5.crate",
+        "sha256": "2fbaa89d2ddc8473c78a3adf69eea8cffa28c483b8e02a971ef31527cd0fc92c",
+        "dest": "cargo/vendor/open-5.3.5"
     },
     {
         "type": "inline",
-        "contents": "{\"package\": \"9f3bab717c29a857abf75fcef718d441ec7cb2725f937343c734740a985d37fd\", \"files\": {}}",
-        "dest": "cargo/vendor/open-5.3.4",
+        "contents": "{\"package\": \"2fbaa89d2ddc8473c78a3adf69eea8cffa28c483b8e02a971ef31527cd0fc92c\", \"files\": {}}",
+        "dest": "cargo/vendor/open-5.3.5",
         "dest-filename": ".cargo-checksum.json"
     },
     {
