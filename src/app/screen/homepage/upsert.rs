@@ -451,7 +451,6 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
         .padding(10)
         .align_y(iced::Alignment::Center)
         .width(Length::Fill)
-        .into()
     })
     .height(Length::Shrink)
     .into()

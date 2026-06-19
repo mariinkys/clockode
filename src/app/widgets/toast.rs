@@ -207,13 +207,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
         widget::tree::State::new(Vec::<Option<Instant>>::new())
     }
 
-    fn children(&self) -> Vec<Tree> {
-        std::iter::once(Tree::new(&self.content))
-            .chain(self.toasts.iter().map(Tree::new))
-            .collect()
-    }
-
-    fn diff(&self, tree: &mut Tree) {
+    fn diff(&mut self, tree: &mut Tree) {
         let instants = tree.state.downcast_mut::<Vec<Option<Instant>>>();
 
         // Invalidating removed instants to None allows us to remove
@@ -232,8 +226,8 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
         }
 
         tree.diff_children(
-            &std::iter::once(&self.content)
-                .chain(self.toasts.iter())
+            &mut std::iter::once(&mut self.content)
+                .chain(&mut self.toasts)
                 .collect::<Vec<_>>(),
         );
     }

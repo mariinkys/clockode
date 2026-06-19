@@ -27,7 +27,7 @@ totp-rs = { version = "5.7.1", features = [
 ] } # TOTP Generation ...
 rfd = "0.17.2" # File System Dialogs
 secrecy = "0.10.3" # Provides us with SecretString
-uuid = "1.23.1" # Allows us to identify entries
+uuid = "1.23.3" # Allows us to identify entries
 serde = { version = "1.0.228", features = [
     "derive",
 ] } # Needed for config serializing and deserializing
