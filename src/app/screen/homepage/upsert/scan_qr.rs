@@ -201,32 +201,46 @@ impl QrScanPage {
 
     fn init_gstreamer(camera_fd: Arc<OwnedFd>) -> Result<State, QrScanError> {
         let pipeline = gst::Pipeline::new();
-        let src = gst::ElementFactory::make("pipewiresrc")
-            .property("fd", camera_fd.as_raw_fd())
-            .build()
-            .map_err(|_| QrScanError::ElementCreation("pipewiresrc"))?;
-        let convert = gst::ElementFactory::make("videoconvert")
-            .build()
-            .map_err(|_| QrScanError::ElementCreation("videoconvert"))?;
-        let sink = gst::ElementFactory::make("appsink")
-            .build()
-            .map_err(|_| QrScanError::ElementCreation("appsink"))?;
 
-        pipeline
-            .add_many([&src, &convert, &sink])
-            .map_err(QrScanError::PipelineSetup)?;
-        gst::Element::link_many([&src, &convert, &sink]).map_err(QrScanError::PipelineSetup)?;
+            let src = gst::ElementFactory::make("pipewiresrc")
+                .property("fd", camera_fd.as_raw_fd())
+                .property("do-timestamp", true)  // helps with mobile cameras
+                .build()
+                .map_err(|_| QrScanError::ElementCreation("pipewiresrc"))?;
 
-        let appsink = sink
-            .dynamic_cast::<gst_app::AppSink>()
-            .map_err(|_| QrScanError::ElementCreation("appsink cast failed"))?;
-        appsink.set_caps(Some(
-            &gst::Caps::builder("video/x-raw")
-                .field("format", "GRAY8")
-                .field("width", 640i32)
-                .field("height", 480i32)
-                .build(),
-        ));
+            let convert = gst::ElementFactory::make("videoconvert")
+                .build()
+                .map_err(|_| QrScanError::ElementCreation("videoconvert"))?;
+
+            let scale = gst::ElementFactory::make("videoscale")
+                .build()
+                .map_err(|_| QrScanError::ElementCreation("videoscale"))?;
+
+            let capsfilter = gst::ElementFactory::make("capsfilter")
+                .property(
+                    "caps",
+                    gst::Caps::builder("video/x-raw")
+                        .field("format", "GRAY8")
+                        .field("width", 640i32)
+                        .field("height", 480i32)
+                        .build(),
+                )
+                .build()
+                .map_err(|_| QrScanError::ElementCreation("capsfilter"))?;
+
+            let sink = gst::ElementFactory::make("appsink")
+                .build()
+                .map_err(|_| QrScanError::ElementCreation("appsink"))?;
+
+            pipeline
+                .add_many([&src, &convert, &scale, &capsfilter, &sink])
+                .map_err(QrScanError::PipelineSetup)?;
+            gst::Element::link_many([&src, &convert, &scale, &capsfilter, &sink])
+                .map_err(QrScanError::PipelineSetup)?;
+
+            let appsink = sink
+                .dynamic_cast::<gst_app::AppSink>()
+                .map_err(|_| QrScanError::ElementCreation("appsink cast failed"))?;
 
         let (frame_tx, frame_rx) = channel::bounded::<FrameData>(1);
         let (display_tx, display_rx) = channel::bounded::<image::Handle>(1);
