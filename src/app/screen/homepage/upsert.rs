@@ -14,7 +14,6 @@ use iced::{
 };
 use rfd::{AsyncFileDialog, FileHandle};
 use totp_rs::Algorithm;
-use tracing::error;
 
 use crate::{
     app::{
@@ -25,7 +24,6 @@ use crate::{
     icons,
 };
 
-#[cfg(unix)]
 mod scan_qr;
 
 pub struct UpsertPage {
@@ -36,7 +34,6 @@ pub struct UpsertPage {
 
 pub enum SubScreen {
     UpsertPage,
-    #[cfg(unix)]
     ScanQrPage(scan_qr::QrScanPage),
 }
 
@@ -63,11 +60,9 @@ pub enum Message {
     ToggleShowQRCode,
 
     /// Messages of the [`ScanQrPage`]
-    #[cfg(unix)]
     ScanQrPage(scan_qr::Message),
 
     /// Ask to open the [`ScanQrPage`]
-    #[cfg(unix)]
     OpenScanQrPage,
 }
 
@@ -130,7 +125,6 @@ impl UpsertPage {
                 .center(Length::Fill)
                 .into()
             }
-            #[cfg(unix)]
             SubScreen::ScanQrPage(qr_scan_page) => qr_scan_page.view(now).map(Message::ScanQrPage),
         }
     }
@@ -251,7 +245,6 @@ impl UpsertPage {
                 Action::None
             }
 
-            #[cfg(unix)]
             Message::ScanQrPage(message) => {
                 let SubScreen::ScanQrPage(scan_qr_page) = &mut self.subscreen else {
                     return Action::None;
@@ -278,24 +271,17 @@ impl UpsertPage {
                     }
                 }
             }
-            #[cfg(unix)]
-            Message::OpenScanQrPage => match scan_qr::QrScanPage::new() {
-                Ok((scan_qr_page, task)) => {
-                    self.subscreen = SubScreen::ScanQrPage(scan_qr_page);
-                    Action::Run(task.map(Message::ScanQrPage))
-                }
-                Err(e) => {
-                    error!("{e}");
-                    Action::AddToast(Toast::error_toast(format!("Failed to open camera: {}", e)))
-                }
-            },
+            Message::OpenScanQrPage => {
+                let (scan_qr_page, task) = scan_qr::QrScanPage::new();
+                self.subscreen = SubScreen::ScanQrPage(scan_qr_page);
+                Action::Run(task.map(Message::ScanQrPage))
+            }
         }
     }
 
     pub fn subscription(&self, now: Instant) -> Subscription<Message> {
         match &self.subscreen {
             SubScreen::UpsertPage => event::listen_with(handle_event),
-            #[cfg(unix)]
             SubScreen::ScanQrPage(qr_scan_page) => {
                 qr_scan_page.subscription(now).map(Message::ScanQrPage)
             }
@@ -347,7 +333,6 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
                 .into(),
             );
 
-            #[cfg(unix)]
             buttons.push(
                 button(
                     row![
