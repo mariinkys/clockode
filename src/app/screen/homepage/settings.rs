@@ -257,7 +257,7 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
     ]
     .spacing(style::spacing::XLARGE)
     .padding(10)
-    .max_width(600);
+    .width(Length::Fill.max(600));
 
     container(
         column![

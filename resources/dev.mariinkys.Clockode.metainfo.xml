@@ -83,6 +83,12 @@
     </keywords>
 
     <releases>
+        <release version="0.2.6" date="2026-07-04">
+            <description>
+                <p>Improved gstreamer handling for QR Scanning</p>
+                <p>Updated dependencies</p>
+            </description>
+        </release>
         <release version="0.2.5" date="2026-05-05">
             <description>
                 <p>Fixed issue with text color in some themes</p>

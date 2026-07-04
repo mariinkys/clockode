@@ -90,7 +90,7 @@ impl UnlockDatabase {
             ]
             .spacing(style::spacing::XLARGE),
         )
-        .max_width(500)
+        .width(Length::Fill.max(500))
         .padding(32)
         .style(style::card_container);
 

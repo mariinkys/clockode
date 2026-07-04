@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use iced::{
-    Alignment, Element,
-    Length::{self},
-    Subscription, Task, event,
-    keyboard::{self, Key, Modifiers, key::Named},
-    time::Instant,
-    widget::{
+    Alignment, Element, Length::{self}, Subscription, Task, event, keyboard::{self, Key, Modifiers, key::Named}, time::Instant, widget::{
         button, column, container, image,
         operation::{focus_next, focus_previous},
         pick_list, row, scrollable, space, stack, text, text_input,
@@ -576,7 +571,7 @@ fn upsert_entry_view<'a>(
     ]
     .spacing(style::spacing::XLARGE)
     .padding(10)
-    .max_width(600);
+    .width(Length::Fill.max(600));
 
     let form_view = scrollable(container(form).center_x(Length::Fill))
         .width(Length::Fill)

@@ -360,8 +360,7 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
     fn layout(&mut self, renderer: &Renderer, bounds: Size) -> layout::Node {
         let max_width = bounds.width * 0.75;
         let limits = layout::Limits::new(Size::ZERO, bounds)
-            .max_width(max_width)
-            .width(Length::Shrink);
+            .width(Length::Shrink.max(max_width));
 
         let node = layout::flex::resolve(
             layout::flex::Axis::Vertical,
