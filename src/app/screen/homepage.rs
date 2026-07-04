@@ -157,7 +157,7 @@ impl HomePage {
                     Action::None
                 }
                 Err(err) => {
-                    error!("{}", err);
+                    error!("{err}");
                     Action::AddToast(Toast::error_toast(err))
                 }
             },
@@ -211,6 +211,7 @@ impl HomePage {
             Message::EntryUpserted(result) => match result {
                 Ok(_) => self.update(Message::LoadEntries, now),
                 Err(err) => {
+                    error!("{err}");
                     self.state = State::Loading;
                     let db_clone = Arc::clone(&self.database);
                     Action::RunAndToast(

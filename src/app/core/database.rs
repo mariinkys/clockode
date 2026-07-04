@@ -101,6 +101,8 @@ pub struct ClockodeDatabase {
 
 impl ClockodeDatabase {
     pub async fn list_entries(&self) -> Result<Vec<ClockodeEntry>, anywho::Error> {
+        info!("Listing database entries");
+
         let lock = self.lock.clone();
 
         let path = self.path.clone();
@@ -136,6 +138,8 @@ impl ClockodeDatabase {
     }
 
     pub async fn add_entry(&self, entry: ClockodeEntry) -> Result<(), anywho::Error> {
+        info!("Adding database entry");
+
         let lock = self.lock.clone();
 
         let path = self.path.clone();
@@ -170,6 +174,8 @@ impl ClockodeDatabase {
     }
 
     pub async fn update_entry(&self, entry: ClockodeEntry) -> Result<(), anywho::Error> {
+        info!("Updating database entry");
+
         let lock = self.lock.clone();
 
         let path = self.path.clone();
@@ -216,6 +222,8 @@ impl ClockodeDatabase {
     }
 
     pub async fn delete_entry(&self, entry_id: uuid::Uuid) -> Result<(), anywho::Error> {
+        info!("Deleting database entry");
+
         let lock = self.lock.clone();
 
         let path = self.path.clone();
@@ -258,6 +266,8 @@ impl ClockodeDatabase {
 
     // Import the content given in standard totp
     pub async fn import_content(&self, file_path: PathBuf) -> Result<(), anywho::Error> {
+        info!("Importing content to database");
+
         // Read the import file
         let content = std::fs::read_to_string(&file_path)
             .map_err(|e| anywho!("Failed to read import file: {}", e))?;
@@ -299,6 +309,8 @@ impl ClockodeDatabase {
 
     // Export content to standard
     pub async fn export_content(&self, file_path: PathBuf) -> Result<(), anywho::Error> {
+        info!("Exporting database content");
+
         let entries = self.list_entries().await?;
 
         if entries.is_empty() {
