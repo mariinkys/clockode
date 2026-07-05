@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use anywho::anywho;
-use keepass::{Database, DatabaseKey};
+use keepass::{Database, DatabaseKey, config::DatabaseVersion};
 use secrecy::{ExposeSecret, SecretString};
 use std::{path::PathBuf, sync::Arc, sync::Mutex};
 use tracing::{info, warn};
@@ -61,6 +61,7 @@ pub async fn create_database(password: SecretString) -> Result<PathBuf, anywho::
         let mut group = root.add_group();
         group.name = String::from("Default Group");
 
+        db.config.version = DatabaseVersion::KDB4(1);
         db.save(
             &mut std::fs::File::create(&path)?,
             DatabaseKey::new().with_password(password.expose_secret()),
@@ -163,6 +164,7 @@ impl ClockodeDatabase {
 
             update_clockode_entry_in_keepass(entry, &mut keepass_entry);
 
+            db.config.version = DatabaseVersion::KDB4(1);
             db.save(
                 &mut std::fs::File::create(&*path)?,
                 DatabaseKey::new().with_password(password.expose_secret()),
@@ -211,6 +213,7 @@ impl ClockodeDatabase {
 
             update_clockode_entry_in_keepass(entry, &mut entry_found);
 
+            db.config.version = DatabaseVersion::KDB4(1);
             db.save(
                 &mut std::fs::File::create(&*path)?,
                 DatabaseKey::new().with_password(password.expose_secret()),
@@ -254,6 +257,7 @@ impl ClockodeDatabase {
 
             entry_found.remove();
 
+            db.config.version = DatabaseVersion::KDB4(1);
             db.save(
                 &mut std::fs::File::create(&*path)?,
                 DatabaseKey::new().with_password(password.expose_secret()),

@@ -17,7 +17,7 @@ iced = { git = "https://github.com/iced-rs/iced", default-features = true, featu
 anywho = "0.1.2"
 dirs = "6.0.0"
 smol = "2.0.2"
-keepass = { version = "0.12.8", features = [
+keepass = { version = "0.13.13", features = [
     "save_kdbx4",
 ] } # KeePass DB Management
 rqrr = "0.10.1" # QR Detection
