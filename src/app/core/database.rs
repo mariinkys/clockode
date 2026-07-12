@@ -3,7 +3,7 @@
 use anywho::anywho;
 use keepass::{Database, DatabaseKey, config::DatabaseVersion};
 use secrecy::{ExposeSecret, SecretString};
-use std::{path::PathBuf, sync::Arc, sync::Mutex};
+use std::{io::Write, path::PathBuf, sync::Arc, sync::Mutex};
 use tracing::{info, warn};
 
 use crate::{
@@ -41,6 +41,44 @@ pub fn check_database() -> Result<Option<PathBuf>, anywho::Error> {
     }
 }
 
+/// Saves the database atomically
+fn save_database_atomic(
+    db: &mut Database,
+    path: &std::path::Path,
+    password: &SecretString,
+) -> Result<(), anywho::Error> {
+    db.config.version = DatabaseVersion::KDB4(1);
+
+    // serialize entirely into memory first. If this fails, the file on disk is untouched.
+    let mut buf: Vec<u8> = Vec::new();
+    db.save(
+        &mut buf,
+        DatabaseKey::new().with_password(password.expose_secret()),
+    )?;
+
+    // write to a temporary file in the same directory.
+    let dir = path
+        .parent()
+        .ok_or_else(|| anywho!("Database path has no parent directory"))?;
+    let tmp_path = dir.join("database.kdbx.tmp");
+
+    {
+        let mut f = std::fs::File::create(&tmp_path)?;
+        f.write_all(&buf)?;
+        // make sure the bytes actually hit the disk before we swap files,
+        f.sync_all()?;
+    } // drop file handle
+
+    // replace the old database with the new one
+    if let Err(e) = std::fs::rename(&tmp_path, path) {
+        // remove tmp file
+        let _ = std::fs::remove_file(&tmp_path);
+        return Err(anywho!("Failed to replace database file: {}", e));
+    }
+
+    Ok(())
+}
+
 pub async fn create_database(password: SecretString) -> Result<PathBuf, anywho::Error> {
     let path = dirs::data_dir()
         .ok_or_else(|| anywho!("Could not determine data directory"))?
@@ -61,11 +99,7 @@ pub async fn create_database(password: SecretString) -> Result<PathBuf, anywho::
         let mut group = root.add_group();
         group.name = String::from("Default Group");
 
-        db.config.version = DatabaseVersion::KDB4(1);
-        db.save(
-            &mut std::fs::File::create(&path)?,
-            DatabaseKey::new().with_password(password.expose_secret()),
-        )?;
+        save_database_atomic(&mut db, &path, &password)?;
 
         Ok(path)
     })
@@ -164,11 +198,7 @@ impl ClockodeDatabase {
 
             update_clockode_entry_in_keepass(entry, &mut keepass_entry);
 
-            db.config.version = DatabaseVersion::KDB4(1);
-            db.save(
-                &mut std::fs::File::create(&*path)?,
-                DatabaseKey::new().with_password(password.expose_secret()),
-            )?;
+            save_database_atomic(&mut db, &path, &password)?;
 
             Ok(())
         })
@@ -213,11 +243,7 @@ impl ClockodeDatabase {
 
             update_clockode_entry_in_keepass(entry, &mut entry_found);
 
-            db.config.version = DatabaseVersion::KDB4(1);
-            db.save(
-                &mut std::fs::File::create(&*path)?,
-                DatabaseKey::new().with_password(password.expose_secret()),
-            )?;
+            save_database_atomic(&mut db, &path, &password)?;
 
             Ok(())
         })
@@ -257,11 +283,7 @@ impl ClockodeDatabase {
 
             entry_found.remove();
 
-            db.config.version = DatabaseVersion::KDB4(1);
-            db.save(
-                &mut std::fs::File::create(&*path)?,
-                DatabaseKey::new().with_password(password.expose_secret()),
-            )?;
+            save_database_atomic(&mut db, &path, &password)?;
 
             Ok(())
         })
