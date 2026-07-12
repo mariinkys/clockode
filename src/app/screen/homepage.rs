@@ -12,16 +12,12 @@ use iced::{
     time::Instant,
     widget::{Column, button, column, container, row, scrollable, space, text},
 };
-use tracing::error;
+use tracing::{error, info};
 
 use crate::{
     app::{
-        core::{ClockodeDatabase, ClockodeEntry},
-        utils::{get_time_until_next_totp_refresh, style},
-        widgets::{Toast, dot},
-    },
-    config::Config,
-    icons,
+        core::{ClockodeDatabase, ClockodeEntry}, utils::{get_time_until_next_totp_refresh, style, watch_database}, widgets::{Toast, dot},
+    }, config::Config, icons,
 };
 
 mod settings;
@@ -69,6 +65,8 @@ pub enum Message {
 
     /// Makes iced rerun the view to refresh and tick the timers, runs every second on a subscription
     RefreshCodes,
+    /// The database changed (watcher)
+    DatabaseChangedOnDisk,
 }
 
 pub enum Action {
@@ -269,29 +267,52 @@ impl HomePage {
                 // Since view() calls totp.generate_current(), codes will update automatically
                 Action::None
             }
+
+            Message::DatabaseChangedOnDisk => {
+                info!("Database Changed");
+
+                if !self.database.has_changed_on_disk() {
+                    info!("Ignoring filesystem event: no external change");
+                    return Action::None;
+                }
+
+                let State::Ready { subscreen, .. } = &mut self.state else {
+                    return Action::None;
+                };
+
+                let SubScreen::Home { entries: _ } = subscreen else {
+                    return Action::None;
+                };
+
+                self.update(Message::LoadEntries, now)
+            }
         }
     }
 
     pub fn subscription(&self, now: Instant) -> Subscription<Message> {
-        let State::Ready { subscreen, .. } = &self.state else {
-            return Subscription::none();
+        let watcher = watch_database((*self.database.path()).clone())
+            .map(|_| Message::DatabaseChangedOnDisk);
+
+        let screen_subscription = match &self.state {
+            State::Loading => Subscription::none(),
+            State::Ready { subscreen } => match subscreen {
+                SubScreen::Home { entries } => {
+                    if entries.is_empty() {
+                        Subscription::none()
+                    } else {
+                        iced::time::every(Duration::from_secs(1)).map(|_| Message::RefreshCodes)
+                    }
+                }
+                SubScreen::UpsertPage(upsert_page) => {
+                    upsert_page.subscription(now).map(Message::UpsertPage)
+                }
+                SubScreen::SettingsPage(settings_page) => {
+                    settings_page.subscription(now).map(Message::SettingsPage)
+                }
+            },
         };
 
-        match subscreen {
-            SubScreen::Home { entries } => {
-                if entries.is_empty() {
-                    Subscription::none()
-                } else {
-                    iced::time::every(Duration::from_secs(1)).map(|_| Message::RefreshCodes)
-                }
-            }
-            SubScreen::UpsertPage(upsert_page) => {
-                upsert_page.subscription(now).map(Message::UpsertPage)
-            }
-            SubScreen::SettingsPage(settings_page) => {
-                settings_page.subscription(now).map(Message::SettingsPage)
-            }
-        }
+        Subscription::batch([screen_subscription, watcher])
     }
 }
 
