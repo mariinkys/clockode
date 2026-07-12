@@ -266,28 +266,34 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
                 .height(Length::Fill),
             // App version at the bottom
             container(
-                row![
-                    mouse_area(
-                        text(format!("Version {}", env!("CARGO_PKG_VERSION")))
+                column![
+                    iced::widget::iced(15.),
+                    row![
+                        mouse_area(
+                            text(format!("Version {}", env!("CARGO_PKG_VERSION")))
+                                .size(style::font_size::SMALL)
+                                .style(style::link_text)
+                        )
+                        .on_press(Message::LaunchUrl(String::from(
+                            "https://github.com/mariinkys/clockode/releases"
+                        ))),
+                        text(" - ")
                             .size(style::font_size::SMALL)
-                            .style(style::link_text)
-                    )
-                    .on_press(Message::LaunchUrl(String::from(
-                        "https://github.com/mariinkys/clockode/releases"
-                    ))),
-                    text(" - ")
-                        .size(style::font_size::SMALL)
-                        .style(style::muted_text),
-                    mouse_area(
-                        text("Donate")
-                            .size(style::font_size::SMALL)
-                            .style(style::link_text)
-                    )
-                    .on_press(Message::LaunchUrl(String::from(
-                        "https://buymeacoffee.com/mariinkys"
-                    )))
+                            .style(style::muted_text),
+                        mouse_area(
+                            text("Donate")
+                                .size(style::font_size::SMALL)
+                                .style(style::link_text)
+                        )
+                        .on_press(Message::LaunchUrl(String::from(
+                            "https://buymeacoffee.com/mariinkys"
+                        )))
+                    ]
+                    .spacing(style::spacing::SMALL)
                 ]
                 .spacing(style::spacing::SMALL)
+                .align_x(Alignment::Center)
+                .width(Length::Shrink),
             )
             .width(Length::Fill)
             .align_x(Alignment::Center)
