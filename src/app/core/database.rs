@@ -3,7 +3,12 @@
 use anywho::anywho;
 use keepass::{Database, DatabaseKey, config::DatabaseVersion};
 use secrecy::{ExposeSecret, SecretString};
-use std::{io::Write, path::PathBuf, sync::Arc, sync::Mutex};
+use std::{
+    io::Write,
+    path::PathBuf,
+    sync::{Arc, Mutex},
+    time::SystemTime,
+};
 use tracing::{info, warn};
 
 use crate::{
@@ -41,12 +46,17 @@ pub fn check_database() -> Result<Option<PathBuf>, anywho::Error> {
     }
 }
 
-/// Saves the database atomically
+/// Reads the current modification time of a file, if available.
+fn read_mtime(path: &std::path::Path) -> Option<SystemTime> {
+    std::fs::metadata(path).and_then(|m| m.modified()).ok()
+}
+
+/// Saves the database atomically and returns the resulting file mtime
 fn save_database_atomic(
     db: &mut Database,
     path: &std::path::Path,
     password: &SecretString,
-) -> Result<(), anywho::Error> {
+) -> Result<Option<SystemTime>, anywho::Error> {
     db.config.version = DatabaseVersion::KDB4(1);
 
     // serialize entirely into memory first. If this fails, the file on disk is untouched.
@@ -62,12 +72,15 @@ fn save_database_atomic(
         .ok_or_else(|| anywho!("Database path has no parent directory"))?;
     let tmp_path = dir.join("database.kdbx.tmp");
 
-    {
+    let mtime = {
         let mut f = std::fs::File::create(&tmp_path)?;
         f.write_all(&buf)?;
         // make sure the bytes actually hit the disk before we swap files,
         f.sync_all()?;
-    } // drop file handle
+
+        // capture the mtime the destination file will have after the rename, tthis is what lets callers recognize (and ignore) filesystem-watcher events caused by this very save.
+        f.metadata().and_then(|m| m.modified()).ok()
+    };  // drop file handle
 
     // replace the old database with the new one
     if let Err(e) = std::fs::rename(&tmp_path, path) {
@@ -76,7 +89,14 @@ fn save_database_atomic(
         return Err(anywho!("Failed to replace database file: {}", e));
     }
 
-    Ok(())
+    Ok(mtime)
+}
+
+/// Stores `mtime` as the last file state this app instance knows about.
+fn record_known_mtime(slot: &Mutex<Option<SystemTime>>, mtime: Option<SystemTime>) {
+    if let Ok(mut guard) = slot.lock() {
+        *guard = mtime;
+    }
 }
 
 pub async fn create_database(password: SecretString) -> Result<PathBuf, anywho::Error> {
@@ -99,7 +119,7 @@ pub async fn create_database(password: SecretString) -> Result<PathBuf, anywho::
         let mut group = root.add_group();
         group.name = String::from("Default Group");
 
-        save_database_atomic(&mut db, &path, &password)?;
+        let _ = save_database_atomic(&mut db, &path, &password)?;
 
         Ok(path)
     })
@@ -111,6 +131,8 @@ pub async fn unlock_database(
     password: SecretString,
 ) -> Result<ClockodeDatabase, anywho::Error> {
     smol::unblock(move || {
+        let known_mtime = read_mtime(&path);
+
         let mut file = std::fs::File::open(&path)?;
         let key = DatabaseKey::new().with_password(password.expose_secret());
         let _db = Database::open(&mut file, key).map_err(|e| match e {
@@ -122,6 +144,7 @@ pub async fn unlock_database(
             path: Box::from(path),
             password: Box::from(password),
             lock: Arc::new(Mutex::new(())),
+            known_mtime: Arc::new(Mutex::new(known_mtime)),
         })
     })
     .await
@@ -132,9 +155,36 @@ pub struct ClockodeDatabase {
     path: Box<PathBuf>,
     password: Box<SecretString>,
     lock: Arc<std::sync::Mutex<()>>, // We use this to prevent Race Condition / Data Loss
+    /// The file mtime corresponding to the last read or write this instance performed. Used to tell our own saves apart from changes made by another process.
+    known_mtime: Arc<Mutex<Option<SystemTime>>>,
 }
 
 impl ClockodeDatabase {
+    /// Path of the database file on disk.
+    pub fn path(&self) -> &PathBuf {
+        &self.path
+    }
+
+    /// Returns `true` if the file on disk differs from the last state this
+    /// instance read or wrote — i.e. the change came from *another* process.
+    ///
+    /// We uuse this in the filesystem-watcher handler to skip reloads triggered
+    /// by our own saves.
+    ///
+    /// Errs on the side of `true`: if the mtime can't be read (file deleted,
+    /// permissions...), a reload is triggered so the failure surfaces to the
+    /// user instead of being silently swallowed.
+    pub fn has_changed_on_disk(&self) -> bool {
+        let current = read_mtime(&self.path);
+
+        let known = self.known_mtime.lock().ok().and_then(|guard| *guard);
+
+        match (current, known) {
+            (Some(current), Some(known)) => current != known,
+            _ => true,
+        }
+    }
+
     pub async fn list_entries(&self) -> Result<Vec<ClockodeEntry>, anywho::Error> {
         info!("Listing database entries");
 
@@ -142,16 +192,22 @@ impl ClockodeDatabase {
 
         let path = self.path.clone();
         let password = self.password.clone();
+        let known_mtime = self.known_mtime.clone();
 
         smol::unblock(move || {
             let _guard = lock
                 .lock()
                 .map_err(|e| anywho!("Database lock poisoned: {}", e))?;
 
+            // Capture the mtime before opening
+            let mtime = read_mtime(&path);
+
             let mut file = std::fs::File::open(&*path)?;
             let key = DatabaseKey::new().with_password(password.expose_secret());
             let db = Database::open(&mut file, key)?;
             drop(file); // this should't be needed here because we only read, I just added it for consistency
+
+            record_known_mtime(&known_mtime, mtime);
 
             let entries = db
                 .root()
@@ -179,6 +235,7 @@ impl ClockodeDatabase {
 
         let path = self.path.clone();
         let password = self.password.clone();
+        let known_mtime = self.known_mtime.clone();
 
         smol::unblock(move || {
             let _guard = lock
@@ -198,7 +255,8 @@ impl ClockodeDatabase {
 
             update_clockode_entry_in_keepass(entry, &mut keepass_entry);
 
-            save_database_atomic(&mut db, &path, &password)?;
+            let mtime = save_database_atomic(&mut db, &path, &password)?;
+            record_known_mtime(&known_mtime, mtime);
 
             Ok(())
         })
@@ -212,6 +270,7 @@ impl ClockodeDatabase {
 
         let path = self.path.clone();
         let password = self.password.clone();
+        let known_mtime = self.known_mtime.clone();
 
         smol::unblock(move || {
             let _guard = lock
@@ -243,7 +302,8 @@ impl ClockodeDatabase {
 
             update_clockode_entry_in_keepass(entry, &mut entry_found);
 
-            save_database_atomic(&mut db, &path, &password)?;
+            let mtime = save_database_atomic(&mut db, &path, &password)?;
+            record_known_mtime(&known_mtime, mtime);
 
             Ok(())
         })
@@ -257,6 +317,7 @@ impl ClockodeDatabase {
 
         let path = self.path.clone();
         let password = self.password.clone();
+        let known_mtime = self.known_mtime.clone();
 
         smol::unblock(move || {
             let _guard = lock
@@ -283,7 +344,8 @@ impl ClockodeDatabase {
 
             entry_found.remove();
 
-            save_database_atomic(&mut db, &path, &password)?;
+            let mtime = save_database_atomic(&mut db, &path, &password)?;
+            record_known_mtime(&known_mtime, mtime);
 
             Ok(())
         })
