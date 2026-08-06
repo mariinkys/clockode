@@ -17,18 +17,18 @@ iced = { git = "https://github.com/iced-rs/iced", default-features = true, featu
 anywho = "0.1.2"
 dirs = "6.0.0"
 smol = "2.0.2"
-keepass = { version = "0.13.16", features = [
+keepass = { version = "0.13.20", features = [
     "save_kdbx4",
 ] } # KeePass DB Management
 rqrr = "0.10.1" # QR Detection
-totp-rs = { version = "5.7.2", features = [
+totp-rs = { version = "6.0.0", features = [
     "otpauth",
     "qr",
 ] } # TOTP Generation ...
 rfd = "0.17.2" # File System Dialogs
 secrecy = "0.10.3" # Provides us with SecretString
-uuid = "1.23.4" # Allows us to identify entries
-serde = { version = "1.0.228", features = [
+uuid = "1.24.0" # Allows us to identify entries
+serde = { version = "1.0.229", features = [
     "derive",
 ] } # Needed for config serializing and deserializing
 ron = "0.12.2" # Needed for config serializing and deserializing
@@ -38,18 +38,18 @@ image = { version = "0.25.10", default-features = false, features = [
     "webp",
     "rayon",
 ] } # needed for qr detection
-open = "5.4.0" # needed for opening the default browser
+open = "5.4.1" # needed for opening the default browser
 notify-debouncer-full = "0.7.0"
-futures = "0.3.32"
+futures = "0.3.33"
 
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 
 [target.'cfg(unix)'.dependencies] # gstreamer dependencies for qr detection with camera (Unix-like systems)
-gstreamer = "0.25.1"
-gstreamer-app = "0.25.0"
-gstreamer-video = "0.25.0"
-ashpd = { version = "0.13.10", default-features = false, features = ["tokio", "camera"] }
+gstreamer = "0.25.3"
+gstreamer-app = "0.25.2"
+gstreamer-video = "0.25.3"
+ashpd = { version = "0.13.13", default-features = false, features = ["tokio", "camera"] }
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]

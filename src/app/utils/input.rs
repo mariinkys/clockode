@@ -2,7 +2,7 @@
 
 use crate::app::core::ClockodeEntry;
 use anywho::anywho;
-use totp_rs::{Algorithm, TOTP};
+use totp_rs::{Algorithm, Secret};
 use uuid::Uuid;
 
 pub const ALL_ALGORITHMS: &[Algorithm] = &[Algorithm::SHA1, Algorithm::SHA256, Algorithm::SHA512];
@@ -12,7 +12,7 @@ pub struct InputableClockodeEntry {
     pub uuid: Option<Uuid>,
     pub name: String,
     pub algorithm: Algorithm,
-    pub digits: usize,
+    pub digits: u8,
     pub step: u64,
     pub secret: String,
     pub issuer: Option<String>,
@@ -39,12 +39,12 @@ impl From<ClockodeEntry> for InputableClockodeEntry {
         Self {
             uuid: value.id,
             name: value.name,
-            algorithm: value.totp.algorithm,
-            digits: value.totp.digits,
-            step: value.totp.step,
-            secret: value.totp.get_secret_base32(),
-            issuer: value.totp.issuer,
-            account_name: value.totp.account_name,
+            algorithm: value.totp.algorithm(),
+            digits: value.totp.digits(),
+            step: value.totp.step(),
+            secret: value.totp.secret().to_base32(),
+            issuer: value.totp.issuer().map(ToOwned::to_owned),
+            account_name: value.totp.account_name().to_string(),
         }
     }
 }
@@ -60,20 +60,14 @@ impl TryFrom<InputableClockodeEntry> for ClockodeEntry {
             .collect::<String>()
             .to_uppercase();
 
+        let secret = Secret::try_from_base32(secret)
+            .map_err(|e| anywho!("Failed to decode TOTP secret from KeePass entry: {}", e))?;
+        let secret_bytes: &[u8] = secret.as_bytes();
+
         let entry = Self {
             id: value.uuid,
             name: value.name,
-            totp: TOTP {
-                algorithm: value.algorithm,
-                digits: value.digits,
-                skew: 0,
-                step: value.step,
-                secret: totp_rs::Secret::Encoded(secret).to_bytes().map_err(|e| {
-                    anywho!("Failed to decode TOTP secret from KeePass entry: {}", e)
-                })?,
-                issuer: value.issuer,
-                account_name: value.account_name,
-            },
+            totp: totp_rs::Builder::new().with_algorithm(value.algorithm).with_digits(value.digits).with_skew(0).with_step_duration(value.step).with_secret(secret_bytes).with_issuer(value.issuer).with_account_name(value.account_name).build_noncompliant()
         };
 
         Ok(entry)
@@ -84,17 +78,17 @@ impl TryFrom<String> for InputableClockodeEntry {
     type Error = anywho::Error;
 
     fn try_from(value: String) -> Result<Self, anywho::Error> {
-        let totp = totp_rs::TOTP::from_url_unchecked(value)?;
+        let totp = totp_rs::Totp::from_url_unchecked(value)?;
 
         Ok(Self {
             uuid: None,
-            name: totp.account_name.clone(),
-            algorithm: totp.algorithm,
-            digits: totp.digits,
-            step: totp.step,
-            secret: totp.get_secret_base32(),
-            issuer: totp.issuer,
-            account_name: totp.account_name,
+            name: totp.account_name().to_string(),
+            algorithm: totp.algorithm(),
+            digits: totp.digits(),
+            step: totp.step(),
+            secret: totp.secret().to_base32(),
+            issuer: totp.issuer().map(ToOwned::to_owned),
+            account_name: totp.account_name().to_string(),
         })
     }
 }
@@ -120,6 +114,7 @@ impl InputableClockodeEntry {
         // Validate algorithm is one of the supported types
         match self.algorithm {
             Algorithm::SHA1 | Algorithm::SHA256 | Algorithm::SHA512 => {}
+            _ => return false,
         }
 
         // Validate secret has reasonable length
@@ -147,22 +142,15 @@ impl InputableClockodeEntry {
             return Err(anywho!("Invalid Entity"));
         };
 
-        let secret_bytes: Vec<u8> = totp_rs::Secret::Encoded(self.secret.clone())
-            .to_bytes()
+        let secret = Secret::try_from_base32(self.secret.clone())
             .map_err(|e| anywho!("Failed to decode TOTP secret from KeePass entry: {}", e))?;
+        let secret_bytes: &[u8] = secret.as_bytes();
 
-        let totp = TOTP {
-            algorithm: self.algorithm,
-            digits: self.digits,
-            skew: 1,
-            step: self.step,
-            secret: secret_bytes,
-            issuer: self.issuer.clone(),
-            account_name: self.account_name.clone(),
-        };
+        let totp = totp_rs::Builder::new().with_algorithm(self.algorithm).with_digits(self.digits).with_skew(0).with_step_duration(self.step).with_secret(secret_bytes).with_issuer(self.issuer.clone()).with_account_name(self.account_name.clone()).build_noncompliant();
+
 
         let qr = totp
-            .get_qr_png()
+            .to_qr_png()
             .map_err(|e| anywho!("Error generating the QR Code: {}", e))?;
 
         Ok(qr)

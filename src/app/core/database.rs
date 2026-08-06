@@ -370,12 +370,12 @@ impl ClockodeDatabase {
             // Don't use TOTP::new() because it enforces validation and some secrets (ej: microsoft)
             // that are xxxx xxxx xxxx xxxx will fail here if we use ::new() with error:
             // Failed to construct TOTP object: The length of the shared secret MUST be at least 128 bits. 80 bits is not enough
-            match totp_rs::TOTP::from_url_unchecked(line) {
+            match totp_rs::Totp::from_url_unchecked(line) {
                 Ok(totp) => {
-                    let name = if totp.account_name.trim().is_empty() {
+                    let name = if totp.account_name().trim().is_empty() {
                         "Default".to_string()
                     } else {
-                        totp.account_name.clone()
+                        totp.account_name().to_string()
                     };
 
                     let entry = ClockodeEntry {
@@ -408,7 +408,7 @@ impl ClockodeDatabase {
         let mut export_content = String::new();
 
         for entry in entries {
-            let url = entry.totp.get_url();
+            let url = entry.totp.to_url().unwrap_or_default();
             export_content.push_str(&url);
             export_content.push('\n');
         }

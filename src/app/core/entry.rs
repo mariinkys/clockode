@@ -1,6 +1,6 @@
 use anywho::anywho;
 use keepass::db::{Entry, EntryMut, Value};
-use totp_rs::{Algorithm, Secret, TOTP};
+use totp_rs::{Algorithm, Secret, Totp};
 use tracing::error;
 use uuid::Uuid;
 
@@ -16,7 +16,7 @@ const CUSTOM_ACCOUNTNAME_KEY: &str = "ClockodeTotpAccountName";
 pub struct ClockodeEntry {
     pub id: Option<Uuid>,
     pub name: String,
-    pub totp: TOTP,
+    pub totp: Totp,
 }
 
 impl TryFrom<Entry> for ClockodeEntry {
@@ -46,7 +46,7 @@ impl TryFrom<Entry> for ClockodeEntry {
             }
         };
 
-        let digits: usize = value
+        let digits: u8 = value
             .get(CUSTOM_DIGITS_KEY)
             .and_then(|s| s.parse().ok())
             .unwrap_or(6);
@@ -56,9 +56,9 @@ impl TryFrom<Entry> for ClockodeEntry {
             .and_then(|s| s.parse().ok())
             .unwrap_or(30);
 
-        let secret_bytes: Vec<u8> = Secret::Encoded(secret_encoded_str)
-            .to_bytes()
+        let secret = Secret::try_from_base32(secret_encoded_str)
             .map_err(|e| anywho!("Failed to decode TOTP secret from KeePass entry: {}", e))?;
+        let secret_bytes: &[u8] = secret.as_bytes();
 
         let issuer: Option<String> = value.get(CUSTOM_ISSUER_KEY).map(String::from);
 
@@ -67,18 +67,8 @@ impl TryFrom<Entry> for ClockodeEntry {
             .unwrap_or(&name)
             .to_string();
 
-        // Don't use TOTP::new() because it enforces validation and some secrets (ej: microsoft)
-        // that are xxxx xxxx xxxx xxxx will fail here if we use ::new() with error:
-        // Failed to construct TOTP object: The length of the shared secret MUST be at least 128 bits. 80 bits is not enough
-        let totp_result = TOTP {
-            algorithm,
-            digits,
-            skew: 0,
-            step: period,
-            secret: secret_bytes,
-            issuer,
-            account_name,
-        };
+        // Don't use build() because it enforces validation and some secrets (ej: microsoft)
+        let totp_result = totp_rs::Builder::new().with_algorithm(algorithm).with_digits(digits).with_skew(0).with_step_duration(period).with_secret(secret_bytes).with_issuer(issuer).with_account_name(account_name).build_noncompliant();
 
         Ok(ClockodeEntry {
             id: Some(id),
@@ -93,7 +83,7 @@ pub fn update_clockode_entry_in_keepass(value: ClockodeEntry, entry: &mut EntryM
         .fields
         .insert("Title".to_string(), Value::Unprotected(value.name.clone()));
 
-    let secret_b32_string = value.totp.get_secret_base32().to_string();
+    let secret_b32_string = value.totp.secret().to_base32().to_string();
 
     entry.fields.insert(
         CUSTOM_SECRET_KEY.to_string(),
@@ -102,27 +92,30 @@ pub fn update_clockode_entry_in_keepass(value: ClockodeEntry, entry: &mut EntryM
 
     entry.fields.insert(
         CUSTOM_ALGORITHM_KEY.to_string(),
-        Value::Unprotected(value.totp.algorithm.to_string()),
+        Value::Unprotected(value.totp.algorithm().to_string()),
     );
 
     entry.fields.insert(
         CUSTOM_PERIOD_KEY.to_string(),
-        Value::Unprotected(value.totp.step.to_string()),
+        Value::Unprotected(value.totp.step().to_string()),
     );
 
     entry.fields.insert(
         CUSTOM_DIGITS_KEY.to_string(),
-        Value::Unprotected(value.totp.digits.to_string()),
+        Value::Unprotected(value.totp.digits().to_string()),
     );
-
     entry.fields.insert(
         CUSTOM_ISSUER_KEY.to_string(),
-        Value::Unprotected(value.totp.issuer.unwrap_or(value.name)),
+        Value::Unprotected(value
+            .totp
+            .issuer()
+            .unwrap_or(value.name.as_str())
+            .to_string()),
     );
 
     entry.fields.insert(
         CUSTOM_ACCOUNTNAME_KEY.to_string(),
-        Value::Unprotected(value.totp.account_name),
+        Value::Unprotected(value.totp.account_name().to_string()),
     );
 }
 

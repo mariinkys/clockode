@@ -150,7 +150,7 @@ impl UpsertPage {
                     TOTPEntryInput::UpdateAlgorithm(v) => self.entry.algorithm = v,
                     TOTPEntryInput::UpdateDigits(v) => {
                         if !v.is_empty() {
-                            if let Ok(parsed) = v.parse::<usize>() {
+                            if let Ok(parsed) = v.parse::<u8>() {
                                 self.entry.digits = parsed;
                             }
                         } else {
@@ -268,7 +268,7 @@ impl UpsertPage {
                         self.subscreen = SubScreen::UpsertPage;
                         Action::AddToast(Toast::success_toast(format!(
                             "Code detected correctly for: {}",
-                            &self.entry.account_name
+                            self.entry.account_name
                         )))
                     }
                 }
@@ -532,7 +532,7 @@ fn upsert_entry_view<'a>(
                         text("Digits")
                             .size(style::font_size::BODY)
                             .style(style::label_text),
-                        text_input("6 or 8", &entry.digits.to_string())
+                        text_input("6 or 8", entry.digits.to_string())
                             .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateDigits(v)))
                             .padding(12)
                             .size(style::font_size::MEDIUM)
@@ -543,7 +543,7 @@ fn upsert_entry_view<'a>(
                         text("Period")
                             .size(style::font_size::BODY)
                             .style(style::label_text),
-                        text_input("30", &entry.step.to_string())
+                        text_input("30", entry.step.to_string())
                             .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateStep(v)))
                             .padding(12)
                             .size(style::font_size::MEDIUM)

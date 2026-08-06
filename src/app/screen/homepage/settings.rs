@@ -319,7 +319,7 @@ fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> O
     #[allow(clippy::collapsible_match)]
     match event {
         event::Event::Keyboard(keyboard::Event::KeyPressed {
-            key, modifiers: _, ..
+            key, ..
         }) => match key {
             Key::Named(Named::Escape) => Some(Message::Hotkey(Hotkey::Esc)),
             _ => None,

@@ -375,8 +375,8 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
                 .spacing(style::spacing::MEDIUM)
                 .padding(10),
             |col, entry| {
-                let code = entry.totp.generate_current().unwrap_or_default();
-                let time_remaining = get_time_until_next_totp_refresh(entry.totp.step);
+                let code = entry.totp.generate_current().to_string();
+                let time_remaining = get_time_until_next_totp_refresh(entry.totp.step());
 
                 let entry_view = container(
                     row![
@@ -387,7 +387,7 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
                             row![
                                 text(format!(
                                     "{} digits · {}s",
-                                    entry.totp.digits, time_remaining
+                                    entry.totp.digits(), time_remaining
                                 ))
                                 .size(style::font_size::SMALL)
                                 .style(style::muted_text),
