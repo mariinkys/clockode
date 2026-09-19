@@ -5,6 +5,7 @@ mod qr;
 pub mod style;
 mod time;
 mod database;
+pub mod clipboard;
 
 pub use input::ALL_ALGORITHMS;
 pub use input::InputableClockodeEntry;
