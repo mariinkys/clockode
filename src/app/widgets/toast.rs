@@ -236,14 +236,16 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
         &mut self,
         tree: &mut Tree,
         layout: Layout<'_>,
+        viewport: &Rectangle,
         renderer: &Renderer,
         operation: &mut dyn Operation,
     ) {
-        operation.container(None, layout.bounds());
+        operation.container(None, layout.bounds(), viewport);
         operation.traverse(&mut |operation| {
             self.content.as_widget_mut().operate(
                 &mut tree.children[0],
                 layout,
+                viewport,
                 renderer,
                 operation,
             );
@@ -310,41 +312,41 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
     }
 
     fn overlay<'b>(
-        &'b mut self,
-        tree: &'b mut Tree,
-        layout: Layout<'b>,
-        renderer: &Renderer,
-        viewport: &Rectangle,
-        translation: Vector,
-    ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
-        let instants = tree.state.downcast_mut::<Vec<Option<Instant>>>();
+            &'b mut self,
+            tree: &'b mut Tree,
+            layout: Layout<'b>,
+            renderer: &Renderer,
+            viewport: &Rectangle,
+            translation: Vector,
+        ) -> Vec<overlay::Element<'b, Message, Theme, Renderer>> {
+            let instants = tree.state.downcast_mut::<Vec<Option<Instant>>>();
 
-        let (content_state, toasts_state) = tree.children.split_at_mut(1);
+            let (content_state, toasts_state) = tree.children.split_at_mut(1);
 
-        let content = self.content.as_widget_mut().overlay(
-            &mut content_state[0],
-            layout,
-            renderer,
-            viewport,
-            translation,
-        );
+            let content = self.content.as_widget_mut().overlay(
+                &mut content_state[0],
+                layout,
+                renderer,
+                viewport,
+                translation,
+            );
 
-        let toasts = (!self.toasts.is_empty()).then(|| {
-            overlay::Element::new(Box::new(Overlay {
-                position: layout.bounds().position() + translation,
-                viewport: *viewport,
-                toasts: &mut self.toasts,
-                trees: toasts_state,
-                instants,
-                on_close: &self.on_close,
-                timeout_secs: self.timeout_secs,
-            }))
-        });
-        let overlays = content.into_iter().chain(toasts).collect::<Vec<_>>();
+            let toasts = (!self.toasts.is_empty()).then(|| {
+                overlay::Element::new(Box::new(Overlay {
+                    position: layout.bounds().position() + translation,
+                    viewport: *viewport + translation,
+                    toasts: &mut self.toasts,
+                    trees: toasts_state,
+                    instants,
+                    on_close: &self.on_close,
+                    timeout_secs: self.timeout_secs,
+                }))
+            });
 
-        (!overlays.is_empty()).then(|| overlay::Group::with_children(overlays).overlay())
+            content.into_iter().chain(toasts).collect()
+        }
     }
-}
+
 
 struct Overlay<'a, 'b, Message> {
     position: Point,
@@ -466,16 +468,20 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
         renderer: &Renderer,
         operation: &mut dyn widget::Operation,
     ) {
-        operation.container(None, layout.bounds());
+        operation.container(None, layout.bounds(), &self.viewport);
         operation.traverse(&mut |operation| {
             self.toasts
                 .iter_mut()
                 .zip(self.trees.iter_mut())
                 .zip(layout.children())
                 .for_each(|((child, state), layout)| {
-                    child
-                        .as_widget_mut()
-                        .operate(state, layout, renderer, operation);
+                    child.as_widget_mut().operate(
+                        state,
+                        layout,
+                        &self.viewport,
+                        renderer,
+                        operation,
+                    );
                 });
         });
     }
