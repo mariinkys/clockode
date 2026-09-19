@@ -734,6 +734,7 @@ name = "clockode"
 version = "0.2.7"
 dependencies = [
  "anywho",
+ "arboard",
  "ashpd",
  "dirs",
  "futures",

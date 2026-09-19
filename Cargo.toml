@@ -41,6 +41,9 @@ image = { version = "0.25.10", default-features = false, features = [
 open = "5.4.4" # needed for opening the default browser
 notify-debouncer-full = "0.7.0"
 futures = "0.3.34"
+arboard = { version = "3.6.1", features = [
+    "wayland-data-control",
+] } # Clipboard (https://github.com/bitwarden/clients/issues/6812)
 
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
