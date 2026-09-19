@@ -884,6 +884,19 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/calloop/calloop-0.14.4.crate",
+        "sha256": "4dbf9978365bac10f54d1d4b04f7ce4427e51f71d61f2fe15e3fed5166474df7",
+        "dest": "cargo/vendor/calloop-0.14.4"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"4dbf9978365bac10f54d1d4b04f7ce4427e51f71d61f2fe15e3fed5166474df7\", \"files\": {}}",
+        "dest": "cargo/vendor/calloop-0.14.4",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/calloop-wayland-source/calloop-wayland-source-0.3.0.crate",
         "sha256": "95a66a987056935f7efce4ab5668920b5d0dac4a7c99991a67395f13702ddd20",
         "dest": "cargo/vendor/calloop-wayland-source-0.3.0"
@@ -892,6 +905,19 @@
         "type": "inline",
         "contents": "{\"package\": \"95a66a987056935f7efce4ab5668920b5d0dac4a7c99991a67395f13702ddd20\", \"files\": {}}",
         "dest": "cargo/vendor/calloop-wayland-source-0.3.0",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/calloop-wayland-source/calloop-wayland-source-0.4.1.crate",
+        "sha256": "138efcf0940a02ebf0cc8d1eff41a1682a46b431630f4c52450d6265876021fa",
+        "dest": "cargo/vendor/calloop-wayland-source-0.4.1"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"138efcf0940a02ebf0cc8d1eff41a1682a46b431630f4c52450d6265876021fa\", \"files\": {}}",
+        "dest": "cargo/vendor/calloop-wayland-source-0.4.1",
         "dest-filename": ".cargo-checksum.json"
     },
     {
@@ -5886,6 +5912,32 @@
     {
         "type": "archive",
         "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/smithay-client-toolkit/smithay-client-toolkit-0.20.0.crate",
+        "sha256": "0512da38f5e2b31201a93524adb8d3136276fa4fe4aafab4e1f727a82b534cc0",
+        "dest": "cargo/vendor/smithay-client-toolkit-0.20.0"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"0512da38f5e2b31201a93524adb8d3136276fa4fe4aafab4e1f727a82b534cc0\", \"files\": {}}",
+        "dest": "cargo/vendor/smithay-client-toolkit-0.20.0",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/smithay-clipboard/smithay-clipboard-0.7.3.crate",
+        "sha256": "71704c03f739f7745053bde45fa203a46c58d25bc5c4efba1d9a60e9dba81226",
+        "dest": "cargo/vendor/smithay-clipboard-0.7.3"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"71704c03f739f7745053bde45fa203a46c58d25bc5c4efba1d9a60e9dba81226\", \"files\": {}}",
+        "dest": "cargo/vendor/smithay-clipboard-0.7.3",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
         "url": "https://static.crates.io/crates/smol/smol-2.0.2.crate",
         "sha256": "a33bd3e260892199c3ccfc487c88b2da2265080acb316cd920da72fdfd7c599f",
         "dest": "cargo/vendor/smol-2.0.2"
@@ -6895,6 +6947,32 @@
         "type": "inline",
         "contents": "{\"package\": \"23d0c813de3daa2ed6520af85a3bd49b0e722a3078506899aa9686fea58dc4b6\", \"files\": {}}",
         "dest": "cargo/vendor/wayland-protocols-0.32.13",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/wayland-protocols-experimental/wayland-protocols-experimental-20250721.0.1.crate",
+        "sha256": "40a1f863128dcaaec790d7b4b396cc9b9a7a079e878e18c47e6c2d2c5a8dcbb1",
+        "dest": "cargo/vendor/wayland-protocols-experimental-20250721.0.1"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"40a1f863128dcaaec790d7b4b396cc9b9a7a079e878e18c47e6c2d2c5a8dcbb1\", \"files\": {}}",
+        "dest": "cargo/vendor/wayland-protocols-experimental-20250721.0.1",
+        "dest-filename": ".cargo-checksum.json"
+    },
+    {
+        "type": "archive",
+        "archive-type": "tar-gzip",
+        "url": "https://static.crates.io/crates/wayland-protocols-misc/wayland-protocols-misc-0.3.12.crate",
+        "sha256": "6e9567599ef23e09b8dad6e429e5738d4509dfc46b3b21f32841a304d16b29c8",
+        "dest": "cargo/vendor/wayland-protocols-misc-0.3.12"
+    },
+    {
+        "type": "inline",
+        "contents": "{\"package\": \"6e9567599ef23e09b8dad6e429e5738d4509dfc46b3b21f32841a304d16b29c8\", \"files\": {}}",
+        "dest": "cargo/vendor/wayland-protocols-misc-0.3.12",
         "dest-filename": ".cargo-checksum.json"
     },
     {

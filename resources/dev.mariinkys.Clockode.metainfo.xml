@@ -83,6 +83,12 @@
     </keywords>
 
     <releases>
+        <release version="0.2.9" date="2026-08-20">
+            <description>
+                <p>Fixed issue that prevented the clipboard from working in some Wayland environments</p>
+                <p>Updated dependencies</p>
+            </description>
+        </release>
         <release version="0.2.8" date="2026-08-19">
             <description>
                 <p>Fixed issue that prevented the clipboard from working in some Wayland environments</p>
