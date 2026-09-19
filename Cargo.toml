@@ -41,9 +41,8 @@ image = { version = "0.25.10", default-features = false, features = [
 open = "5.4.4" # needed for opening the default browser
 notify-debouncer-full = "0.7.0"
 futures = "0.3.34"
-arboard = { version = "3.6.1", features = [
-    "wayland-data-control",
-] } # Clipboard (https://github.com/bitwarden/clients/issues/6812)
+arboard = { version = "3.6.1" } # for x11 clipboard
+raw-window-handle = "0.6.2" # also needed for clipboard
 
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
@@ -53,6 +52,9 @@ gstreamer = "0.25.3"
 gstreamer-app = "0.25.2"
 gstreamer-video = "0.25.3"
 ashpd = { version = "0.13.13", default-features = false, features = ["tokio", "camera"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+smithay-clipboard = "0.7.3" # for wayland clipboard
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]

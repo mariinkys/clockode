@@ -12,12 +12,11 @@ use iced::{
     time::Instant,
     widget::{Column, button, column, container, row, scrollable, space, text},
 };
-use arboard::Clipboard;
 use tracing::{error, info};
 
 use crate::{
     app::{
-        core::{ClockodeDatabase, ClockodeEntry}, utils::{get_time_until_next_totp_refresh, style, watch_database}, widgets::{Toast, dot},
+        core::{ClockodeDatabase, ClockodeEntry}, utils::{clipboard::{self, AppClipboard}, get_time_until_next_totp_refresh, style, watch_database}, widgets::{Toast, dot},
     }, config::Config, icons,
 };
 
@@ -26,7 +25,7 @@ mod upsert;
 
 pub struct HomePage {
     config: Arc<Mutex<Config>>,
-    clipboard: Option<Clipboard>,
+    clipboard: AppClipboard,
     database: Arc<ClockodeDatabase>,
     state: State,
 }
@@ -44,6 +43,8 @@ pub enum SubScreen {
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    /// Callback when the clipboard is ready to be used
+    ClipboardReady(Option<usize>),
     /// Attempt to copy some [`String`] to the user clipboard
     CopyToClipboard(String),
     /// Ask to load the [`ClockodeEntry`]s to list on the page
@@ -86,22 +87,21 @@ impl HomePage {
         config: Arc<Mutex<Config>>,
     ) -> (Self, Task<Message>) {
         let db_clone = Arc::clone(&database);
-        let clipboard = Clipboard::new();
-        if let Err(clip_err) = &clipboard {
-            error!("{clip_err}");
-        };
 
         (
             Self {
                 config,
-                clipboard: clipboard.ok(),
+                clipboard: AppClipboard::Pending,
                 database,
                 state: State::Loading,
             },
-            Task::perform(
-                async move { db_clone.list_entries().await },
-                Message::EntriesLoaded,
-            ),
+            Task::batch([
+                Task::perform(
+                    async move { db_clone.list_entries().await },
+                    Message::EntriesLoaded,
+                ),
+                clipboard::resolve_display().map(Message::ClipboardReady),
+            ]),
         )
     }
 
@@ -133,20 +133,17 @@ impl HomePage {
 
     pub fn update(&mut self, message: Message, now: Instant) -> Action {
         match message {
-            Message::CopyToClipboard(value) => {
-                if let Some(clipboard) = &mut self.clipboard {
-                    let res = &clipboard.set_text(value);
-                    match res {
-                        Ok(_) => {
-                            return Action::AddToast(Toast::success_toast("Copied to clipboard"));
-                        }
-                        Err(err) => {
-                            eprintln!("{err}");
-                        }
-                    }
-                }
+            Message::ClipboardReady(display) => {
+                self.clipboard.init(display);
                 Action::None
             }
+            Message::CopyToClipboard(value) => match self.clipboard.set_text(value) {
+                Ok(()) => Action::AddToast(Toast::success_toast("Copied to clipboard")),
+                Err(err) => {
+                    error!("{err}");
+                    Action::AddToast(Toast::error_toast(err))
+                }
+            },
             Message::LoadEntries => {
                 self.state = State::Loading;
 
