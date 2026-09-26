@@ -563,7 +563,6 @@ fn header_view<'a>(entry_count: usize, search: Option<&'a str>) -> Element<'a, M
             .style(style::muted_text)
         ]
         .spacing(style::spacing::TINY),
-        // Right-aligned action buttons or search input
         container(actions).align_right(Length::Fill),
     ]
     .spacing(style::spacing::LARGE)
