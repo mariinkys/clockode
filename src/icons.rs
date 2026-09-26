@@ -49,6 +49,7 @@ impl IconCache {
         bundle!("qr-symbolic", 21);
         bundle!("camera-photo-symbolic", 48);
         bundle!("system-search-symbolic", 21);
+        bundle!("input-keyboard-symbolic", 16);
 
         Self { cache }
     }

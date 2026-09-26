@@ -1,5 +1,5 @@
 use iced::widget::{button, container, svg, text, text_input};
-use iced::{Border, Theme};
+use iced::{Border, Shadow, Theme};
 
 /// Standard spacing values
 pub mod spacing {
@@ -131,6 +131,55 @@ pub fn transparent_button(theme: &Theme, status: button::Status) -> button::Styl
     }
 }
 
+/// Subtle transparent button that glows on hover
+pub fn ghost_button(theme: &Theme, status: button::Status) -> button::Style {
+    let palette = theme.palette();
+    let text_color = palette.background.base.text.scale_alpha(0.7);
+    let glow = palette.background.base.text;
+
+    let base = button::Style {
+        background: None,
+        text_color,
+        border: Border {
+            radius: radius::MEDIUM.into(),
+            ..Default::default()
+        },
+        ..button::Style::default()
+    };
+
+    let glowing = |strength: f32| button::Style {
+        background: Some(glow.scale_alpha(0.10 * strength).into()),
+        border: Border {
+            color: glow.scale_alpha(0.35 * strength),
+            width: 1.0,
+            ..base.border
+        },
+        shadow: Shadow {
+            color: glow.scale_alpha(0.30 * strength),
+            blur_radius: 12.0,
+            ..Default::default()
+        },
+        ..base
+    };
+
+    match status {
+        button::Status::Active => base,
+        button::Status::Hovered => glowing(1.0),
+        button::Status::Pressed => glowing(1.6),
+        button::Status::Disabled => button::Style {
+            text_color: text_color.scale_alpha(0.5),
+            ..base
+        },
+    }
+}
+
+/// Icon matching the muted text of a ghost button
+pub fn icon_muted(theme: &Theme, _status: svg::Status) -> svg::Style {
+    svg::Style {
+        color: Some(theme.palette().background.base.text.scale_alpha(0.7)),
+    }
+}
+
 /// Label text style (subdued color)
 pub fn label_text(theme: &Theme) -> text::Style {
     text::Style {
@@ -211,5 +260,21 @@ pub fn text_input_style(theme: &Theme, status: text_input::Status) -> text_input
         },
         placeholder: palette.background.base.text.scale_alpha(0.6),
         ..base
+    }
+}
+
+/// Keyboard key "cap" used to display shortcuts
+pub fn keycap(theme: &Theme) -> container::Style {
+    let palette = theme.palette();
+
+    container::Style {
+        background: Some(palette.background.weak.color.into()),
+        text_color: Some(palette.background.weak.text),
+        border: Border {
+            color: palette.background.strong.color,
+            width: 1.0,
+            radius: radius::SMALL.into(),
+        },
+        ..Default::default()
     }
 }

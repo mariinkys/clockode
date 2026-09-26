@@ -6,12 +6,7 @@ use std::{
 };
 
 use iced::{
-    Alignment, Element,
-    Length::{self},
-    Subscription, Task, Theme, event,
-    keyboard::{self, Key, key::Named},
-    time::Instant,
-    widget::{button, column, container, mouse_area, pick_list, row, scrollable, space, text},
+    Alignment, Color, Element, Length::{self}, Subscription, Task, Theme, event, keyboard::{self, Key, key::Named}, time::Instant, widget::{Column, Row, button, center, column, container, mouse_area, opaque, pick_list, row, scrollable, space, stack, text},
 };
 use rfd::{AsyncFileDialog, FileHandle};
 use tracing::error;
@@ -25,6 +20,8 @@ use crate::{
 
 pub struct SettingsPage {
     config: Arc<Mutex<Config>>,
+    /// Whether the keyboard shortcuts dialog is open
+    show_shortcuts: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -47,6 +44,10 @@ pub enum Message {
     ExportPathSelected(Option<FileHandle>),
     /// Opens the given URL in the browser
     LaunchUrl(String),
+    /// Open the keyboard shortcuts dialog
+    ShowShortcuts,
+    /// Close the keyboard shortcuts dialog
+    HideShortcuts,
 }
 
 pub enum Action {
@@ -66,27 +67,36 @@ pub enum Action {
 
 impl SettingsPage {
     pub fn new(config: Arc<Mutex<Config>>) -> (Self, Task<Message>) {
-        (Self { config }, Task::none())
+        (Self { config, show_shortcuts: false }, Task::none())
     }
 
     pub fn view(&self, _now: Instant) -> iced::Element<'_, Message> {
         let header = header_view();
         let content = settings_view(&self.config);
 
-        container(
+        let page = container(
             container(column![header, content])
                 .padding(5.)
                 .width(Length::Fill)
                 .height(Length::Fill),
         )
-        .center(Length::Fill)
-        .into()
+        .center(Length::Fill);
+
+        if self.show_shortcuts {
+            modal(page, shortcuts_view(), Message::HideShortcuts)
+        } else {
+            page.into()
+        }
     }
 
     pub fn update(&mut self, message: Message, _now: Instant) -> Action {
         match message {
             Message::Back => Action::Back,
             Message::Hotkey(hotkey) => match hotkey {
+                Hotkey::Esc if self.show_shortcuts => {
+                    self.show_shortcuts = false;
+                    Action::None
+                }
                 Hotkey::Esc => Action::Back,
             },
             Message::ChangedTheme(colockode_theme) => {
@@ -146,6 +156,14 @@ impl SettingsPage {
                         error!("failed to open {url:?}: {err}");
                     }
                 }
+                Action::None
+            }
+            Message::ShowShortcuts => {
+                self.show_shortcuts = true;
+                Action::None
+            }
+            Message::HideShortcuts => {
+                self.show_shortcuts = false;
                 Action::None
             }
         }
@@ -254,6 +272,21 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
             .padding(12)
         ]
         .spacing(style::spacing::TINY),
+        // Keyboard shortcuts
+        container(
+            button(
+                row![
+                    icons::get_icon("input-keyboard-symbolic", 16).style(style::icon_muted),
+                    text("Keyboard Shortcuts").size(style::font_size::SMALL)
+                ]
+                .spacing(style::spacing::SMALL)
+                .align_y(Alignment::Center)
+            )
+            .on_press(Message::ShowShortcuts)
+            .padding([6, 14])
+            .style(style::ghost_button),
+        )
+        .center_x(Length::Fill),
     ]
     .spacing(style::spacing::XLARGE)
     .padding(10)
@@ -326,4 +359,145 @@ fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> O
         },
         _ => None,
     }
+}
+
+//
+// KEYBOARD SHORTCUTS
+//
+
+/// A keyboard shortcut: one or more alternative key combos and what they do
+struct Shortcut {
+    /// Alternatives (shown separated by "or"), each a combo of keys (joined by "+")
+    keys: &'static [&'static [&'static str]],
+    description: &'static str,
+}
+
+const SHORTCUT_SECTIONS: &[(&str, &[Shortcut])] = &[
+    (
+        "Home Screen",
+        &[
+            Shortcut { keys: &[&["Tab"]], description: "Highlight Next Entry" },
+            Shortcut { keys: &[&["Shift", "Tab"]], description: "Highlight Previous Entry" },
+            Shortcut { keys: &[&["Enter"], &["C"]], description: "Copy Highlighted Code" },
+            Shortcut { keys: &[&["E"]], description: "Edit Highlighted Entry" },
+            Shortcut { keys: &[&["S"]], description: "Open Search" },
+            Shortcut { keys: &[&["Esc"]], description: "Close Search or Clear Highlight" },
+        ],
+    ),
+    (
+        "Add & Edit Entry Screens",
+        &[
+            Shortcut { keys: &[&["Tab"]], description: "Next Field" },
+            Shortcut { keys: &[&["Shift", "Tab"]], description: "Previous Field" },
+            Shortcut { keys: &[&["Esc"]], description: "Go Back" },
+        ],
+    ),
+    (
+        "Settings Screen",
+        &[Shortcut { keys: &[&["Esc"]], description: "Go Back" }],
+    ),
+];
+
+/// The keyboard shortcuts dialog card
+fn shortcuts_view<'a>() -> Element<'a, Message> {
+    let title = row![
+        text("Keyboard Shortcuts")
+            .size(style::font_size::LARGE)
+            .font(iced::Font {
+                weight: iced::font::Weight::ExtraBold,
+                ..iced::Font::DEFAULT
+            })
+            .width(Length::Fill),
+        button(icons::get_icon("window-close-symbolic", 16).style(style::icon))
+            .on_press(Message::HideShortcuts)
+            .padding(4)
+            .style(style::transparent_button),
+    ]
+    .align_y(Alignment::Center);
+
+    let sections = SHORTCUT_SECTIONS.iter().map(|(name, shortcuts)| -> Element<'a, Message> {
+        column![
+            text(*name)
+                .size(style::font_size::SMALL)
+                .font(iced::Font {
+                    weight: iced::font::Weight::Bold,
+                    ..iced::Font::DEFAULT
+                })
+                .style(style::label_text),
+            Column::with_children(shortcuts.iter().map(shortcut_row))
+                .spacing(style::spacing::SMALL),
+        ]
+        .spacing(style::spacing::SMALL)
+        .into()
+    });
+
+    container(
+        column![
+            title,
+            scrollable(Column::with_children(sections).spacing(style::spacing::LARGE)),
+        ]
+        .spacing(style::spacing::MEDIUM),
+    )
+    .padding(20)
+    .width(Length::Fill.max(420.0))
+    .style(style::card_container)
+    .into()
+}
+
+/// One line of the dialog: description on the left, keycaps on the right
+fn shortcut_row<'a>(shortcut: &Shortcut) -> Element<'a, Message> {
+    let mut keys = Row::new()
+        .spacing(style::spacing::TINY)
+        .align_y(Alignment::Center);
+
+    for (i, combo) in shortcut.keys.iter().enumerate() {
+        if i > 0 {
+            keys = keys.push(text("or").size(style::font_size::SMALL).style(style::muted_text));
+        }
+
+        for (j, key) in combo.iter().enumerate() {
+            if j > 0 {
+                keys = keys.push(text("+").size(style::font_size::SMALL).style(style::muted_text));
+            }
+
+            keys = keys.push(
+                container(text(*key).size(style::font_size::SMALL).font(iced::Font::MONOSPACE))
+                    .padding([2, 8])
+                    .style(style::keycap),
+            );
+        }
+    }
+
+    row![
+        text(shortcut.description)
+            .size(style::font_size::BODY)
+            .width(Length::Fill),
+        keys,
+    ]
+    .spacing(style::spacing::MEDIUM)
+    .align_y(Alignment::Center)
+    .into()
+}
+
+/// Shows `content` centered over a dimmed `base`; clicking the backdrop sends `on_blur`
+fn modal<'a>(
+    base: impl Into<Element<'a, Message>>,
+    content: impl Into<Element<'a, Message>>,
+    on_blur: Message,
+) -> Element<'a, Message> {
+    stack![
+        base.into(),
+        opaque(
+            mouse_area(
+                center(opaque(container(content).padding(style::spacing::LARGE))).style(
+                    |_theme| container::Style {
+                        background: Some(Color { a: 0.6, ..Color::BLACK }.into()),
+                        ..container::Style::default()
+                    }
+                )
+            )
+            .on_press(on_blur)
+        )
+    ]
+    .into()
 }
