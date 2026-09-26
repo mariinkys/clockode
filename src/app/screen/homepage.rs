@@ -6,7 +6,7 @@ use std::{
 };
 
 use iced::{
-    Alignment, Element, Event, Length::{self}, Subscription, Task, event, keyboard, time::Instant, widget::{Column, button, column, container, operation, row, scrollable, space, stack, text, text_input},
+    Alignment, Element, Event, Length::{self}, Rectangle, Subscription, Task, event, keyboard, time::Instant, widget::{Column, button, column, container, operation, row, scrollable, stack, text, text_input},
 };
 use tracing::{error, info};
 
@@ -20,6 +20,7 @@ mod settings;
 mod upsert;
 
 const SEARCH_INPUT: &str = "home-search";
+const ENTRIES_SCROLLABLE: &str = "home-entries";
 
 pub struct HomePage {
     config: Arc<Mutex<Config>>,
@@ -29,6 +30,8 @@ pub struct HomePage {
     search: Box<Option<String>>,
     /// Whether the search input currently has keyboard focus
     search_focused: bool,
+    /// Index (in the filtered list) of the entry highlighted with Tab
+    selected_entry: Option<usize>,
 }
 
 pub enum State {
@@ -82,6 +85,15 @@ pub enum Message {
     CheckSearchFocus,
     /// Result of checking whether the search input is focused
     SearchFocusChanged(bool),
+
+    /// Tab: highlight the next entry
+    SelectNextEntry,
+    /// Shift+Tab: highlight the previous entry
+    SelectPreviousEntry,
+    /// Enter: copy the code of the highlighted entry
+    CopySelectedEntry,
+    /// E: open the edit page for the highlighted entry
+    EditSelectedEntry,
 }
 
 pub enum Action {
@@ -110,6 +122,7 @@ impl HomePage {
                 state: State::Loading,
                 search: Box::from(None),
                 search_focused: false,
+                selected_entry: None,
             },
             Task::batch([
                 Task::perform(
@@ -128,7 +141,7 @@ impl HomePage {
                 SubScreen::Home { entries } => {
                     let search = self.search.as_deref();
                     let header = header_view(entries.len(), search);
-                    let content = content_view(entries, search);
+                    let content = content_view(entries, search, self.selected_entry);
 
                     container(column![header, content])
                         .padding(5.)
@@ -172,6 +185,7 @@ impl HomePage {
             }
             Message::EntriesLoaded(result) => match result {
                 Ok(entries) => {
+                    self.selected_entry = None;
                     self.state = State::Ready {
                         subscreen: SubScreen::Home { entries },
                     };
@@ -311,35 +325,71 @@ impl HomePage {
             }
 
             Message::OpenSearch => {
-                self.search = Box::from(Some(String::new()));
+                if self.search.is_none() {
+                    self.search = Box::from(Some(String::new()));
+                }
+
                 self.search_focused = true;
+                self.selected_entry = None;
                 Action::Run(operation::focus(SEARCH_INPUT))
             }
             Message::SearchChanged(query) => {
                 if let Some(search) = &mut *self.search {
                     *search = query;
                     self.search_focused = true;
+                    self.selected_entry = None;
                 }
                 Action::None
             }
             Message::CloseSearch => {
                 self.search = Box::from(None);
                 self.search_focused = false;
+                self.selected_entry = None;
                 Action::None
             }
             Message::SearchEscape => {
                 if self.search_focused {
                     self.update(Message::CloseSearch, now)
+                } else if self.selected_entry.is_some() {
+                    self.selected_entry = None;
+                    Action::None
                 } else {
                     Action::None
                 }
             }
             Message::CheckSearchFocus => {
+                if self.search.is_none() {
+                    return Action::None;
+                }
                 Action::Run(operation::is_focused(SEARCH_INPUT).map(Message::SearchFocusChanged))
             }
             Message::SearchFocusChanged(focused) => {
                 self.search_focused = focused;
+                // Clicking into the search takes over from the entry highlight
+                if focused {
+                    self.selected_entry = None;
+                }
                 Action::None
+            }
+
+            Message::SelectNextEntry => self.move_selection(true),
+            Message::SelectPreviousEntry => self.move_selection(false),
+            Message::CopySelectedEntry => {
+                let Some(code) = self
+                    .highlighted_entry()
+                    .map(|entry| entry.totp.generate_current().to_string())
+                else {
+                    return Action::None;
+                };
+
+                self.update(Message::CopyToClipboard(code), now)
+            }
+            Message::EditSelectedEntry => {
+                let Some(entry) = self.highlighted_entry().cloned() else {
+                    return Action::None;
+                };
+
+                self.update(Message::OpenUpsertPage(Some(entry)), now)
             }
         }
     }
@@ -348,21 +398,45 @@ impl HomePage {
         let watcher = watch_database((*self.database.path()).clone())
             .map(|_| Message::DatabaseChangedOnDisk);
 
-        let search = if self.search.is_some() {
-            event::listen_with(|event, _status, _window| match event {
+        let keys = match &self.state {
+            State::Ready {
+                subscreen: SubScreen::Home { .. },
+            } => event::listen_with(|event, status, _window| match event {
+                Event::Keyboard(keyboard::Event::KeyPressed {
+                    key: keyboard::Key::Named(keyboard::key::Named::Tab),
+                    modifiers,
+                    ..
+                }) => Some(if modifiers.shift() {
+                    Message::SelectPreviousEntry
+                } else {
+                    Message::SelectNextEntry
+                }),
                 Event::Keyboard(keyboard::Event::KeyPressed {
                     key: keyboard::Key::Named(keyboard::key::Named::Escape),
                     ..
                 }) => Some(Message::SearchEscape),
                 Event::Keyboard(keyboard::Event::KeyPressed {
-                    key: keyboard::Key::Named(keyboard::key::Named::Tab),
+                    key: keyboard::Key::Named(keyboard::key::Named::Enter),
                     ..
-                })
-                | Event::Mouse(iced::mouse::Event::ButtonPressed(_)) => Some(Message::CheckSearchFocus),
+                }) if status == event::Status::Ignored => Some(Message::CopySelectedEntry),
+                Event::Keyboard(keyboard::Event::KeyPressed {
+                    key: keyboard::Key::Character(c),
+                    modifiers,
+                    ..
+                }) if status == event::Status::Ignored && modifiers.is_empty() => {
+                    match c.as_str().to_lowercase().as_str() {
+                        "c" => Some(Message::CopySelectedEntry),
+                        "e" => Some(Message::EditSelectedEntry),
+                        "s" => Some(Message::OpenSearch),
+                        _ => None,
+                    }
+                }
+                Event::Mouse(iced::mouse::Event::ButtonPressed(_)) => {
+                    Some(Message::CheckSearchFocus)
+                }
                 _ => None,
-            })
-        } else {
-            Subscription::none()
+            }),
+            _ => Subscription::none(),
         };
 
         let screen_subscription = match &self.state {
@@ -384,12 +458,95 @@ impl HomePage {
             },
         };
 
-        Subscription::batch([screen_subscription, watcher, search])
+        Subscription::batch([screen_subscription, watcher, keys])
     }
+
+    /// Moves the Tab highlight forwards or backwards (wrapping) and scrolls it into view
+    fn move_selection(&mut self, forward: bool) -> Action {
+        let State::Ready {
+            subscreen: SubScreen::Home { entries },
+        } = &self.state
+        else {
+            return Action::None;
+        };
+
+        let count = filter_entries(entries, self.search.as_deref()).len();
+
+        if count == 0 {
+            self.selected_entry = None;
+            return Action::None;
+        }
+
+        let index = match (self.selected_entry, forward) {
+            (None, true) => 0,
+            (None, false) => count - 1,
+            (Some(index), true) => (index + 1) % count,
+            (Some(index), false) => (index + count - 1) % count,
+        };
+
+        self.selected_entry = Some(index);
+
+        let scroll = scroll_to_entry(index);
+
+        if self.search_focused {
+            self.search_focused = false;
+            Action::Run(Task::batch([scroll, unfocus_search()]))
+        } else {
+            Action::Run(scroll)
+        }
+    }
+
+    /// The entry currently highlighted with Tab, if any
+    fn highlighted_entry(&self) -> Option<&ClockodeEntry> {
+        let State::Ready {
+            subscreen: SubScreen::Home { entries },
+        } = &self.state
+        else {
+            return None;
+        };
+
+        let index = self.selected_entry?;
+
+        filter_entries(entries, self.search.as_deref())
+            .get(index)
+            .copied()
+    }
+}
+
+fn entry_id(index: usize) -> iced::widget::Id {
+    iced::widget::Id::from(format!("home-entry-{index}"))
+}
+
+/// Removes keyboard focus from whatever widget has it (i.e. the search input)
+fn unfocus_search() -> Task<Message> {
+    use iced::advanced::widget::{operate, operation::focusable};
+
+    operate(focusable::unfocus::<()>()).discard()
 }
 
 /// View of the header of this screen
 fn header_view<'a>(entry_count: usize, search: Option<&'a str>) -> Element<'a, Message> {
+    // While searching, the input replaces the action buttons so nothing gets pushed off-screen
+    let actions: Element<'a, Message> = match search {
+        None => row![
+            button(icons::get_icon("system-search-symbolic", 21).style(style::icon))
+                .on_press(Message::OpenSearch)
+                .padding(8)
+                .style(style::transparent_button),
+            button(icons::get_icon("list-add-symbolic", 21))
+                .on_press(Message::OpenUpsertPage(None))
+                .padding(8)
+                .style(style::primary_button),
+            button(icons::get_icon("emblem-system-symbolic", 21))
+                .on_press(Message::OpenSettingsPage)
+                .padding(8)
+                .style(style::secondary_button),
+        ]
+        .spacing(style::spacing::SMALL)
+        .into(),
+        Some(query) => search_input_view(query),
+    };
+
     row![
         // Title section
         column![
@@ -406,20 +563,8 @@ fn header_view<'a>(entry_count: usize, search: Option<&'a str>) -> Element<'a, M
             .style(style::muted_text)
         ]
         .spacing(style::spacing::TINY),
-        space().width(Length::Fill),
-        // Action buttons
-        row![
-            search_view(search),
-            button(icons::get_icon("list-add-symbolic", 21))
-                .on_press(Message::OpenUpsertPage(None))
-                .padding(8)
-                .style(style::primary_button),
-            button(icons::get_icon("emblem-system-symbolic", 21))
-                .on_press(Message::OpenSettingsPage)
-                .padding(8)
-                .style(style::secondary_button),
-        ]
-        .spacing(style::spacing::SMALL)
+        // Right-aligned action buttons or search input
+        container(actions).align_right(Length::Fill),
     ]
     .spacing(style::spacing::LARGE)
     .padding(10)
@@ -428,21 +573,30 @@ fn header_view<'a>(entry_count: usize, search: Option<&'a str>) -> Element<'a, M
     .into()
 }
 
-/// View of the contents of this screen
-fn content_view<'a>(entries: &'a [ClockodeEntry], search: Option<&'a str>) -> Element<'a, Message> {
+/// Entries matching the current search query (all of them if there's none)
+fn filter_entries<'a>(entries: &'a [ClockodeEntry], search: Option<&str>) -> Vec<&'a ClockodeEntry> {
     let query = search
-            .map(str::trim)
-            .filter(|query| !query.is_empty())
-            .map(str::to_lowercase);
+        .map(str::trim)
+        .filter(|query| !query.is_empty())
+        .map(str::to_lowercase);
 
-    let filtered: Vec<&'a ClockodeEntry> = entries
+    entries
         .iter()
         .filter(|entry| {
             query
                 .as_ref()
                 .is_none_or(|query| entry.name.to_lowercase().contains(query))
         })
-        .collect();
+        .collect()
+}
+
+/// View of the contents of this screen
+fn content_view<'a>(
+    entries: &'a [ClockodeEntry],
+    search: Option<&'a str>,
+    selected: Option<usize>,
+) -> Element<'a, Message> {
+    let filtered = filter_entries(entries, search);
 
     if entries.is_empty() {
         container(
@@ -464,14 +618,15 @@ fn content_view<'a>(entries: &'a [ClockodeEntry], search: Option<&'a str>) -> El
             .center(Length::Fill)
             .into()
     } else {
-        let entries_list = entries.iter().fold(
+        let entries_list = filtered.into_iter().enumerate().fold(
             Column::new()
                 .height(Length::Fill)
                 .spacing(style::spacing::MEDIUM)
                 .padding(10),
-            |col, entry| {
+            |col, (index, entry)| {
                 let code = entry.totp.generate_current().to_string();
                 let time_remaining = get_time_until_next_totp_refresh(entry.totp.step());
+                let is_selected = selected == Some(index);
 
                 let entry_view = container(
                     row![
@@ -513,53 +668,104 @@ fn content_view<'a>(entries: &'a [ClockodeEntry], search: Option<&'a str>) -> El
                     .padding(16)
                     .align_y(iced::Alignment::Center),
                 )
-                .style(style::entry_card);
+                .id(entry_id(index))
+                .style(move |theme| {
+                    if is_selected {
+                        style::entry_card_selected(theme)
+                    } else {
+                        style::entry_card(theme)
+                    }
+                });
 
                 col.push(entry_view)
             },
         );
 
-        scrollable(entries_list).height(Length::Fill).into()
+        scrollable(entries_list).height(Length::Fill).id(ENTRIES_SCROLLABLE).into()
     }
 }
 
-/// Search icon that expands into a text input with an inline close button
-fn search_view<'a>(search: Option<&'a str>) -> Element<'a, Message> {
+/// Search text input with an inline close button, shown in the header while searching
+fn search_input_view(query: &str) -> Element<'_, Message> {
     const CLOSE_ICON_SIZE: u16 = 16;
     const CLOSE_PADDING: f32 = 4.0;
 
-    match search {
-        None => button(icons::get_icon("system-search-symbolic", 21).style(style::icon))
-            .on_press(Message::OpenSearch)
-            .padding(8)
-            .style(style::transparent_button)
-            .into(),
-        Some(query) => {
-            let input = text_input("Search entries...", query)
-                .id(SEARCH_INPUT)
-                .on_input(Message::SearchChanged)
-                // Extra right padding so typed text never runs under the close button
-                .padding(iced::padding::all(8).right(
-                    CLOSE_ICON_SIZE as f32 + CLOSE_PADDING * 2.0 + style::spacing::TINY * 2.0,
-                ))
-                .width(Length::Fixed(200.0))
-                .style(style::text_input_style);
+    let input = text_input("Search entries...", query)
+        .id(SEARCH_INPUT)
+        .on_input(Message::SearchChanged)
+        // Extra right padding so typed text never runs under the close button
+        .padding(iced::padding::all(8).right(
+            CLOSE_ICON_SIZE as f32 + CLOSE_PADDING * 2.0 + style::spacing::TINY * 2.0,
+        ))
+        .width(Length::Fill.max(200.0))
+        .style(style::text_input_style);
 
-            let close = button(
-                icons::get_icon("window-close-symbolic", CLOSE_ICON_SIZE).style(style::icon),
-            )
-            .on_press(Message::CloseSearch)
-            .padding(CLOSE_PADDING)
-            .style(style::transparent_button);
+    let close = button(icons::get_icon("window-close-symbolic", CLOSE_ICON_SIZE).style(style::icon))
+        .on_press(Message::CloseSearch)
+        .padding(CLOSE_PADDING)
+        .style(style::transparent_button);
 
-            stack![
-                input,
-                container(close)
-                    .align_right(Length::Fill)
-                    .center_y(Length::Fill)
-                    .padding(iced::padding::right(style::spacing::TINY)),
-            ]
-            .into()
+    stack![
+        input,
+        container(close)
+            .align_right(Length::Fill)
+            .center_y(Length::Fill)
+            .padding(iced::padding::right(style::spacing::TINY)),
+    ]
+    .into()
+}
+
+/// Scrolls the entry list just enough to make the entry at `index` fully visible
+fn scroll_to_entry(index: usize) -> Task<Message> {
+    use iced::advanced::widget::operation::Outcome;
+    use iced::advanced::widget::{Id, Operation, operate};
+
+    struct ScrollDelta {
+        target: Id,
+        delta: Option<f32>,
+    }
+
+    impl Operation<f32> for ScrollDelta {
+        fn traverse(&mut self, operate: &mut dyn FnMut(&mut dyn Operation<f32>)) {
+            operate(self);
+        }
+
+        fn container(&mut self, id: Option<&Id>, bounds: Rectangle, viewport: &Rectangle) {
+            if id != Some(&self.target) {
+                return;
+            }
+
+            let margin = style::spacing::MEDIUM;
+            let top = bounds.y - margin;
+            let bottom = bounds.y + bounds.height + margin;
+
+            self.delta = Some(if top < viewport.y {
+                top - viewport.y
+            } else if bottom > viewport.y + viewport.height {
+                bottom - (viewport.y + viewport.height)
+            } else {
+                0.0
+            });
+        }
+
+        fn finish(&self) -> Outcome<f32> {
+            self.delta.map_or(Outcome::None, Outcome::Some)
         }
     }
+
+    operate(ScrollDelta {
+        target: entry_id(index),
+        delta: None,
+    })
+    .then(|delta| {
+        if delta == 0.0 {
+            Task::none()
+        } else {
+            operation::scroll_by(
+                ENTRIES_SCROLLABLE,
+                operation::AbsoluteOffset { x: 0.0, y: delta },
+                operation::Animation::Auto,
+            )
+        }
+    })
 }

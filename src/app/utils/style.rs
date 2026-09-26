@@ -54,6 +54,14 @@ pub fn entry_card(theme: &Theme) -> container::Style {
     }
 }
 
+/// Entry card style when highlighted with keyboard navigation
+pub fn entry_card_selected(theme: &Theme) -> container::Style {
+    let mut style = entry_card(theme);
+    style.border.color = theme.palette().primary.base.color;
+    style.border.width = 2.0;
+    style
+}
+
 /// Primary submit button style
 pub fn primary_submit_button(theme: &Theme, status: button::Status) -> button::Style {
     button::Style {
