@@ -10,6 +10,7 @@ use iced::Task;
 use tracing::info;
 pub use unlock::UnlockDatabase;
 
+#[allow(clippy::large_enum_variant)]
 pub enum Screen {
     Error(String),
     CreateDatabase(CreateDatabase),
