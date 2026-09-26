@@ -6,11 +6,7 @@ use std::{
 };
 
 use iced::{
-    Alignment, Element,
-    Length::{self},
-    Subscription, Task,
-    time::Instant,
-    widget::{Column, button, column, container, row, scrollable, space, text},
+    Alignment, Element, Event, Length::{self}, Subscription, Task, event, keyboard, time::Instant, widget::{Column, button, column, container, operation, row, scrollable, space, stack, text, text_input},
 };
 use tracing::{error, info};
 
@@ -23,11 +19,16 @@ use crate::{
 mod settings;
 mod upsert;
 
+const SEARCH_INPUT: &str = "home-search";
+
 pub struct HomePage {
     config: Arc<Mutex<Config>>,
     clipboard: AppClipboard,
     database: Arc<ClockodeDatabase>,
     state: State,
+    search: Box<Option<String>>,
+    /// Whether the search input currently has keyboard focus
+    search_focused: bool,
 }
 
 pub enum State {
@@ -68,6 +69,19 @@ pub enum Message {
     RefreshCodes,
     /// The database changed (watcher)
     DatabaseChangedOnDisk,
+
+    /// Expand the search icon into a text input
+    OpenSearch,
+    /// The search query changed
+    SearchChanged(String),
+    /// Clear the search and collapse it back to an icon
+    CloseSearch,
+    /// Escape was pressed while the search is open
+    SearchEscape,
+    /// Something that may change focus happened (click, Tab), re-check it
+    CheckSearchFocus,
+    /// Result of checking whether the search input is focused
+    SearchFocusChanged(bool),
 }
 
 pub enum Action {
@@ -94,6 +108,8 @@ impl HomePage {
                 clipboard: AppClipboard::Pending,
                 database,
                 state: State::Loading,
+                search: Box::from(None),
+                search_focused: false,
             },
             Task::batch([
                 Task::perform(
@@ -110,8 +126,9 @@ impl HomePage {
             State::Loading => text("Loading...").into(),
             State::Ready { subscreen } => match subscreen {
                 SubScreen::Home { entries } => {
-                    let header = header_view(entries.len());
-                    let content = content_view(entries);
+                    let search = self.search.as_deref();
+                    let header = header_view(entries.len(), search);
+                    let content = content_view(entries, search);
 
                     container(column![header, content])
                         .padding(5.)
@@ -292,12 +309,61 @@ impl HomePage {
 
                 self.update(Message::LoadEntries, now)
             }
+
+            Message::OpenSearch => {
+                self.search = Box::from(Some(String::new()));
+                self.search_focused = true;
+                Action::Run(operation::focus(SEARCH_INPUT))
+            }
+            Message::SearchChanged(query) => {
+                if let Some(search) = &mut *self.search {
+                    *search = query;
+                    self.search_focused = true;
+                }
+                Action::None
+            }
+            Message::CloseSearch => {
+                self.search = Box::from(None);
+                self.search_focused = false;
+                Action::None
+            }
+            Message::SearchEscape => {
+                if self.search_focused {
+                    self.update(Message::CloseSearch, now)
+                } else {
+                    Action::None
+                }
+            }
+            Message::CheckSearchFocus => {
+                Action::Run(operation::is_focused(SEARCH_INPUT).map(Message::SearchFocusChanged))
+            }
+            Message::SearchFocusChanged(focused) => {
+                self.search_focused = focused;
+                Action::None
+            }
         }
     }
 
     pub fn subscription(&self, now: Instant) -> Subscription<Message> {
         let watcher = watch_database((*self.database.path()).clone())
             .map(|_| Message::DatabaseChangedOnDisk);
+
+        let search = if self.search.is_some() {
+            event::listen_with(|event, _status, _window| match event {
+                Event::Keyboard(keyboard::Event::KeyPressed {
+                    key: keyboard::Key::Named(keyboard::key::Named::Escape),
+                    ..
+                }) => Some(Message::SearchEscape),
+                Event::Keyboard(keyboard::Event::KeyPressed {
+                    key: keyboard::Key::Named(keyboard::key::Named::Tab),
+                    ..
+                })
+                | Event::Mouse(iced::mouse::Event::ButtonPressed(_)) => Some(Message::CheckSearchFocus),
+                _ => None,
+            })
+        } else {
+            Subscription::none()
+        };
 
         let screen_subscription = match &self.state {
             State::Loading => Subscription::none(),
@@ -318,12 +384,12 @@ impl HomePage {
             },
         };
 
-        Subscription::batch([screen_subscription, watcher])
+        Subscription::batch([screen_subscription, watcher, search])
     }
 }
 
 /// View of the header of this screen
-fn header_view<'a>(entry_count: usize) -> Element<'a, Message> {
+fn header_view<'a>(entry_count: usize, search: Option<&'a str>) -> Element<'a, Message> {
     row![
         // Title section
         column![
@@ -343,6 +409,7 @@ fn header_view<'a>(entry_count: usize) -> Element<'a, Message> {
         space().width(Length::Fill),
         // Action buttons
         row![
+            search_view(search),
             button(icons::get_icon("list-add-symbolic", 21))
                 .on_press(Message::OpenUpsertPage(None))
                 .padding(8)
@@ -362,7 +429,21 @@ fn header_view<'a>(entry_count: usize) -> Element<'a, Message> {
 }
 
 /// View of the contents of this screen
-fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
+fn content_view<'a>(entries: &'a [ClockodeEntry], search: Option<&'a str>) -> Element<'a, Message> {
+    let query = search
+            .map(str::trim)
+            .filter(|query| !query.is_empty())
+            .map(str::to_lowercase);
+
+    let filtered: Vec<&'a ClockodeEntry> = entries
+        .iter()
+        .filter(|entry| {
+            query
+                .as_ref()
+                .is_none_or(|query| entry.name.to_lowercase().contains(query))
+        })
+        .collect();
+
     if entries.is_empty() {
         container(
             column![
@@ -374,6 +455,14 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
         )
         .center(Length::Fill)
         .into()
+    } else if filtered.is_empty() {
+            container(
+                text("No entries match your search")
+                    .size(style::font_size::BODY)
+                    .style(style::muted_text),
+            )
+            .center(Length::Fill)
+            .into()
     } else {
         let entries_list = entries.iter().fold(
             Column::new()
@@ -431,5 +520,46 @@ fn content_view<'a>(entries: &'a [ClockodeEntry]) -> Element<'a, Message> {
         );
 
         scrollable(entries_list).height(Length::Fill).into()
+    }
+}
+
+/// Search icon that expands into a text input with an inline close button
+fn search_view<'a>(search: Option<&'a str>) -> Element<'a, Message> {
+    const CLOSE_ICON_SIZE: u16 = 16;
+    const CLOSE_PADDING: f32 = 4.0;
+
+    match search {
+        None => button(icons::get_icon("system-search-symbolic", 21).style(style::icon))
+            .on_press(Message::OpenSearch)
+            .padding(8)
+            .style(style::transparent_button)
+            .into(),
+        Some(query) => {
+            let input = text_input("Search entries...", query)
+                .id(SEARCH_INPUT)
+                .on_input(Message::SearchChanged)
+                // Extra right padding so typed text never runs under the close button
+                .padding(iced::padding::all(8).right(
+                    CLOSE_ICON_SIZE as f32 + CLOSE_PADDING * 2.0 + style::spacing::TINY * 2.0,
+                ))
+                .width(Length::Fixed(200.0))
+                .style(style::text_input_style);
+
+            let close = button(
+                icons::get_icon("window-close-symbolic", CLOSE_ICON_SIZE).style(style::icon),
+            )
+            .on_press(Message::CloseSearch)
+            .padding(CLOSE_PADDING)
+            .style(style::transparent_button);
+
+            stack![
+                input,
+                container(close)
+                    .align_right(Length::Fill)
+                    .center_y(Length::Fill)
+                    .padding(iced::padding::right(style::spacing::TINY)),
+            ]
+            .into()
+        }
     }
 }

@@ -69,6 +69,7 @@ impl CreateDatabase {
                         .on_submit_maybe(self.inputs.valid().then_some(Message::Submit))
                         .padding(12)
                         .size(style::font_size::MEDIUM)
+                        .style(style::text_input_style)
                 ]
                 .spacing(style::spacing::TINY),
                 column![
@@ -81,6 +82,7 @@ impl CreateDatabase {
                         .on_submit_maybe(self.inputs.valid().then_some(Message::Submit))
                         .padding(12)
                         .size(style::font_size::MEDIUM)
+                        .style(style::text_input_style)
                 ]
                 .spacing(style::spacing::TINY),
                 // Password strength hint

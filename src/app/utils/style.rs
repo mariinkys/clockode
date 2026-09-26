@@ -1,4 +1,4 @@
-use iced::widget::{button, container, text};
+use iced::widget::{button, container, svg, text, text_input};
 use iced::{Border, Theme};
 
 /// Standard spacing values
@@ -107,6 +107,22 @@ pub fn success_button(theme: &Theme, status: button::Status) -> button::Style {
     style
 }
 
+/// Transparent button style: no background, no border, no shadow. Only the content is visible
+pub fn transparent_button(theme: &Theme, status: button::Status) -> button::Style {
+    let text_color = theme.palette().background.base.text;
+
+    button::Style {
+        background: None,
+        text_color: match status {
+            button::Status::Active => text_color,
+            button::Status::Hovered => text_color.scale_alpha(0.7),
+            button::Status::Pressed => text_color.scale_alpha(0.5),
+            button::Status::Disabled => text_color.scale_alpha(0.4),
+        },
+        ..button::Style::default()
+    }
+}
+
 /// Label text style (subdued color)
 pub fn label_text(theme: &Theme) -> text::Style {
     text::Style {
@@ -132,5 +148,60 @@ pub fn link_text(theme: &Theme) -> text::Style {
 pub fn subtitle_text(theme: &Theme) -> text::Style {
     text::Style {
         color: Some(theme.palette().background.weak.text.scale_alpha(0.7)),
+    }
+}
+
+/// Icon on a transparent surface: same color as regular text
+pub fn icon(theme: &Theme, status: svg::Status) -> svg::Style {
+    tinted(theme.palette().background.base.text, status)
+}
+
+#[allow(dead_code)]
+/// Icon on a primary button
+pub fn icon_on_primary(theme: &Theme, _status: svg::Status) -> svg::Style {
+    svg::Style {
+        color: Some(theme.palette().primary.base.text),
+    }
+}
+
+#[allow(dead_code)]
+/// Icon on a secondary button
+pub fn icon_on_secondary(theme: &Theme, _status: svg::Status) -> svg::Style {
+    svg::Style {
+        color: Some(theme.palette().secondary.base.text),
+    }
+}
+
+fn tinted(color: iced::Color, status: svg::Status) -> svg::Style {
+    svg::Style {
+        color: Some(match status {
+            svg::Status::Idle => color,
+            svg::Status::Hovered => color.scale_alpha(0.7),
+        }),
+    }
+}
+
+/// Text input style matching the cards and buttons
+pub fn text_input_style(theme: &Theme, status: text_input::Status) -> text_input::Style {
+    let palette = theme.palette();
+    let base = text_input::default(theme, status);
+
+    let border_color = match status {
+        text_input::Status::Focused { .. } => palette.primary.base.color,
+        text_input::Status::Hovered => palette.background.base.text.scale_alpha(0.25),
+        text_input::Status::Active | text_input::Status::Disabled => {
+            palette.background.base.text.scale_alpha(0.1)
+        }
+    };
+
+    text_input::Style {
+        background: palette.background.base.color.into(),
+        border: Border {
+            color: border_color,
+            width: 1.0,
+            radius: radius::SMALL.into(),
+        },
+        placeholder: palette.background.base.text.scale_alpha(0.6),
+        ..base
     }
 }
