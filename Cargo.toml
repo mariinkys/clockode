@@ -17,7 +17,7 @@ iced = { git = "https://github.com/iced-rs/iced", default-features = true, featu
 anywho = "0.1.2"
 dirs = "7.0.0"
 smol = "2.0.2"
-keepass = { version = "0.14.0", features = [
+keepass = { version = "0.15.0", features = [
     "save_kdbx4",
 ] } # KeePass DB Management
 rqrr = "0.11.0" # QR Detection
@@ -48,9 +48,9 @@ tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 
 [target.'cfg(unix)'.dependencies] # gstreamer dependencies for qr detection with camera (Unix-like systems)
-gstreamer = "0.25.3"
+gstreamer = "0.25.4"
 gstreamer-app = "0.25.2"
-gstreamer-video = "0.25.3"
+gstreamer-video = "0.25.4"
 ashpd = { version = "0.13.13", default-features = false, features = ["tokio", "camera"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]

@@ -39,13 +39,8 @@ impl<Message> Widget<Message, Theme, Renderer> for Dot {
         }
     }
 
-    fn layout(
-        &mut self,
-        _tree: &mut Tree,
-        _renderer: &Renderer,
-        _limits: &layout::Limits,
-    ) -> layout::Node {
-        layout::Node::new(Size::new(DOT_SIZE, DOT_SIZE))
+    fn layout(&mut self, tree: &mut Tree, _renderer: &Renderer, _limits: &layout::Limits) {
+        tree.size = Size::new(DOT_SIZE, DOT_SIZE);
     }
 
     fn draw(
@@ -54,7 +49,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Dot {
         renderer: &mut Renderer,
         theme: &Theme,
         _style: &renderer::Style,
-        layout: Layout<'_>,
+        layout: Layout,
         _cursor: mouse::Cursor,
         _viewport: &Rectangle,
     ) {
@@ -71,7 +66,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Dot {
                     height: DOT_SIZE,
                 },
                 border: Border {
-                    radius: (radius).into(),
+                    radius: radius.into(),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -93,7 +88,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Dot {
         &mut self,
         _tree: &mut Tree,
         _event: &Event,
-        _layout: Layout<'_>,
+        _layout: Layout,
         _cursor: mouse::Cursor,
         _renderer: &Renderer,
         _shell: &mut Shell<'_, Message>,
@@ -105,7 +100,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Dot {
     fn mouse_interaction(
         &self,
         _tree: &Tree,
-        _layout: Layout<'_>,
+        _layout: Layout,
         _cursor: mouse::Cursor,
         _viewport: &Rectangle,
         _renderer: &Renderer,
@@ -123,7 +118,6 @@ where
     }
 }
 
-// Helper function for ease of use
 pub fn dot(timer: u64) -> Dot {
     Dot::new(timer)
 }
