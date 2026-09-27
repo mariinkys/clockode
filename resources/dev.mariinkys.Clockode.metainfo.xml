@@ -88,6 +88,7 @@
                 <p>Added search feature</p>
                 <p>Added new keyboard navigation features to the home screen</p>
                 <p>Added new keyboard shortcuts section on settings screen</p>
+                <p>Improved behavior of numeric fields in Upsert Page</p>
                 <p>Updated dependencies</p>
             </description>
         </release>
