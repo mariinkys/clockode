@@ -6,14 +6,27 @@ use std::{
 };
 
 use iced::{
-    Alignment, Element, Event, Length::{self}, Rectangle, Subscription, Task, event, keyboard, time::Instant, widget::{Column, button, column, container, operation, row, scrollable, stack, text, text_input},
+    Alignment, Element, Event,
+    Length::{self},
+    Rectangle, Subscription, Task, event, keyboard,
+    time::Instant,
+    widget::{
+        Column, button, column, container, operation, row, scrollable, stack, text, text_input,
+    },
 };
 use tracing::{error, info};
 
 use crate::{
     app::{
-        core::{ClockodeDatabase, ClockodeEntry}, utils::{clipboard::{self, AppClipboard}, get_time_until_next_totp_refresh, style, watch_database}, widgets::{Toast, dot},
-    }, config::Config, icons,
+        core::{ClockodeDatabase, ClockodeEntry},
+        utils::{
+            clipboard::{self, AppClipboard},
+            get_time_until_next_totp_refresh, style, watch_database,
+        },
+        widgets::{Toast, dot},
+    },
+    config::Config,
+    icons,
 };
 
 mod settings;
@@ -21,17 +34,13 @@ mod upsert;
 
 const SEARCH_INPUT: &str = "home-search";
 const ENTRIES_SCROLLABLE: &str = "home-entries";
+const SEARCH_DEBOUNCE: Duration = Duration::from_millis(150);
 
 pub struct HomePage {
     config: Arc<Mutex<Config>>,
     clipboard: AppClipboard,
     database: Arc<ClockodeDatabase>,
     state: State,
-    search: Box<Option<String>>,
-    /// Whether the search input currently has keyboard focus
-    search_focused: bool,
-    /// Index (in the filtered list) of the entry highlighted with Tab
-    selected_entry: Option<usize>,
 }
 
 pub enum State {
@@ -40,9 +49,88 @@ pub enum State {
 }
 
 pub enum SubScreen {
-    Home { entries: Vec<ClockodeEntry> },
+    Home(HomeState),
     UpsertPage(upsert::UpsertPage),
     SettingsPage(settings::SettingsPage),
+}
+
+/// State of the home subscreen
+pub struct HomeState {
+    entries: Vec<ClockodeEntry>,
+    /// `None` = collapsed search icon, `Some(query)` = what is typed in the search box
+    search: Option<String>,
+    /// Whether the search input currently has keyboard focus
+    search_focused: bool,
+    /// Index (in the filtered list) of the entry highlighted with Tab
+    selected_entry: Option<usize>,
+    /// The query the entry list is currently filtered by (lags `search` by the debounce)
+    applied_search: Option<String>,
+    /// Bumped on every keystroke so stale debounce timers can be ignored
+    search_generation: u64,
+}
+
+impl HomeState {
+    fn new(entries: Vec<ClockodeEntry>) -> Self {
+        Self {
+            entries,
+            search: None,
+            search_focused: false,
+            selected_entry: None,
+            applied_search: None,
+            search_generation: 0,
+        }
+    }
+
+    /// Entries matching the applied search query
+    fn filtered(&self) -> Vec<&ClockodeEntry> {
+        filter_entries(&self.entries, self.applied_search.as_deref())
+    }
+
+    /// The entry currently highlighted with Tab, if any
+    fn highlighted_entry(&self) -> Option<&ClockodeEntry> {
+        let index = self.selected_entry?;
+        self.filtered().get(index).copied()
+    }
+
+    /// Clears the search and collapses it back to an icon
+    fn close_search(&mut self) {
+        self.search = None;
+        self.applied_search = None;
+        // Invalidate any debounce timer still pending
+        self.search_generation = self.search_generation.wrapping_add(1);
+        self.search_focused = false;
+        self.selected_entry = None;
+    }
+
+    /// Moves the Tab highlight forwards or backwards (wrapping) and scrolls it into view
+    fn move_selection(&mut self, forward: bool) -> Task<Message> {
+        let count = self.filtered().len();
+
+        if count == 0 {
+            self.selected_entry = None;
+            return Task::none();
+        }
+
+        let index = match (self.selected_entry, forward) {
+            (None, true) => 0,
+            (None, false) => count - 1,
+            (Some(index), true) => (index + 1) % count,
+            (Some(index), false) => (index + count - 1) % count,
+        };
+
+        self.selected_entry = Some(index);
+
+        let scroll = scroll_to_entry(index);
+
+        // Highlighting an entry takes over from the search input, so keys like
+        // E and Enter act on the entry instead of being typed
+        if self.search_focused {
+            self.search_focused = false;
+            Task::batch([scroll, unfocus_search()])
+        } else {
+            scroll
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -73,15 +161,17 @@ pub enum Message {
     /// The database changed (watcher)
     DatabaseChangedOnDisk,
 
-    /// Expand the search icon into a text input
+    /// Expand the search icon into a text input (or refocus it if already open)
     OpenSearch,
     /// The search query changed
     SearchChanged(String),
+    /// Debounce timer fired; apply the query if nothing was typed since
+    ApplySearch(u64),
     /// Clear the search and collapse it back to an icon
     CloseSearch,
-    /// Escape was pressed while the search is open
+    /// Escape was pressed on the home screen
     SearchEscape,
-    /// Something that may change focus happened (click, Tab), re-check it
+    /// Something that may change focus happened (click), re-check it
     CheckSearchFocus,
     /// Result of checking whether the search input is focused
     SearchFocusChanged(bool),
@@ -90,7 +180,7 @@ pub enum Message {
     SelectNextEntry,
     /// Shift+Tab: highlight the previous entry
     SelectPreviousEntry,
-    /// Enter: copy the code of the highlighted entry
+    /// Enter / C: copy the code of the highlighted entry
     CopySelectedEntry,
     /// E: open the edit page for the highlighted entry
     EditSelectedEntry,
@@ -120,9 +210,6 @@ impl HomePage {
                 clipboard: AppClipboard::Pending,
                 database,
                 state: State::Loading,
-                search: Box::from(None),
-                search_focused: false,
-                selected_entry: None,
             },
             Task::batch([
                 Task::perform(
@@ -138,10 +225,13 @@ impl HomePage {
         let content: Element<Message> = match &self.state {
             State::Loading => text("Loading...").into(),
             State::Ready { subscreen } => match subscreen {
-                SubScreen::Home { entries } => {
-                    let search = self.search.as_deref();
-                    let header = header_view(entries.len(), search);
-                    let content = content_view(entries, search, self.selected_entry);
+                SubScreen::Home(home) => {
+                    let header = header_view(home.entries.len(), home.search.as_deref());
+                    let content = content_view(
+                        &home.entries,
+                        home.applied_search.as_deref(),
+                        home.selected_entry,
+                    );
 
                     container(column![header, content])
                         .padding(5.)
@@ -185,9 +275,8 @@ impl HomePage {
             }
             Message::EntriesLoaded(result) => match result {
                 Ok(entries) => {
-                    self.selected_entry = None;
                     self.state = State::Ready {
-                        subscreen: SubScreen::Home { entries },
+                        subscreen: SubScreen::Home(HomeState::new(entries)),
                     };
                     Action::None
                 }
@@ -313,70 +402,116 @@ impl HomePage {
                     return Action::None;
                 }
 
-                let State::Ready { subscreen, .. } = &mut self.state else {
+                if self.home().is_none() {
                     return Action::None;
-                };
-
-                let SubScreen::Home { entries: _ } = subscreen else {
-                    return Action::None;
-                };
+                }
 
                 self.update(Message::LoadEntries, now)
             }
 
             Message::OpenSearch => {
-                if self.search.is_none() {
-                    self.search = Box::from(Some(String::new()));
+                let Some(home) = self.home_mut() else {
+                    return Action::None;
+                };
+
+                if home.search.is_none() {
+                    home.search = Some(String::new());
                 }
 
-                self.search_focused = true;
-                self.selected_entry = None;
+                home.search_focused = true;
+                home.selected_entry = None;
                 Action::Run(operation::focus(SEARCH_INPUT))
             }
             Message::SearchChanged(query) => {
-                if let Some(search) = &mut *self.search {
-                    *search = query;
-                    self.search_focused = true;
-                    self.selected_entry = None;
+                let Some(home) = self.home_mut() else {
+                    return Action::None;
+                };
+
+                let Some(search) = &mut home.search else {
+                    return Action::None;
+                };
+
+                *search = query;
+                let is_empty = search.trim().is_empty();
+
+                home.search_focused = true;
+                home.selected_entry = None;
+                home.search_generation = home.search_generation.wrapping_add(1);
+
+                if is_empty {
+                    home.applied_search = None;
+                    return Action::None;
                 }
+
+                let generation = home.search_generation;
+
+                Action::Run(Task::perform(
+                    async move {
+                        smol::Timer::after(SEARCH_DEBOUNCE).await;
+                        generation
+                    },
+                    Message::ApplySearch,
+                ))
+            }
+            Message::ApplySearch(generation) => {
+                let Some(home) = self.home_mut() else {
+                    return Action::None;
+                };
+
+                // A newer keystroke arrived while this timer was waiting
+                if generation != home.search_generation {
+                    return Action::None;
+                }
+
+                home.applied_search = home.search.clone();
+                home.selected_entry = None;
                 Action::None
             }
             Message::CloseSearch => {
-                self.search = Box::from(None);
-                self.search_focused = false;
-                self.selected_entry = None;
+                if let Some(home) = self.home_mut() {
+                    home.close_search();
+                }
                 Action::None
             }
             Message::SearchEscape => {
-                if self.search_focused {
-                    self.update(Message::CloseSearch, now)
-                } else if self.selected_entry.is_some() {
-                    self.selected_entry = None;
-                    Action::None
-                } else {
-                    Action::None
+                if let Some(home) = self.home_mut() {
+                    if home.search_focused {
+                        home.close_search();
+                    } else {
+                        home.selected_entry = None;
+                    }
                 }
+                Action::None
             }
             Message::CheckSearchFocus => {
-                if self.search.is_none() {
+                if self.home().is_none_or(|home| home.search.is_none()) {
                     return Action::None;
                 }
+
                 Action::Run(operation::is_focused(SEARCH_INPUT).map(Message::SearchFocusChanged))
             }
             Message::SearchFocusChanged(focused) => {
-                self.search_focused = focused;
-                // Clicking into the search takes over from the entry highlight
-                if focused {
-                    self.selected_entry = None;
+                if let Some(home) = self.home_mut() {
+                    home.search_focused = focused;
+
+                    // Clicking into the search takes over from the entry highlight
+                    if focused {
+                        home.selected_entry = None;
+                    }
                 }
                 Action::None
             }
 
-            Message::SelectNextEntry => self.move_selection(true),
-            Message::SelectPreviousEntry => self.move_selection(false),
+            Message::SelectNextEntry => self
+                .home_mut()
+                .map_or(Action::None, |home| Action::Run(home.move_selection(true))),
+            Message::SelectPreviousEntry => self
+                .home_mut()
+                .map_or(Action::None, |home| Action::Run(home.move_selection(false))),
             Message::CopySelectedEntry => {
                 let Some(code) = self
-                    .highlighted_entry()
+                    .home()
+                    .and_then(HomeState::highlighted_entry)
                     .map(|entry| entry.totp.generate_current().to_string())
                 else {
                     return Action::None;
@@ -385,7 +520,11 @@ impl HomePage {
                 self.update(Message::CopyToClipboard(code), now)
             }
             Message::EditSelectedEntry => {
-                let Some(entry) = self.highlighted_entry().cloned() else {
+                let Some(entry) = self
+                    .home()
+                    .and_then(HomeState::highlighted_entry)
+                    .cloned()
+                else {
                     return Action::None;
                 };
 
@@ -400,7 +539,7 @@ impl HomePage {
 
         let keys = match &self.state {
             State::Ready {
-                subscreen: SubScreen::Home { .. },
+                subscreen: SubScreen::Home(_),
             } => event::listen_with(|event, status, _window| match event {
                 Event::Keyboard(keyboard::Event::KeyPressed {
                     key: keyboard::Key::Named(keyboard::key::Named::Tab),
@@ -442,8 +581,8 @@ impl HomePage {
         let screen_subscription = match &self.state {
             State::Loading => Subscription::none(),
             State::Ready { subscreen } => match subscreen {
-                SubScreen::Home { entries } => {
-                    if entries.is_empty() {
+                SubScreen::Home(home) => {
+                    if home.entries.is_empty() {
                         Subscription::none()
                     } else {
                         iced::time::every(Duration::from_secs(1)).map(|_| Message::RefreshCodes)
@@ -461,55 +600,24 @@ impl HomePage {
         Subscription::batch([screen_subscription, watcher, keys])
     }
 
-    /// Moves the Tab highlight forwards or backwards (wrapping) and scrolls it into view
-    fn move_selection(&mut self, forward: bool) -> Action {
-        let State::Ready {
-            subscreen: SubScreen::Home { entries },
-        } = &self.state
-        else {
-            return Action::None;
-        };
-
-        let count = filter_entries(entries, self.search.as_deref()).len();
-
-        if count == 0 {
-            self.selected_entry = None;
-            return Action::None;
-        }
-
-        let index = match (self.selected_entry, forward) {
-            (None, true) => 0,
-            (None, false) => count - 1,
-            (Some(index), true) => (index + 1) % count,
-            (Some(index), false) => (index + count - 1) % count,
-        };
-
-        self.selected_entry = Some(index);
-
-        let scroll = scroll_to_entry(index);
-
-        if self.search_focused {
-            self.search_focused = false;
-            Action::Run(Task::batch([scroll, unfocus_search()]))
-        } else {
-            Action::Run(scroll)
+    /// The home subscreen state, if it's the one currently shown
+    fn home(&self) -> Option<&HomeState> {
+        match &self.state {
+            State::Ready {
+                subscreen: SubScreen::Home(home),
+            } => Some(home),
+            _ => None,
         }
     }
 
-    /// The entry currently highlighted with Tab, if any
-    fn highlighted_entry(&self) -> Option<&ClockodeEntry> {
-        let State::Ready {
-            subscreen: SubScreen::Home { entries },
-        } = &self.state
-        else {
-            return None;
-        };
-
-        let index = self.selected_entry?;
-
-        filter_entries(entries, self.search.as_deref())
-            .get(index)
-            .copied()
+    /// The home subscreen state (mutable), if it's the one currently shown
+    fn home_mut(&mut self) -> Option<&mut HomeState> {
+        match &mut self.state {
+            State::Ready {
+                subscreen: SubScreen::Home(home),
+            } => Some(home),
+            _ => None,
+        }
     }
 }
 
@@ -609,13 +717,13 @@ fn content_view<'a>(
         .center(Length::Fill)
         .into()
     } else if filtered.is_empty() {
-            container(
-                text("No entries match your search")
-                    .size(style::font_size::BODY)
-                    .style(style::muted_text),
-            )
-            .center(Length::Fill)
-            .into()
+        container(
+            text("No entries match your search")
+                .size(style::font_size::BODY)
+                .style(style::muted_text),
+        )
+        .center(Length::Fill)
+        .into()
     } else {
         let entries_list = filtered.into_iter().enumerate().fold(
             Column::new()
@@ -636,7 +744,8 @@ fn content_view<'a>(
                             row![
                                 text(format!(
                                     "{} digits · {}s",
-                                    entry.totp.digits(), time_remaining
+                                    entry.totp.digits(),
+                                    time_remaining
                                 ))
                                 .size(style::font_size::SMALL)
                                 .style(style::muted_text),
@@ -680,7 +789,10 @@ fn content_view<'a>(
             },
         );
 
-        scrollable(entries_list).height(Length::Fill).id(ENTRIES_SCROLLABLE).into()
+        scrollable(entries_list)
+            .height(Length::Fill)
+            .id(ENTRIES_SCROLLABLE)
+            .into()
     }
 }
 
