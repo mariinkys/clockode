@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use iced::{
-    Alignment, Element, Length::{self}, Subscription, Task, event, keyboard::{self, Key, Modifiers, key::Named}, time::Instant, widget::{
+    Alignment, Element,
+    Length::{self},
+    Subscription, Task, event,
+    keyboard::{self, Key, Modifiers, key::Named},
+    time::Instant,
+    widget::{
         button, column, container, image,
         operation::{focus_next, focus_previous},
         pick_list, row, scrollable, space, stack, text, text_input,
@@ -25,6 +30,10 @@ mod scan_qr;
 
 pub struct UpsertPage {
     entry: InputableClockodeEntry,
+    /// Raw text of the Digits input
+    digits_input: String,
+    /// Raw text of the Period input
+    step_input: String,
     show_qr: bool,
     subscreen: SubScreen,
 }
@@ -102,6 +111,8 @@ impl UpsertPage {
 
         (
             Self {
+                digits_input: number_text(u64::from(entry.digits)),
+                step_input: number_text(entry.step),
                 entry,
                 show_qr: false,
                 subscreen: SubScreen::UpsertPage,
@@ -114,7 +125,12 @@ impl UpsertPage {
         match &self.subscreen {
             SubScreen::UpsertPage => {
                 let header = header_view(&self.entry);
-                let content = upsert_entry_view(&self.entry, self.show_qr);
+                let content = upsert_entry_view(
+                    &self.entry,
+                    &self.digits_input,
+                    &self.step_input,
+                    self.show_qr,
+                );
 
                 container(
                     container(column![header, content])
@@ -149,22 +165,12 @@ impl UpsertPage {
                     TOTPEntryInput::UpdateName(v) => self.entry.name = v,
                     TOTPEntryInput::UpdateAlgorithm(v) => self.entry.algorithm = v,
                     TOTPEntryInput::UpdateDigits(v) => {
-                        if !v.is_empty() {
-                            if let Ok(parsed) = v.parse::<u8>() {
-                                self.entry.digits = parsed;
-                            }
-                        } else {
-                            self.entry.digits = 0;
-                        }
+                        self.digits_input = sanitize_number(&v, 2);
+                        self.entry.digits = self.digits_input.parse().unwrap_or(0);
                     }
                     TOTPEntryInput::UpdateStep(v) => {
-                        if !v.is_empty() {
-                            if let Ok(parsed) = v.parse::<u64>() {
-                                self.entry.step = parsed;
-                            }
-                        } else {
-                            self.entry.step = 0;
-                        }
+                        self.step_input = sanitize_number(&v, 6);
+                        self.entry.step = self.step_input.parse().unwrap_or(0);
                     }
                     TOTPEntryInput::UpdateSecret(v) => self.entry.secret = v,
                     TOTPEntryInput::UpdateIssuer(v) => {
@@ -227,7 +233,7 @@ impl UpsertPage {
                             let conv_result = InputableClockodeEntry::try_from(value);
                             match conv_result {
                                 Ok(entry) => {
-                                    self.entry = entry;
+                                    self.set_entry(entry);
                                     Action::None
                                 }
                                 Err(e) => Action::AddToast(Toast::error_toast(e)),
@@ -264,7 +270,7 @@ impl UpsertPage {
                         Action::AddToast(toast)
                     }
                     scan_qr::Action::EntryDetected(entry) => {
-                        self.entry = entry;
+                        self.set_entry(entry);
                         self.subscreen = SubScreen::UpsertPage;
                         Action::AddToast(Toast::success_toast(format!(
                             "Code detected correctly for: {}",
@@ -295,6 +301,13 @@ impl UpsertPage {
                 qr_scan_page.subscription(now).map(Message::ScanQrPage)
             }
         }
+    }
+
+    /// Replaces the edited entry and re-syncs the numeric input texts
+    fn set_entry(&mut self, entry: InputableClockodeEntry) {
+        self.digits_input = number_text(u64::from(entry.digits));
+        self.step_input = number_text(entry.step);
+        self.entry = entry;
     }
 }
 
@@ -453,6 +466,8 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
 
 fn upsert_entry_view<'a>(
     entry: &'a InputableClockodeEntry,
+    digits_input: &'a str,
+    step_input: &'a str,
     show_qr_code: bool,
 ) -> Element<'a, Message> {
     let button_text = if entry.uuid.is_some() {
@@ -532,7 +547,7 @@ fn upsert_entry_view<'a>(
                         text("Digits")
                             .size(style::font_size::BODY)
                             .style(style::label_text),
-                        text_input("6 or 8", entry.digits.to_string())
+                        text_input("6 or 8", digits_input)
                             .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateDigits(v)))
                             .padding(12)
                             .size(style::font_size::MEDIUM)
@@ -543,7 +558,7 @@ fn upsert_entry_view<'a>(
                         text("Period")
                             .size(style::font_size::BODY)
                             .style(style::label_text),
-                        text_input("30", entry.step.to_string())
+                        text_input("30", step_input)
                             .on_input(|v| Message::InputUpdated(TOTPEntryInput::UpdateStep(v)))
                             .padding(12)
                             .size(style::font_size::MEDIUM)
@@ -623,6 +638,24 @@ fn upsert_entry_view<'a>(
         stack![form_view, qr_modal].into()
     } else {
         form_view.into()
+    }
+}
+
+/// Keeps only ASCII digits, up to `max_len` of them
+fn sanitize_number(value: &str, max_len: usize) -> String {
+    value
+        .chars()
+        .filter(char::is_ascii_digit)
+        .take(max_len)
+        .collect()
+}
+
+/// Text shown for a number field; 0 means "not set", so it shows as empty
+fn number_text(value: u64) -> String {
+    if value == 0 {
+        String::new()
+    } else {
+        value.to_string()
     }
 }
 
