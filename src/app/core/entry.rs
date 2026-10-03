@@ -68,7 +68,15 @@ impl TryFrom<Entry> for ClockodeEntry {
             .to_string();
 
         // Don't use build() because it enforces validation and some secrets (ej: microsoft)
-        let totp_result = totp_rs::Builder::new().with_algorithm(algorithm).with_digits(digits).with_skew(0).with_step_duration(period).with_secret(secret_bytes).with_issuer(issuer).with_account_name(account_name).build_noncompliant();
+        let totp_result = totp_rs::Builder::new()
+            .with_algorithm(algorithm)
+            .with_digits(digits)
+            .with_skew(0)
+            .with_step_duration(period)
+            .with_secret(secret_bytes)
+            .with_issuer(issuer)
+            .with_account_name(account_name)
+            .build_noncompliant();
 
         Ok(ClockodeEntry {
             id: Some(id),
@@ -106,11 +114,13 @@ pub fn update_clockode_entry_in_keepass(value: ClockodeEntry, entry: &mut EntryM
     );
     entry.fields.insert(
         CUSTOM_ISSUER_KEY.to_string(),
-        Value::Unprotected(value
-            .totp
-            .issuer()
-            .unwrap_or(value.name.as_str())
-            .to_string()),
+        Value::Unprotected(
+            value
+                .totp
+                .issuer()
+                .unwrap_or(value.name.as_str())
+                .to_string(),
+        ),
     );
 
     entry.fields.insert(

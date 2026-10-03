@@ -80,7 +80,7 @@ fn save_database_atomic(
 
         // capture the mtime the destination file will have after the rename, tthis is what lets callers recognize (and ignore) filesystem-watcher events caused by this very save.
         f.metadata().and_then(|m| m.modified()).ok()
-    };  // drop file handle
+    }; // drop file handle
 
     // replace the old database with the new one
     if let Err(e) = std::fs::rename(&tmp_path, path) {

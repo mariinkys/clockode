@@ -6,14 +6,25 @@ use std::{
 };
 
 use iced::{
-    Alignment, Color, Element, Length::{self}, Subscription, Task, Theme, event, keyboard::{self, Key, key::Named}, time::Instant, widget::{Column, Row, button, center, column, container, mouse_area, opaque, pick_list, row, scrollable, space, stack, text},
+    Alignment, Color, Element,
+    Length::{self},
+    Subscription, Task, Theme, Widget, event,
+    keyboard::{self, Key, key::Named},
+    time::Instant,
+    widget::{
+        Column, Row, button, center, column, container, mouse_area, opaque, pick_list, row,
+        scrollable, space, stack, text,
+    },
 };
 use rfd::{AsyncFileDialog, FileHandle};
 use tracing::error;
 
 use crate::{
     APP_ID,
-    app::{utils::style, widgets::Toast},
+    app::{
+        utils::{ImportType, style},
+        widgets::{Toast, menu_button::menu_button},
+    },
     config::{ColockodeTheme, Config},
     icons,
 };
@@ -35,7 +46,7 @@ pub enum Message {
     /// Configuration Saved
     ConfigurationSaved(Result<(), anywho::Error>),
     /// Open the File Dialog to select a file to import
-    OpenImportDialog,
+    OpenImportDialog(ImportType),
     /// Open the File Dialog to select where to export the file
     OpenExportDialog,
     /// Import Path Selected Callback (after dialog)
@@ -67,10 +78,16 @@ pub enum Action {
 
 impl SettingsPage {
     pub fn new(config: Arc<Mutex<Config>>) -> (Self, Task<Message>) {
-        (Self { config, show_shortcuts: false }, Task::none())
+        (
+            Self {
+                config,
+                show_shortcuts: false,
+            },
+            Task::none(),
+        )
     }
 
-    pub fn view(&self, _now: Instant) -> iced::Element<'_, Message> {
+    pub fn view(&self, _now: Instant) -> impl Widget<Message> {
         let header = header_view();
         let content = settings_view(&self.config);
 
@@ -83,9 +100,9 @@ impl SettingsPage {
         .center(Length::Fill);
 
         if self.show_shortcuts {
-            modal(page, shortcuts_view(), Message::HideShortcuts)
+            modal(page, shortcuts_view(), Message::HideShortcuts).boxed()
         } else {
-            page.into()
+            page.boxed()
         }
     }
 
@@ -117,7 +134,7 @@ impl SettingsPage {
                 Ok(_) => Action::None,
                 Err(e) => Action::AddToast(Toast::error_toast(e)),
             },
-            Message::OpenImportDialog => Action::Run(Task::perform(
+            Message::OpenImportDialog(import_type) => Action::Run(Task::perform(
                 async move {
                     AsyncFileDialog::new()
                         .add_filter("txt", &["txt"])
@@ -175,7 +192,7 @@ impl SettingsPage {
 }
 
 /// View of the header of this screen
-fn header_view<'a>() -> Element<'a, Message> {
+fn header_view() -> impl Widget<Message> {
     row![
         // Back button
         button(
@@ -202,10 +219,9 @@ fn header_view<'a>() -> Element<'a, Message> {
     .padding(10)
     .align_y(iced::Alignment::Center)
     .width(Length::Fill)
-    .into()
 }
 
-fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
+fn settings_view(config: &Arc<Mutex<Config>>) -> impl Widget<Message> {
     let settings_form = column![
         // Export and Import buttons in a row
         column![
@@ -231,7 +247,7 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
                 .padding(12)
                 .width(Length::Fill)
                 .style(style::primary_button),
-                button(
+                menu_button(
                     row![
                         icons::get_icon("document-import-symbolic", 21).style(|theme, _status| {
                             let primary_style =
@@ -243,9 +259,11 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
                         text("Import").size(style::font_size::MEDIUM)
                     ]
                     .spacing(style::spacing::TINY)
-                    .align_y(Alignment::Center)
+                    .align_y(Alignment::Center),
+                    ImportType::ALL,
+                    ImportType::to_string
                 )
-                .on_press(Message::OpenImportDialog)
+                .on_select(Message::OpenImportDialog)
                 .padding(12)
                 .width(Length::Fill)
                 .style(style::primary_button),
@@ -336,7 +354,6 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
     )
     .width(Length::Fill)
     .height(Length::Fill)
-    .into()
 }
 
 //
@@ -351,9 +368,7 @@ pub enum Hotkey {
 fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> Option<Message> {
     #[allow(clippy::collapsible_match)]
     match event {
-        event::Event::Keyboard(keyboard::Event::KeyPressed {
-            key, ..
-        }) => match key {
+        event::Event::Keyboard(keyboard::Event::KeyPressed { key, .. }) => match key {
             Key::Named(Named::Escape) => Some(Message::Hotkey(Hotkey::Esc)),
             _ => None,
         },
@@ -376,30 +391,60 @@ const SHORTCUT_SECTIONS: &[(&str, &[Shortcut])] = &[
     (
         "Home Screen",
         &[
-            Shortcut { keys: &[&["Tab"]], description: "Highlight Next Entry" },
-            Shortcut { keys: &[&["Shift", "Tab"]], description: "Highlight Previous Entry" },
-            Shortcut { keys: &[&["Enter"], &["C"]], description: "Copy Highlighted Code" },
-            Shortcut { keys: &[&["E"]], description: "Edit Highlighted Entry" },
-            Shortcut { keys: &[&["S"]], description: "Open Search" },
-            Shortcut { keys: &[&["Esc"]], description: "Close Search or Clear Highlight" },
+            Shortcut {
+                keys: &[&["Tab"]],
+                description: "Highlight Next Entry",
+            },
+            Shortcut {
+                keys: &[&["Shift", "Tab"]],
+                description: "Highlight Previous Entry",
+            },
+            Shortcut {
+                keys: &[&["Enter"], &["C"]],
+                description: "Copy Highlighted Code",
+            },
+            Shortcut {
+                keys: &[&["E"]],
+                description: "Edit Highlighted Entry",
+            },
+            Shortcut {
+                keys: &[&["S"]],
+                description: "Open Search",
+            },
+            Shortcut {
+                keys: &[&["Esc"]],
+                description: "Close Search or Clear Highlight",
+            },
         ],
     ),
     (
         "Add & Edit Entry Screens",
         &[
-            Shortcut { keys: &[&["Tab"]], description: "Next Field" },
-            Shortcut { keys: &[&["Shift", "Tab"]], description: "Previous Field" },
-            Shortcut { keys: &[&["Esc"]], description: "Go Back" },
+            Shortcut {
+                keys: &[&["Tab"]],
+                description: "Next Field",
+            },
+            Shortcut {
+                keys: &[&["Shift", "Tab"]],
+                description: "Previous Field",
+            },
+            Shortcut {
+                keys: &[&["Esc"]],
+                description: "Go Back",
+            },
         ],
     ),
     (
         "Settings Screen",
-        &[Shortcut { keys: &[&["Esc"]], description: "Go Back" }],
+        &[Shortcut {
+            keys: &[&["Esc"]],
+            description: "Go Back",
+        }],
     ),
 ];
 
 /// The keyboard shortcuts dialog card
-fn shortcuts_view<'a>() -> Element<'a, Message> {
+fn shortcuts_view() -> impl Widget<Message> {
     let title = row![
         text("Keyboard Shortcuts")
             .size(style::font_size::LARGE)
@@ -415,21 +460,23 @@ fn shortcuts_view<'a>() -> Element<'a, Message> {
     ]
     .align_y(Alignment::Center);
 
-    let sections = SHORTCUT_SECTIONS.iter().map(|(name, shortcuts)| -> Element<'a, Message> {
-        column![
-            text(*name)
-                .size(style::font_size::SMALL)
-                .font(iced::Font {
-                    weight: iced::font::Weight::Bold,
-                    ..iced::Font::DEFAULT
-                })
-                .style(style::label_text),
-            Column::with_children(shortcuts.iter().map(shortcut_row))
-                .spacing(style::spacing::SMALL),
-        ]
-        .spacing(style::spacing::SMALL)
-        .into()
-    });
+    let sections = SHORTCUT_SECTIONS
+        .iter()
+        .map(|(name, shortcuts)| -> Element<'_, Message> {
+            column![
+                text(*name)
+                    .size(style::font_size::SMALL)
+                    .font(iced::Font {
+                        weight: iced::font::Weight::Bold,
+                        ..iced::Font::DEFAULT
+                    })
+                    .style(style::label_text),
+                Column::with_children(shortcuts.iter().map(shortcut_row))
+                    .spacing(style::spacing::SMALL),
+            ]
+            .spacing(style::spacing::SMALL)
+            .boxed()
+        });
 
     container(
         column![
@@ -441,29 +488,43 @@ fn shortcuts_view<'a>() -> Element<'a, Message> {
     .padding(20)
     .width(Length::Fill.max(420.0))
     .style(style::card_container)
-    .into()
 }
 
 /// One line of the dialog: description on the left, keycaps on the right
 fn shortcut_row<'a>(shortcut: &Shortcut) -> Element<'a, Message> {
-    let mut keys = Row::new()
+    let mut keys: Row<Element<'a, Message>> = Row::new()
         .spacing(style::spacing::TINY)
         .align_y(Alignment::Center);
 
     for (i, combo) in shortcut.keys.iter().enumerate() {
         if i > 0 {
-            keys = keys.push(text("or").size(style::font_size::SMALL).style(style::muted_text));
+            keys = keys.push(
+                text("or")
+                    .size(style::font_size::SMALL)
+                    .style(style::muted_text)
+                    .boxed(),
+            );
         }
 
         for (j, key) in combo.iter().enumerate() {
             if j > 0 {
-                keys = keys.push(text("+").size(style::font_size::SMALL).style(style::muted_text));
+                keys = keys.push(
+                    text("+")
+                        .size(style::font_size::SMALL)
+                        .style(style::muted_text)
+                        .boxed(),
+                );
             }
 
             keys = keys.push(
-                container(text(*key).size(style::font_size::SMALL).font(iced::Font::MONOSPACE))
-                    .padding([2, 8])
-                    .style(style::keycap),
+                container(
+                    text(*key)
+                        .size(style::font_size::SMALL)
+                        .font(iced::Font::MONOSPACE),
+                )
+                .padding([2, 8])
+                .style(style::keycap)
+                .boxed(),
             );
         }
     }
@@ -476,28 +537,33 @@ fn shortcut_row<'a>(shortcut: &Shortcut) -> Element<'a, Message> {
     ]
     .spacing(style::spacing::MEDIUM)
     .align_y(Alignment::Center)
-    .into()
+    .boxed()
 }
 
 /// Shows `content` centered over a dimmed `base`; clicking the backdrop sends `on_blur`
 fn modal<'a>(
-    base: impl Into<Element<'a, Message>>,
-    content: impl Into<Element<'a, Message>>,
+    base: impl Widget<Message> + 'a,
+    content: impl Widget<Message> + 'a,
     on_blur: Message,
-) -> Element<'a, Message> {
+) -> impl Widget<Message> {
     stack![
-        base.into(),
+        base,
         opaque(
             mouse_area(
-                center(opaque(container(content).padding(style::spacing::LARGE))).style(
-                    |_theme| container::Style {
-                        background: Some(Color { a: 0.6, ..Color::BLACK }.into()),
+                center(opaque(container(content).padding(style::spacing::LARGE))).style(|_theme| {
+                    container::Style {
+                        background: Some(
+                            Color {
+                                a: 0.6,
+                                ..Color::BLACK
+                            }
+                            .into(),
+                        ),
                         ..container::Style::default()
                     }
-                )
+                })
             )
             .on_press(on_blur)
         )
     ]
-    .into()
 }

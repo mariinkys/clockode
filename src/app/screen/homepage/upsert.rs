@@ -3,7 +3,7 @@
 use iced::{
     Alignment, Element,
     Length::{self},
-    Subscription, Task, event,
+    Subscription, Task, Widget, event,
     keyboard::{self, Key, Modifiers, key::Named},
     time::Instant,
     widget::{
@@ -121,7 +121,7 @@ impl UpsertPage {
         )
     }
 
-    pub fn view(&self, now: Instant) -> iced::Element<'_, Message> {
+    pub fn view(&self, now: Instant) -> impl Widget<Message> {
         match &self.subscreen {
             SubScreen::UpsertPage => {
                 let header = header_view(&self.entry);
@@ -139,10 +139,12 @@ impl UpsertPage {
                         .height(Length::Fill),
                 )
                 .center(Length::Fill)
-                .into()
+                .boxed()
             }
             #[cfg(unix)]
-            SubScreen::ScanQrPage(qr_scan_page) => qr_scan_page.view(now).map(Message::ScanQrPage),
+            SubScreen::ScanQrPage(qr_scan_page) => {
+                qr_scan_page.view(now).map(Message::ScanQrPage).boxed()
+            }
         }
     }
 
@@ -312,7 +314,7 @@ impl UpsertPage {
 }
 
 /// View of the header of this screen
-fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
+fn header_view(entry: &InputableClockodeEntry) -> impl Widget<Message> {
     iced::widget::responsive(move |size| {
         let (title, subtitle) = if entry.uuid.is_some() {
             ("Edit Entry", "Modify your TOTP entry")
@@ -352,7 +354,7 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
                 .style(style::primary_button)
                 .padding(8)
                 .on_press(Message::OpenQrFileSelection)
-                .into(),
+                .boxed(),
             );
 
             #[cfg(unix)]
@@ -375,7 +377,7 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
                 .style(style::primary_button)
                 .padding(8)
                 .on_press(Message::OpenScanQrPage)
-                .into(),
+                .boxed(),
             );
         } else {
             // Only for existing entries
@@ -398,7 +400,7 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
                 .style(style::danger_button)
                 .padding(8)
                 .on_press(Message::Delete)
-                .into(),
+                .boxed(),
                 button(
                     row![
                         icons::get_icon("qr-symbolic", 21).style(|theme, _status| {
@@ -417,16 +419,16 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
                 .style(style::success_button)
                 .padding(8)
                 .on_press(Message::ToggleShowQRCode)
-                .into(),
+                .boxed(),
             ]);
         }
 
         let buttons_layout: Element<Message> = if mobile_view && buttons.len() > 1 {
             // buttons vertically on narrow screens
-            column(buttons).spacing(style::spacing::SMALL).into()
+            column(buttons).spacing(style::spacing::SMALL).boxed()
         } else {
             // buttons horizontal on wide screens
-            row(buttons).spacing(style::spacing::LARGE).into()
+            row(buttons).spacing(style::spacing::LARGE).boxed()
         };
 
         row![
@@ -461,7 +463,6 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
         .width(Length::Fill)
     })
     .height(Length::Shrink)
-    .into()
 }
 
 fn upsert_entry_view<'a>(
@@ -598,7 +599,7 @@ fn upsert_entry_view<'a>(
             Ok(bytes) => image(image::Handle::from_bytes(bytes.to_owned()))
                 .width(Length::Fixed(400.0))
                 .height(Length::Fixed(400.0))
-                .into(),
+                .boxed(),
             Err(e) => column![
                 icons::get_icon("dialog-error-symbolic", 48),
                 text("Failed to generate QR code").size(style::font_size::TITLE),
@@ -608,7 +609,7 @@ fn upsert_entry_view<'a>(
             ]
             .spacing(style::spacing::MEDIUM)
             .align_x(iced::Alignment::Center)
-            .into(),
+            .boxed(),
         };
 
         // QR code overlay
@@ -635,9 +636,9 @@ fn upsert_entry_view<'a>(
         .style(style::entry_card)
         .center(Length::Fill);
 
-        stack![form_view, qr_modal].into()
+        stack![form_view, qr_modal].boxed()
     } else {
-        form_view.into()
+        form_view.boxed()
     }
 }
 
