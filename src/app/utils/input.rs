@@ -67,7 +67,15 @@ impl TryFrom<InputableClockodeEntry> for ClockodeEntry {
         let entry = Self {
             id: value.uuid,
             name: value.name,
-            totp: totp_rs::Builder::new().with_algorithm(value.algorithm).with_digits(value.digits).with_skew(0).with_step_duration(value.step).with_secret(secret_bytes).with_issuer(value.issuer).with_account_name(value.account_name).build_noncompliant()
+            totp: totp_rs::Builder::new()
+                .with_algorithm(value.algorithm)
+                .with_digits(value.digits)
+                .with_skew(0)
+                .with_step_duration(value.step)
+                .with_secret(secret_bytes)
+                .with_issuer(value.issuer)
+                .with_account_name(value.account_name)
+                .build_noncompliant(),
         };
 
         Ok(entry)
@@ -146,8 +154,15 @@ impl InputableClockodeEntry {
             .map_err(|e| anywho!("Failed to decode TOTP secret from KeePass entry: {}", e))?;
         let secret_bytes: &[u8] = secret.as_bytes();
 
-        let totp = totp_rs::Builder::new().with_algorithm(self.algorithm).with_digits(self.digits).with_skew(0).with_step_duration(self.step).with_secret(secret_bytes).with_issuer(self.issuer.clone()).with_account_name(self.account_name.clone()).build_noncompliant();
-
+        let totp = totp_rs::Builder::new()
+            .with_algorithm(self.algorithm)
+            .with_digits(self.digits)
+            .with_skew(0)
+            .with_step_duration(self.step)
+            .with_secret(secret_bytes)
+            .with_issuer(self.issuer.clone())
+            .with_account_name(self.account_name.clone())
+            .build_noncompliant();
 
         let qr = totp
             .to_qr_png()

@@ -28,21 +28,19 @@ fn watch_stream(db_path: PathBuf) -> impl Stream<Item = ()> {
             error!("Database path has no parent directory, not watching");
             return;
         };
-        let file_name: Option<OsString> =
-            db_path.file_name().map(std::ffi::OsStr::to_os_string);
+        let file_name: Option<OsString> = db_path.file_name().map(std::ffi::OsStr::to_os_string);
 
         let (tx, mut rx) = futures::channel::mpsc::unbounded();
 
-        let mut debouncer =
-            match new_debouncer(DEBOUNCE, None, move |res: DebounceEventResult| {
-                let _ = tx.unbounded_send(res);
-            }) {
-                Ok(debouncer) => debouncer,
-                Err(e) => {
-                    error!("Failed to create filesystem watcher: {e}");
-                    return;
-                }
-            };
+        let mut debouncer = match new_debouncer(DEBOUNCE, None, move |res: DebounceEventResult| {
+            let _ = tx.unbounded_send(res);
+        }) {
+            Ok(debouncer) => debouncer,
+            Err(e) => {
+                error!("Failed to create filesystem watcher: {e}");
+                return;
+            }
+        };
 
         if let Err(e) = debouncer.watch(&dir, RecursiveMode::NonRecursive) {
             error!("Failed to watch {dir:?}: {e}");
@@ -59,9 +57,7 @@ fn watch_stream(db_path: PathBuf) -> impl Stream<Item = ()> {
                         // only genuine mutations
                         let is_mutation = matches!(
                             ev.kind,
-                            EventKind::Create(_)
-                                | EventKind::Modify(_)
-                                | EventKind::Remove(_)
+                            EventKind::Create(_) | EventKind::Modify(_) | EventKind::Remove(_)
                         );
 
                         // only events touching the database file itself

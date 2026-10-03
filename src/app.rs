@@ -3,7 +3,9 @@
 use std::sync::{Arc, Mutex};
 
 use iced::{
-    Element, Length, Subscription, Task, Theme, Widget, time::Instant, widget::{container, text},
+    Length, Subscription, Task, Theme, Widget,
+    time::Instant,
+    widget::{container, text},
 };
 use tracing::{error, info};
 
@@ -141,19 +143,21 @@ impl Clockode {
         }
     }
 
-    pub fn view(&self) -> Element<'_, Message> {
+    pub fn view(&self) -> impl Widget<Message> {
         let content = match &self.screen {
             Screen::Error(error) => container(text(error)).center(Length::Fill).boxed(),
-            Screen::CreateDatabase(create_database) => {
-                create_database.view(self.now).map(Message::CreateDatabase).boxed()
-            }
-            Screen::UnlockDatabase(unlock_database) => {
-                unlock_database.view(self.now).map(Message::UnlockDatabase).boxed()
-            }
+            Screen::CreateDatabase(create_database) => create_database
+                .view(self.now)
+                .map(Message::CreateDatabase)
+                .boxed(),
+            Screen::UnlockDatabase(unlock_database) => unlock_database
+                .view(self.now)
+                .map(Message::UnlockDatabase)
+                .boxed(),
             Screen::HomePage(homepage) => homepage.view(self.now).map(Message::HomePage).boxed(),
         };
 
-        widgets::toast::Manager::new(content, &self.toasts, Message::CloseToast).boxed()
+        widgets::toast::Manager::new(content, &self.toasts, Message::CloseToast)
     }
 
     pub fn subscription(&self) -> Subscription<Message> {

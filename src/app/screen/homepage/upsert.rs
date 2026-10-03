@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use iced::{
-    Alignment, Element, Length::{self}, Subscription, Task, Widget, event, keyboard::{self, Key, Modifiers, key::Named}, time::Instant, widget::{
+    Alignment, Element,
+    Length::{self},
+    Subscription, Task, Widget, event,
+    keyboard::{self, Key, Modifiers, key::Named},
+    time::Instant,
+    widget::{
         button, column, container, image,
         operation::{focus_next, focus_previous},
         pick_list, row, scrollable, space, stack, text, text_input,
@@ -116,7 +121,7 @@ impl UpsertPage {
         )
     }
 
-    pub fn view(&self, now: Instant) -> iced::Element<'_, Message> {
+    pub fn view(&self, now: Instant) -> impl Widget<Message> {
         match &self.subscreen {
             SubScreen::UpsertPage => {
                 let header = header_view(&self.entry);
@@ -137,7 +142,9 @@ impl UpsertPage {
                 .boxed()
             }
             #[cfg(unix)]
-            SubScreen::ScanQrPage(qr_scan_page) => qr_scan_page.view(now).map(Message::ScanQrPage).boxed(),
+            SubScreen::ScanQrPage(qr_scan_page) => {
+                qr_scan_page.view(now).map(Message::ScanQrPage).boxed()
+            }
         }
     }
 
@@ -307,7 +314,7 @@ impl UpsertPage {
 }
 
 /// View of the header of this screen
-fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
+fn header_view(entry: &InputableClockodeEntry) -> impl Widget<Message> {
     iced::widget::responsive(move |size| {
         let (title, subtitle) = if entry.uuid.is_some() {
             ("Edit Entry", "Modify your TOTP entry")
@@ -456,7 +463,6 @@ fn header_view<'a>(entry: &'a InputableClockodeEntry) -> Element<'a, Message> {
         .width(Length::Fill)
     })
     .height(Length::Shrink)
-    .boxed()
 }
 
 fn upsert_entry_view<'a>(

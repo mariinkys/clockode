@@ -14,16 +14,14 @@ pub enum AppClipboard {
 impl AppClipboard {
     /// `wayland_display` is the `wl_display*` of the main window, if it runs on Wayland.
     pub fn init(&mut self, wayland_display: Option<usize>) {
-        *self = Self::wayland(wayland_display).unwrap_or_else(|| {
-            match arboard::Clipboard::new() {
-                Ok(clipboard) => {
-                    info!("Using arboard clipboard");
-                    Self::Arboard(clipboard)
-                }
-                Err(err) => {
-                    error!("{err}");
-                    Self::Unavailable
-                }
+        *self = Self::wayland(wayland_display).unwrap_or_else(|| match arboard::Clipboard::new() {
+            Ok(clipboard) => {
+                info!("Using arboard clipboard");
+                Self::Arboard(clipboard)
+            }
+            Err(err) => {
+                error!("{err}");
+                Self::Unavailable
             }
         });
     }

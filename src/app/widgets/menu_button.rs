@@ -162,8 +162,7 @@ struct State<P: text::Paragraph> {
 
 impl<'a, T, Message, W> iced::advanced::widget::Meta for MenuButton<'a, T, Message, W> {}
 
-impl<'a, T, Message, W, Renderer> Widget<Message, Theme, Renderer>
-    for MenuButton<'a, T, Message, W>
+impl<'a, T, Message, W, Renderer> Widget<Message, Theme, Renderer> for MenuButton<'a, T, Message, W>
 where
     T: Clone + 'a,
     Message: Clone + 'a,
@@ -214,10 +213,7 @@ where
 
                 let _ = paragraph.update(Text {
                     content: &label,
-                    bounds: Size::new(
-                        f32::INFINITY,
-                        f32::from(line_height.to_absolute(text_size)),
-                    ),
+                    bounds: Size::new(f32::INFINITY, f32::from(line_height.to_absolute(text_size))),
                     size: text_size,
                     line_height,
                     font: renderer.font(),

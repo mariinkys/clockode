@@ -184,7 +184,7 @@ pub fn icon_muted(theme: &Theme, _status: svg::Status) -> svg::Style {
 pub fn label_text(theme: &Theme) -> text::Style {
     text::Style {
         color: Some(theme.palette().background.weak.text.scale_alpha(0.8)),
-         ..text::Style::default()
+        ..text::Style::default()
     }
 }
 
@@ -192,7 +192,7 @@ pub fn label_text(theme: &Theme) -> text::Style {
 pub fn muted_text(theme: &Theme) -> text::Style {
     text::Style {
         color: Some(theme.palette().background.weak.text.scale_alpha(0.6)),
-         ..text::Style::default()
+        ..text::Style::default()
     }
 }
 
@@ -200,7 +200,7 @@ pub fn muted_text(theme: &Theme) -> text::Style {
 pub fn link_text(theme: &Theme) -> text::Style {
     text::Style {
         color: Some(theme.palette().background.weak.text.scale_alpha(0.8)),
-         ..text::Style::default()
+        ..text::Style::default()
     }
 }
 
@@ -208,7 +208,7 @@ pub fn link_text(theme: &Theme) -> text::Style {
 pub fn subtitle_text(theme: &Theme) -> text::Style {
     text::Style {
         color: Some(theme.palette().background.weak.text.scale_alpha(0.7)),
-         ..text::Style::default()
+        ..text::Style::default()
     }
 }
 

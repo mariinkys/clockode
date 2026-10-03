@@ -442,10 +442,7 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
         let viewport = self.layout.bounds();
 
         renderer.with_layer(Rectangle::with_size(self.window), |renderer| {
-            for (child, (layout, tree)) in self
-                .toasts
-                .iter()
-                .zip(self.layout.iter(&self.trees[..]))
+            for (child, (layout, tree)) in self.toasts.iter().zip(self.layout.iter(&self.trees[..]))
             {
                 child.draw(tree, renderer, theme, style, layout, cursor, &viewport);
             }
@@ -455,10 +452,8 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
     fn operate(&mut self, renderer: &Renderer, operation: &mut dyn widget::Operation) {
         operation.container(None, self.layout.bounds(), &self.viewport);
         operation.traverse(&mut |operation| {
-            for (child, (layout, tree)) in self
-                .toasts
-                .iter_mut()
-                .zip(self.layout.iter_mut(self.trees))
+            for (child, (layout, tree)) in
+                self.toasts.iter_mut().zip(self.layout.iter_mut(self.trees))
             {
                 child.operate(tree, layout, &self.viewport, renderer, operation);
             }

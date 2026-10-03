@@ -3,7 +3,12 @@
 use std::path::PathBuf;
 
 use iced::{
-    Alignment, Length::{self}, Subscription, Task, Widget, event, keyboard::{self, Key, Modifiers, key::Named}, time::Instant, widget::{
+    Alignment,
+    Length::{self},
+    Subscription, Task, Widget, event,
+    keyboard::{self, Key, Modifiers, key::Named},
+    time::Instant,
+    widget::{
         button, column, container,
         operation::{focus_next, focus_previous},
         space, svg, text, text_input,
@@ -57,7 +62,7 @@ impl UnlockDatabase {
         )
     }
 
-    pub fn view(&self, _now: Instant) -> iced::Element<'_, Message> {
+    pub fn view(&self, _now: Instant) -> impl Widget<Message> {
         let unlock_form = container(
             column![
                 column![
@@ -112,7 +117,7 @@ impl UnlockDatabase {
         .spacing(0)
         .align_x(Alignment::Center);
 
-        container(content).center(Length::Fill).padding(20).boxed()
+        container(content).center(Length::Fill).padding(20)
     }
 
     pub fn update(&mut self, message: Message, _now: Instant) -> Action {
