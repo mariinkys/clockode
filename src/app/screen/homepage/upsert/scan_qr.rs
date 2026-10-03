@@ -8,12 +8,7 @@ use gstreamer::{
 };
 use gstreamer_app as gst_app;
 use iced::{
-    Element,
-    Length::{self},
-    Subscription, Task, event,
-    keyboard::{self, Key, key::Named},
-    time::Instant,
-    widget::{button, column, container, image, stack, text},
+    Element, Length::{self}, Subscription, Task, Widget, event, keyboard::{self, Key, key::Named}, time::Instant, widget::{button, column, container, image, stack, text},
 };
 use smol::channel;
 use std::{
@@ -139,11 +134,11 @@ impl QrScanPage {
         let content = match &self.state {
             State::AskingPermission => container(text("Asking for camera permission..."))
                 .center(Length::Fill)
-                .into(),
+                .boxed(),
             State::Permitted(state) => qr_scan_view(&state.display_frame),
         };
 
-        container(content).padding(5.).center(Length::Fill).into()
+        container(content).padding(5.).center(Length::Fill).boxed()
     }
 
     pub fn update(&mut self, message: Message, _now: Instant) -> Action {
@@ -415,7 +410,7 @@ fn qr_scan_view<'a>(display_frame: &'a Option<Box<image::Handle>>) -> Element<'a
                 .content_fit(iced::ContentFit::Contain),
         )
         .padding(40.)
-        .center(Length::Fill)
+        .center(Length::Fill).boxed()
     } else {
         container(
             column![
@@ -428,7 +423,7 @@ fn qr_scan_view<'a>(display_frame: &'a Option<Box<image::Handle>>) -> Element<'a
             .spacing(style::spacing::MEDIUM)
             .align_x(iced::Alignment::Center),
         )
-        .center(Length::Fill)
+        .center(Length::Fill).boxed()
     };
 
     let camera_with_button = container(stack![
@@ -455,7 +450,7 @@ fn qr_scan_view<'a>(display_frame: &'a Option<Box<image::Handle>>) -> Element<'a
         .padding(10)
         .width(Length::Fill)
         .height(Length::Fill)
-        .into()
+        .boxed()
 }
 
 //

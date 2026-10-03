@@ -6,16 +6,13 @@ use std::{
 };
 
 use iced::{
-    Alignment, Color, Element, Length::{self}, Subscription, Task, Theme, event, keyboard::{self, Key, key::Named}, time::Instant, widget::{Column, Row, button, center, column, container, mouse_area, opaque, pick_list, row, scrollable, space, stack, text},
+    Alignment, Color, Element, Length::{self}, Subscription, Task, Theme, Widget, event, keyboard::{self, Key, key::Named}, time::Instant, widget::{Column, Row, button, center, column, container, mouse_area, opaque, pick_list, row, scrollable, space, stack, text},
 };
 use rfd::{AsyncFileDialog, FileHandle};
 use tracing::error;
 
 use crate::{
-    APP_ID,
-    app::{utils::style, widgets::Toast},
-    config::{ColockodeTheme, Config},
-    icons,
+    APP_ID, app::{utils::{ImportType, style}, widgets::{Toast, menu_button::menu_button}}, config::{ColockodeTheme, Config}, icons,
 };
 
 pub struct SettingsPage {
@@ -35,7 +32,7 @@ pub enum Message {
     /// Configuration Saved
     ConfigurationSaved(Result<(), anywho::Error>),
     /// Open the File Dialog to select a file to import
-    OpenImportDialog,
+    OpenImportDialog(ImportType),
     /// Open the File Dialog to select where to export the file
     OpenExportDialog,
     /// Import Path Selected Callback (after dialog)
@@ -85,7 +82,7 @@ impl SettingsPage {
         if self.show_shortcuts {
             modal(page, shortcuts_view(), Message::HideShortcuts)
         } else {
-            page.into()
+            page.boxed()
         }
     }
 
@@ -117,7 +114,7 @@ impl SettingsPage {
                 Ok(_) => Action::None,
                 Err(e) => Action::AddToast(Toast::error_toast(e)),
             },
-            Message::OpenImportDialog => Action::Run(Task::perform(
+            Message::OpenImportDialog(import_type) => Action::Run(Task::perform(
                 async move {
                     AsyncFileDialog::new()
                         .add_filter("txt", &["txt"])
@@ -202,7 +199,7 @@ fn header_view<'a>() -> Element<'a, Message> {
     .padding(10)
     .align_y(iced::Alignment::Center)
     .width(Length::Fill)
-    .into()
+    .boxed()
 }
 
 fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
@@ -231,7 +228,7 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
                 .padding(12)
                 .width(Length::Fill)
                 .style(style::primary_button),
-                button(
+                menu_button(
                     row![
                         icons::get_icon("document-import-symbolic", 21).style(|theme, _status| {
                             let primary_style =
@@ -243,9 +240,10 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
                         text("Import").size(style::font_size::MEDIUM)
                     ]
                     .spacing(style::spacing::TINY)
-                    .align_y(Alignment::Center)
+                    .align_y(Alignment::Center),
+                    ImportType::ALL, ImportType::to_string
                 )
-                .on_press(Message::OpenImportDialog)
+                .on_select(Message::OpenImportDialog)
                 .padding(12)
                 .width(Length::Fill)
                 .style(style::primary_button),
@@ -336,7 +334,7 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
     )
     .width(Length::Fill)
     .height(Length::Fill)
-    .into()
+    .boxed()
 }
 
 //
@@ -428,7 +426,7 @@ fn shortcuts_view<'a>() -> Element<'a, Message> {
                 .spacing(style::spacing::SMALL),
         ]
         .spacing(style::spacing::SMALL)
-        .into()
+        .boxed()
     });
 
     container(
@@ -441,29 +439,40 @@ fn shortcuts_view<'a>() -> Element<'a, Message> {
     .padding(20)
     .width(Length::Fill.max(420.0))
     .style(style::card_container)
-    .into()
+    .boxed()
 }
 
 /// One line of the dialog: description on the left, keycaps on the right
 fn shortcut_row<'a>(shortcut: &Shortcut) -> Element<'a, Message> {
-    let mut keys = Row::new()
+    let mut keys: Row<Element<'a, Message>> = Row::new()
         .spacing(style::spacing::TINY)
         .align_y(Alignment::Center);
 
     for (i, combo) in shortcut.keys.iter().enumerate() {
         if i > 0 {
-            keys = keys.push(text("or").size(style::font_size::SMALL).style(style::muted_text));
+            keys = keys.push(
+                text("or")
+                    .size(style::font_size::SMALL)
+                    .style(style::muted_text)
+                    .boxed(),
+            );
         }
 
         for (j, key) in combo.iter().enumerate() {
             if j > 0 {
-                keys = keys.push(text("+").size(style::font_size::SMALL).style(style::muted_text));
+                keys = keys.push(
+                    text("+")
+                        .size(style::font_size::SMALL)
+                        .style(style::muted_text)
+                        .boxed(),
+                );
             }
 
             keys = keys.push(
                 container(text(*key).size(style::font_size::SMALL).font(iced::Font::MONOSPACE))
                     .padding([2, 8])
-                    .style(style::keycap),
+                    .style(style::keycap)
+                    .boxed(),
             );
         }
     }
@@ -476,17 +485,17 @@ fn shortcut_row<'a>(shortcut: &Shortcut) -> Element<'a, Message> {
     ]
     .spacing(style::spacing::MEDIUM)
     .align_y(Alignment::Center)
-    .into()
+    .boxed()
 }
 
 /// Shows `content` centered over a dimmed `base`; clicking the backdrop sends `on_blur`
 fn modal<'a>(
-    base: impl Into<Element<'a, Message>>,
-    content: impl Into<Element<'a, Message>>,
+    base: impl Widget<Message> + 'a,
+    content: impl Widget<Message> + 'a,
     on_blur: Message,
 ) -> Element<'a, Message> {
     stack![
-        base.into(),
+        base,
         opaque(
             mouse_area(
                 center(opaque(container(content).padding(style::spacing::LARGE))).style(
@@ -499,5 +508,5 @@ fn modal<'a>(
             .on_press(on_blur)
         )
     ]
-    .into()
+    .boxed()
 }

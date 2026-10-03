@@ -5,6 +5,7 @@
 
 use std::fmt;
 
+use iced::Widget as _;
 use iced::advanced::layout::{self, Layout};
 use iced::advanced::overlay;
 use iced::advanced::renderer::{self, Renderer as _};
@@ -112,7 +113,7 @@ where
     Message: 'a + Clone,
 {
     pub fn new(
-        content: impl Into<Element<'a, Message>>,
+        content: impl Widget<Message, Theme, Renderer> + 'a,
         toasts: &'a [Toast],
         on_close: impl Fn(usize) -> Message + 'a,
     ) -> Self {
@@ -162,12 +163,12 @@ where
                     style.border.radius = iced::border::radius(8.);
                     style
                 })
-                .into()
+                .boxed()
             })
             .collect();
 
         Self {
-            content: content.into(),
+            content: content.boxed(),
             toasts,
             timeout_secs: DEFAULT_TIMEOUT,
             on_close: Box::new(on_close),
@@ -190,15 +191,17 @@ struct ManagerState {
     cache: layout::flex::Cache,
 }
 
+impl<Message> widget::Meta for Manager<'_, Message> {}
+
 impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
     fn size(&self) -> Size<Length> {
-        self.content.as_widget().size()
+        self.content.size()
     }
 
     fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
         let content = &mut tree.children[0];
 
-        self.content.as_widget_mut().layout(content, renderer, limits);
+        self.content.layout(content, renderer, limits);
         content.translation = Vector::ZERO;
 
         tree.size = content.size;
@@ -250,7 +253,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
             let (layout, tree) = layout.iter_mut(&mut tree.children).next().unwrap();
 
             self.content
-                .as_widget_mut()
                 .operate(tree, layout, viewport, renderer, operation);
         });
     }
@@ -268,7 +270,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
         let (layout, tree) = layout.iter_mut(&mut tree.children).next().unwrap();
 
         self.content
-            .as_widget_mut()
             .update(tree, event, layout, cursor, renderer, shell, viewport);
     }
 
@@ -285,7 +286,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
         let (layout, tree) = layout.iter(&tree.children).next().unwrap();
 
         self.content
-            .as_widget()
             .draw(tree, renderer, theme, style, layout, cursor, viewport);
     }
 
@@ -300,7 +300,6 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
         let (layout, tree) = layout.iter(&tree.children).next().unwrap();
 
         self.content
-            .as_widget()
             .mouse_interaction(tree, layout, cursor, viewport, renderer)
     }
 
@@ -318,7 +317,7 @@ impl<Message> Widget<Message, Theme, Renderer> for Manager<'_, Message> {
 
         let (content_layout, content_tree) = layout.iter_mut(content_tree).next().unwrap();
 
-        let mut overlays = self.content.as_widget_mut().overlay(
+        let mut overlays = self.content.overlay(
             content_tree,
             content_layout,
             renderer,
@@ -415,7 +414,7 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
             let mut local_messages = shell::Bus::new();
             let mut local_shell = shell.local(&mut local_messages);
 
-            child.as_widget_mut().update(
+            child.update(
                 tree,
                 event,
                 layout,
@@ -448,9 +447,7 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
                 .iter()
                 .zip(self.layout.iter(&self.trees[..]))
             {
-                child
-                    .as_widget()
-                    .draw(tree, renderer, theme, style, layout, cursor, &viewport);
+                child.draw(tree, renderer, theme, style, layout, cursor, &viewport);
             }
         });
     }
@@ -463,9 +460,7 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
                 .iter_mut()
                 .zip(self.layout.iter_mut(self.trees))
             {
-                child
-                    .as_widget_mut()
-                    .operate(tree, layout, &self.viewport, renderer, operation);
+                child.operate(tree, layout, &self.viewport, renderer, operation);
             }
         });
     }
@@ -476,7 +471,6 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
             .zip(self.layout.iter(&self.trees[..]))
             .map(|(child, (layout, tree))| {
                 child
-                    .as_widget()
                     .mouse_interaction(tree, layout, cursor, &self.viewport, renderer)
                     .max(if cursor.is_over(layout.bounds()) {
                         mouse::Interaction::Idle
@@ -486,14 +480,5 @@ impl<Message> overlay::Overlay<Message, Theme, Renderer> for Overlay<'_, '_, Mes
             })
             .max()
             .unwrap_or_default()
-    }
-}
-
-impl<'a, Message> From<Manager<'a, Message>> for Element<'a, Message>
-where
-    Message: 'a,
-{
-    fn from(manager: Manager<'a, Message>) -> Self {
-        Element::new(manager)
     }
 }

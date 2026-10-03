@@ -3,9 +3,7 @@
 use std::sync::{Arc, Mutex};
 
 use iced::{
-    Element, Length, Subscription, Task, Theme,
-    time::Instant,
-    widget::{container, text},
+    Element, Length, Subscription, Task, Theme, Widget, time::Instant, widget::{container, text},
 };
 use tracing::{error, info};
 
@@ -145,17 +143,17 @@ impl Clockode {
 
     pub fn view(&self) -> Element<'_, Message> {
         let content = match &self.screen {
-            Screen::Error(error) => container(text(error)).center(Length::Fill).into(),
+            Screen::Error(error) => container(text(error)).center(Length::Fill).boxed(),
             Screen::CreateDatabase(create_database) => {
-                create_database.view(self.now).map(Message::CreateDatabase)
+                create_database.view(self.now).map(Message::CreateDatabase).boxed()
             }
             Screen::UnlockDatabase(unlock_database) => {
-                unlock_database.view(self.now).map(Message::UnlockDatabase)
+                unlock_database.view(self.now).map(Message::UnlockDatabase).boxed()
             }
-            Screen::HomePage(homepage) => homepage.view(self.now).map(Message::HomePage),
+            Screen::HomePage(homepage) => homepage.view(self.now).map(Message::HomePage).boxed(),
         };
 
-        widgets::toast::Manager::new(content, &self.toasts, Message::CloseToast).into()
+        widgets::toast::Manager::new(content, &self.toasts, Message::CloseToast).boxed()
     }
 
     pub fn subscription(&self) -> Subscription<Message> {

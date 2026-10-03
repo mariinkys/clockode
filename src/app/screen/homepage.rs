@@ -6,11 +6,7 @@ use std::{
 };
 
 use iced::{
-    Alignment, Element, Event,
-    Length::{self},
-    Rectangle, Subscription, Task, event, keyboard,
-    time::Instant,
-    widget::{
+    Alignment, Element, Event, Length::{self}, Rectangle, Subscription, Task, Widget, event, keyboard, time::Instant, widget::{
         Column, button, column, container, operation, row, scrollable, stack, text, text_input,
     },
 };
@@ -223,7 +219,7 @@ impl HomePage {
 
     pub fn view(&self, now: Instant) -> iced::Element<'_, Message> {
         let content: Element<Message> = match &self.state {
-            State::Loading => text("Loading...").into(),
+            State::Loading => text("Loading...").boxed(),
             State::Ready { subscreen } => match subscreen {
                 SubScreen::Home(home) => {
                     let header = header_view(home.entries.len(), home.search.as_deref());
@@ -237,18 +233,18 @@ impl HomePage {
                         .padding(5.)
                         .width(Length::Fill)
                         .height(Length::Fill)
-                        .into()
+                        .boxed()
                 }
                 SubScreen::UpsertPage(upsert_page) => {
-                    upsert_page.view(now).map(Message::UpsertPage)
+                    upsert_page.view(now).map(Message::UpsertPage).boxed()
                 }
                 SubScreen::SettingsPage(settings_page) => {
-                    settings_page.view(now).map(Message::SettingsPage)
+                    settings_page.view(now).map(Message::SettingsPage).boxed()
                 }
             },
         };
 
-        container(content).center(Length::Fill).into()
+        container(content).center(Length::Fill).boxed()
     }
 
     pub fn update(&mut self, message: Message, now: Instant) -> Action {
@@ -651,7 +647,7 @@ fn header_view<'a>(entry_count: usize, search: Option<&'a str>) -> Element<'a, M
                 .style(style::secondary_button),
         ]
         .spacing(style::spacing::SMALL)
-        .into(),
+        .boxed(),
         Some(query) => search_input_view(query),
     };
 
@@ -677,7 +673,7 @@ fn header_view<'a>(entry_count: usize, search: Option<&'a str>) -> Element<'a, M
     .padding(10)
     .align_y(iced::Alignment::Center)
     .width(Length::Fill)
-    .into()
+    .boxed()
 }
 
 /// Entries matching the current search query (all of them if there's none)
@@ -715,7 +711,7 @@ fn content_view<'a>(
             .spacing(style::spacing::MEDIUM),
         )
         .center(Length::Fill)
-        .into()
+        .boxed()
     } else if filtered.is_empty() {
         container(
             text("No entries match your search")
@@ -723,10 +719,10 @@ fn content_view<'a>(
                 .style(style::muted_text),
         )
         .center(Length::Fill)
-        .into()
+        .boxed()
     } else {
         let entries_list = filtered.into_iter().enumerate().fold(
-            Column::new()
+            Column::<Element<'_, Message>>::new()
                 .height(Length::Fill)
                 .spacing(style::spacing::MEDIUM)
                 .padding(10),
@@ -785,14 +781,14 @@ fn content_view<'a>(
                     }
                 });
 
-                col.push(entry_view)
+                col.push(entry_view.boxed())
             },
         );
 
         scrollable(entries_list)
             .height(Length::Fill)
             .id(ENTRIES_SCROLLABLE)
-            .into()
+            .boxed()
     }
 }
 
@@ -823,7 +819,7 @@ fn search_input_view(query: &str) -> Element<'_, Message> {
             .center_y(Length::Fill)
             .padding(iced::padding::right(style::spacing::TINY)),
     ]
-    .into()
+    .boxed()
 }
 
 /// Scrolls the entry list just enough to make the entry at `index` fully visible
@@ -872,9 +868,9 @@ fn scroll_to_entry(index: usize) -> Task<Message> {
         if delta == 0.0 {
             Task::none()
         } else {
-            operation::scroll_by(
+            operation::scrollable::scroll_by(
                 ENTRIES_SCROLLABLE,
-                operation::AbsoluteOffset { x: 0.0, y: delta },
+                operation::scrollable::AbsoluteOffset { x: 0.0, y: delta },
                 operation::Animation::Auto,
             )
         }
