@@ -2,6 +2,7 @@
 
 mod database;
 mod entry;
+pub mod specific_impl;
 
 pub use database::ClockodeDatabase;
 pub use database::check_database;

@@ -12,16 +12,18 @@ use iced::{
     keyboard::{self, Key, key::Named},
     time::Instant,
     widget::{
-        Column, Row, button, center, column, container, mouse_area, opaque, pick_list, row,
-        scrollable, space, stack, text,
+        Column, Row, button, center, column, container, mouse_area, opaque, operation, pick_list,
+        row, scrollable, space, stack, text, text_input,
     },
 };
 use rfd::{AsyncFileDialog, FileHandle};
+use secrecy::SecretString;
 use tracing::error;
 
 use crate::{
     APP_ID,
     app::{
+        core::{ClockodeEntry, specific_impl::aegis},
         utils::{ImportType, style},
         widgets::{Toast, menu_button::menu_button},
     },
@@ -29,10 +31,19 @@ use crate::{
     icons,
 };
 
+const AEGIS_PASSWORD_INPUT: &str = "settings-aegis-password";
+
 pub struct SettingsPage {
     config: Arc<Mutex<Config>>,
-    /// Whether the keyboard shortcuts dialog is open
     show_shortcuts: bool,
+    aegis_import: Option<AegisImport>,
+}
+
+struct AegisImport {
+    path: PathBuf,
+    password: String,
+    error: Option<String>,
+    decrypting: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -59,6 +70,16 @@ pub enum Message {
     ShowShortcuts,
     /// Close the keyboard shortcuts dialog
     HideShortcuts,
+    /// A path for an Aegis import has been selected on the dialog
+    AegisPathSelected(Option<FileHandle>),
+    /// Update the state of the password field for the aegis import
+    AegisPasswordChanged(String),
+    /// Submit import with current password
+    SubmitAegisImport,
+    /// Cancel current aegis import
+    CancelAegisImport,
+    /// Result after trying to decrypt the aegis import
+    AegisDecrypted(Result<Vec<ClockodeEntry>, anywho::Error>),
 }
 
 pub enum Action {
@@ -72,6 +93,8 @@ pub enum Action {
     AddToast(Toast),
     /// Ask parent to import some content from the given filepath
     ImportContent(PathBuf),
+    /// Ask parent to import some entries
+    ImportEntries(Vec<ClockodeEntry>),
     /// Ask parent to export the context to the given filepath
     ExportContent(PathBuf),
 }
@@ -82,6 +105,7 @@ impl SettingsPage {
             Self {
                 config,
                 show_shortcuts: false,
+                aegis_import: None,
             },
             Task::none(),
         )
@@ -99,7 +123,14 @@ impl SettingsPage {
         )
         .center(Length::Fill);
 
-        if self.show_shortcuts {
+        if let Some(import) = &self.aegis_import {
+            modal(
+                page,
+                aegis_password_view(import),
+                Message::CancelAegisImport,
+            )
+            .boxed()
+        } else if self.show_shortcuts {
             modal(page, shortcuts_view(), Message::HideShortcuts).boxed()
         } else {
             page.boxed()
@@ -110,6 +141,10 @@ impl SettingsPage {
         match message {
             Message::Back => Action::Back,
             Message::Hotkey(hotkey) => match hotkey {
+                Hotkey::Esc if self.aegis_import.is_some() => {
+                    self.aegis_import = None;
+                    Action::None
+                }
                 Hotkey::Esc if self.show_shortcuts => {
                     self.show_shortcuts = false;
                     Action::None
@@ -134,16 +169,28 @@ impl SettingsPage {
                 Ok(_) => Action::None,
                 Err(e) => Action::AddToast(Toast::error_toast(e)),
             },
-            Message::OpenImportDialog(import_type) => Action::Run(Task::perform(
-                async move {
-                    AsyncFileDialog::new()
-                        .add_filter("txt", &["txt"])
-                        .set_directory(dirs::download_dir().unwrap_or("/".into()))
-                        .pick_file()
-                        .await
-                },
-                Message::ImportPathSelected,
-            )),
+            Message::OpenImportDialog(import_type) => match import_type {
+                ImportType::Standard => Action::Run(Task::perform(
+                    async move {
+                        AsyncFileDialog::new()
+                            .add_filter("txt", &["txt"])
+                            .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                            .pick_file()
+                            .await
+                    },
+                    Message::ImportPathSelected,
+                )),
+                ImportType::AegisEncrypted => Action::Run(Task::perform(
+                    async move {
+                        AsyncFileDialog::new()
+                            .add_filter("json", &["json"])
+                            .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                            .pick_file()
+                            .await
+                    },
+                    Message::AegisPathSelected,
+                )),
+            },
             Message::OpenExportDialog => Action::Run(Task::perform(
                 async move {
                     AsyncFileDialog::new()
@@ -181,6 +228,64 @@ impl SettingsPage {
             }
             Message::HideShortcuts => {
                 self.show_shortcuts = false;
+                Action::None
+            }
+            Message::AegisPathSelected(handle) => {
+                let Some(handle) = handle else {
+                    return Action::None;
+                };
+
+                self.aegis_import = Some(AegisImport {
+                    path: handle.path().to_path_buf(),
+                    password: String::new(),
+                    error: None,
+                    decrypting: false,
+                });
+                Action::Run(operation::focus(AEGIS_PASSWORD_INPUT))
+            }
+            Message::AegisPasswordChanged(password) => {
+                if let Some(import) = &mut self.aegis_import {
+                    import.password = password;
+                    import.error = None;
+                }
+                Action::None
+            }
+            Message::SubmitAegisImport => {
+                let Some(import) = &mut self.aegis_import else {
+                    return Action::None;
+                };
+                if import.decrypting || import.password.is_empty() {
+                    return Action::None;
+                }
+
+                import.decrypting = true;
+                let path = import.path.clone();
+                let password = SecretString::from(import.password.clone());
+
+                Action::Run(Task::perform(
+                    aegis::import(path, password),
+                    Message::AegisDecrypted,
+                ))
+            }
+            Message::AegisDecrypted(result) => {
+                let Some(import) = &mut self.aegis_import else {
+                    return Action::None;
+                };
+
+                match result {
+                    Ok(entries) => {
+                        self.aegis_import = None;
+                        Action::ImportEntries(entries)
+                    }
+                    Err(err) => {
+                        import.decrypting = false;
+                        import.error = Some(err.to_string());
+                        Action::None
+                    }
+                }
+            }
+            Message::CancelAegisImport => {
+                self.aegis_import = None;
                 Action::None
             }
         }
@@ -354,6 +459,50 @@ fn settings_view(config: &Arc<Mutex<Config>>) -> impl Widget<Message> {
     )
     .width(Length::Fill)
     .height(Length::Fill)
+}
+
+/// The Aegis vault password dialog card
+fn aegis_password_view(import: &AegisImport) -> impl Widget<Message> {
+    let submit = (!import.decrypting).then_some(Message::SubmitAegisImport);
+
+    container(
+        column![
+            text("Aegis Vault Password").size(style::font_size::LARGE),
+            text("Enter the password used to encrypt this vault")
+                .size(style::font_size::SMALL)
+                .style(style::muted_text),
+            text_input("Password", &import.password)
+                .id(AEGIS_PASSWORD_INPUT)
+                .secure(true)
+                .on_input(Message::AegisPasswordChanged)
+                .on_submit(Message::SubmitAegisImport)
+                .padding(8)
+                .style(style::text_input_style),
+            text(import.error.as_deref().unwrap_or(""))
+                .size(style::font_size::SMALL)
+                .style(text::danger),
+            row![
+                space().width(Length::Fill),
+                button(text("Cancel"))
+                    .on_press(Message::CancelAegisImport)
+                    .padding(8)
+                    .style(style::secondary_button),
+                button(text(if import.decrypting {
+                    "Decrypting..."
+                } else {
+                    "Import"
+                }))
+                .on_press_maybe(submit)
+                .padding(8)
+                .style(style::primary_button),
+            ]
+            .spacing(style::spacing::SMALL),
+        ]
+        .spacing(style::spacing::MEDIUM),
+    )
+    .padding(20)
+    .width(Length::Fill.max(420.0))
+    .style(style::card_container)
 }
 
 //

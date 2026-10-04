@@ -263,6 +263,42 @@ impl ClockodeDatabase {
         .await
     }
 
+    pub async fn add_entries(&self, entries: Vec<ClockodeEntry>) -> Result<(), anywho::Error> {
+        info!("Adding {} database entries", entries.len());
+
+        let lock = self.lock.clone();
+        let path = self.path.clone();
+        let password = self.password.clone();
+        let known_mtime = self.known_mtime.clone();
+
+        smol::unblock(move || {
+            let _guard = lock
+                .lock()
+                .map_err(|e| anywho!("Database lock poisoned: {}", e))?;
+
+            let mut file = std::fs::File::open(&*path)?;
+            let key = DatabaseKey::new().with_password(password.expose_secret());
+            let mut db = Database::open(&mut file, key)?;
+            drop(file);
+
+            let mut root = db.root_mut();
+            let mut target_group = root
+                .group_by_name_mut("Default Group")
+                .ok_or_else(|| anywho!("Default Group not found"))?;
+
+            for entry in entries {
+                let mut keepass_entry = target_group.add_entry();
+                update_clockode_entry_in_keepass(entry, &mut keepass_entry);
+            }
+
+            let mtime = save_database_atomic(&mut db, &path, &password)?;
+            record_known_mtime(&known_mtime, mtime);
+
+            Ok(())
+        })
+        .await
+    }
+
     pub async fn update_entry(&self, entry: ClockodeEntry) -> Result<(), anywho::Error> {
         info!("Updating database entry");
 

@@ -362,6 +362,13 @@ impl HomePage {
                     settings::Action::Back => self.update(Message::LoadEntries, now),
                     settings::Action::Run(task) => Action::Run(task.map(Message::SettingsPage)),
                     settings::Action::AddToast(toast) => Action::AddToast(toast),
+                    settings::Action::ImportEntries(entries) => {
+                        let db_clone = Arc::clone(&self.database);
+                        Action::Run(Task::perform(
+                            async move { db_clone.add_entries(entries).await },
+                            Message::EntryUpserted,
+                        ))
+                    }
                     settings::Action::ImportContent(path_buf) => {
                         let db_clone = Arc::clone(&self.database);
                         Action::Run(Task::perform(
