@@ -19,6 +19,17 @@ pub struct ClockodeEntry {
     pub totp: Totp,
 }
 
+/// Display name for an imported entry: "Issuer (account)", falling back to
+/// whichever part is present, or "Default" if neither is.
+pub fn import_display_name(issuer: &str, account: &str) -> String {
+    match (issuer.trim(), account.trim()) {
+        ("", "") => "Default".to_string(),
+        ("", account) => account.to_string(),
+        (issuer, "") => issuer.to_string(),
+        (issuer, account) => format!("{issuer} ({account})"),
+    }
+}
+
 impl TryFrom<Entry> for ClockodeEntry {
     type Error = anywho::Error;
 
@@ -68,7 +79,15 @@ impl TryFrom<Entry> for ClockodeEntry {
             .to_string();
 
         // Don't use build() because it enforces validation and some secrets (ej: microsoft)
-        let totp_result = totp_rs::Builder::new().with_algorithm(algorithm).with_digits(digits).with_skew(0).with_step_duration(period).with_secret(secret_bytes).with_issuer(issuer).with_account_name(account_name).build_noncompliant();
+        let totp_result = totp_rs::Builder::new()
+            .with_algorithm(algorithm)
+            .with_digits(digits)
+            .with_skew(0)
+            .with_step_duration(period)
+            .with_secret(secret_bytes)
+            .with_issuer(issuer)
+            .with_account_name(account_name)
+            .build_noncompliant();
 
         Ok(ClockodeEntry {
             id: Some(id),
@@ -106,11 +125,13 @@ pub fn update_clockode_entry_in_keepass(value: ClockodeEntry, entry: &mut EntryM
     );
     entry.fields.insert(
         CUSTOM_ISSUER_KEY.to_string(),
-        Value::Unprotected(value
-            .totp
-            .issuer()
-            .unwrap_or(value.name.as_str())
-            .to_string()),
+        Value::Unprotected(
+            value
+                .totp
+                .issuer()
+                .unwrap_or(value.name.as_str())
+                .to_string(),
+        ),
     );
 
     entry.fields.insert(

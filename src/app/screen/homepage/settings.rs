@@ -6,22 +6,47 @@ use std::{
 };
 
 use iced::{
-    Alignment, Color, Element, Length::{self}, Subscription, Task, Theme, event, keyboard::{self, Key, key::Named}, time::Instant, widget::{Column, Row, button, center, column, container, mouse_area, opaque, pick_list, row, scrollable, space, stack, text},
+    Alignment, Color, Element,
+    Length::{self},
+    Subscription, Task, Theme, Widget, event,
+    keyboard::{self, Key, key::Named},
+    time::Instant,
+    widget::{
+        Column, Row, button, center, column, container, mouse_area, opaque, operation, pick_list,
+        row, scrollable, space, stack, text, text_input,
+    },
 };
 use rfd::{AsyncFileDialog, FileHandle};
+use secrecy::SecretString;
 use tracing::error;
 
 use crate::{
     APP_ID,
-    app::{utils::style, widgets::Toast},
+    app::{
+        core::{
+            ClockodeEntry,
+            specific_impl::{aegis, otpauth},
+        },
+        utils::{ImportType, style},
+        widgets::{Toast, menu_button::menu_button},
+    },
     config::{ColockodeTheme, Config},
     icons,
 };
 
+const AEGIS_PASSWORD_INPUT: &str = "settings-aegis-password";
+
 pub struct SettingsPage {
     config: Arc<Mutex<Config>>,
-    /// Whether the keyboard shortcuts dialog is open
     show_shortcuts: bool,
+    aegis_import: Option<AegisImport>,
+}
+
+struct AegisImport {
+    path: PathBuf,
+    password: String,
+    error: Option<String>,
+    decrypting: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -35,7 +60,7 @@ pub enum Message {
     /// Configuration Saved
     ConfigurationSaved(Result<(), anywho::Error>),
     /// Open the File Dialog to select a file to import
-    OpenImportDialog,
+    OpenImportDialog(ImportType),
     /// Open the File Dialog to select where to export the file
     OpenExportDialog,
     /// Import Path Selected Callback (after dialog)
@@ -48,6 +73,18 @@ pub enum Message {
     ShowShortcuts,
     /// Close the keyboard shortcuts dialog
     HideShortcuts,
+    /// A path for an Aegis import has been selected on the dialog
+    AegisPathSelected(Option<FileHandle>),
+    /// Update the state of the password field for the aegis import
+    AegisPasswordChanged(String),
+    /// Submit import with current password
+    SubmitAegisImport,
+    /// Cancel current aegis import
+    CancelAegisImport,
+    /// Result after trying to decrypt the aegis import
+    AegisDecrypted(Result<Vec<ClockodeEntry>, anywho::Error>),
+    /// Callback after parsing a standard import file
+    ImportParsed(Result<Vec<ClockodeEntry>, anywho::Error>),
 }
 
 pub enum Action {
@@ -59,18 +96,25 @@ pub enum Action {
     Run(Task<Message>),
     /// Add a new [`Toast`] to show
     AddToast(Toast),
-    /// Ask parent to import some content from the given filepath
-    ImportContent(PathBuf),
+    /// Ask parent to import some entries
+    ImportEntries(Vec<ClockodeEntry>),
     /// Ask parent to export the context to the given filepath
     ExportContent(PathBuf),
 }
 
 impl SettingsPage {
     pub fn new(config: Arc<Mutex<Config>>) -> (Self, Task<Message>) {
-        (Self { config, show_shortcuts: false }, Task::none())
+        (
+            Self {
+                config,
+                show_shortcuts: false,
+                aegis_import: None,
+            },
+            Task::none(),
+        )
     }
 
-    pub fn view(&self, _now: Instant) -> iced::Element<'_, Message> {
+    pub fn view(&self, _now: Instant) -> impl Widget<Message> {
         let header = header_view();
         let content = settings_view(&self.config);
 
@@ -82,10 +126,17 @@ impl SettingsPage {
         )
         .center(Length::Fill);
 
-        if self.show_shortcuts {
-            modal(page, shortcuts_view(), Message::HideShortcuts)
+        if let Some(import) = &self.aegis_import {
+            modal(
+                page,
+                aegis_password_view(import),
+                Message::CancelAegisImport,
+            )
+            .boxed()
+        } else if self.show_shortcuts {
+            modal(page, shortcuts_view(), Message::HideShortcuts).boxed()
         } else {
-            page.into()
+            page.boxed()
         }
     }
 
@@ -93,6 +144,10 @@ impl SettingsPage {
         match message {
             Message::Back => Action::Back,
             Message::Hotkey(hotkey) => match hotkey {
+                Hotkey::Esc if self.aegis_import.is_some() => {
+                    self.aegis_import = None;
+                    Action::None
+                }
                 Hotkey::Esc if self.show_shortcuts => {
                     self.show_shortcuts = false;
                     Action::None
@@ -117,16 +172,28 @@ impl SettingsPage {
                 Ok(_) => Action::None,
                 Err(e) => Action::AddToast(Toast::error_toast(e)),
             },
-            Message::OpenImportDialog => Action::Run(Task::perform(
-                async move {
-                    AsyncFileDialog::new()
-                        .add_filter("txt", &["txt"])
-                        .set_directory(dirs::download_dir().unwrap_or("/".into()))
-                        .pick_file()
-                        .await
-                },
-                Message::ImportPathSelected,
-            )),
+            Message::OpenImportDialog(import_type) => match import_type {
+                ImportType::Standard => Action::Run(Task::perform(
+                    async move {
+                        AsyncFileDialog::new()
+                            .add_filter("txt", &["txt"])
+                            .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                            .pick_file()
+                            .await
+                    },
+                    Message::ImportPathSelected,
+                )),
+                ImportType::AegisEncrypted => Action::Run(Task::perform(
+                    async move {
+                        AsyncFileDialog::new()
+                            .add_filter("json", &["json"])
+                            .set_directory(dirs::download_dir().unwrap_or("/".into()))
+                            .pick_file()
+                            .await
+                    },
+                    Message::AegisPathSelected,
+                )),
+            },
             Message::OpenExportDialog => Action::Run(Task::perform(
                 async move {
                     AsyncFileDialog::new()
@@ -138,10 +205,14 @@ impl SettingsPage {
                 Message::ExportPathSelected,
             )),
             Message::ImportPathSelected(handle) => {
-                if let Some(file_handle) = handle {
-                    return Action::ImportContent(file_handle.path().to_path_buf());
-                }
-                Action::None
+                let Some(handle) = handle else {
+                    return Action::None;
+                };
+
+                Action::Run(Task::perform(
+                    otpauth::import(handle.path().to_path_buf()),
+                    Message::ImportParsed,
+                ))
             }
             Message::ExportPathSelected(handle) => {
                 if let Some(file_handle) = handle {
@@ -166,6 +237,71 @@ impl SettingsPage {
                 self.show_shortcuts = false;
                 Action::None
             }
+            Message::AegisPathSelected(handle) => {
+                let Some(handle) = handle else {
+                    return Action::None;
+                };
+
+                self.aegis_import = Some(AegisImport {
+                    path: handle.path().to_path_buf(),
+                    password: String::new(),
+                    error: None,
+                    decrypting: false,
+                });
+                Action::Run(operation::focus(AEGIS_PASSWORD_INPUT))
+            }
+            Message::AegisPasswordChanged(password) => {
+                if let Some(import) = &mut self.aegis_import {
+                    import.password = password;
+                    import.error = None;
+                }
+                Action::None
+            }
+            Message::SubmitAegisImport => {
+                let Some(import) = &mut self.aegis_import else {
+                    return Action::None;
+                };
+                if import.decrypting || import.password.is_empty() {
+                    return Action::None;
+                }
+
+                import.decrypting = true;
+                let path = import.path.clone();
+                let password = SecretString::from(import.password.clone());
+
+                Action::Run(Task::perform(
+                    aegis::import(path, password),
+                    Message::AegisDecrypted,
+                ))
+            }
+            Message::AegisDecrypted(result) => {
+                let Some(import) = &mut self.aegis_import else {
+                    return Action::None;
+                };
+
+                match result {
+                    Ok(entries) => {
+                        self.aegis_import = None;
+                        Action::ImportEntries(entries)
+                    }
+                    Err(err) => {
+                        import.decrypting = false;
+                        import.error = Some(err.to_string());
+                        Action::None
+                    }
+                }
+            }
+            Message::CancelAegisImport => {
+                self.aegis_import = None;
+                Action::None
+            }
+            Message::ImportParsed(result) => match result {
+                Ok(entries) => Action::ImportEntries(entries),
+                Err(err) => {
+                    error!("{err}");
+                    Action::AddToast(Toast::error_toast(err))
+                }
+            },
         }
     }
 
@@ -175,7 +311,7 @@ impl SettingsPage {
 }
 
 /// View of the header of this screen
-fn header_view<'a>() -> Element<'a, Message> {
+fn header_view() -> impl Widget<Message> {
     row![
         // Back button
         button(
@@ -202,10 +338,9 @@ fn header_view<'a>() -> Element<'a, Message> {
     .padding(10)
     .align_y(iced::Alignment::Center)
     .width(Length::Fill)
-    .into()
 }
 
-fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
+fn settings_view(config: &Arc<Mutex<Config>>) -> impl Widget<Message> {
     let settings_form = column![
         // Export and Import buttons in a row
         column![
@@ -231,7 +366,7 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
                 .padding(12)
                 .width(Length::Fill)
                 .style(style::primary_button),
-                button(
+                menu_button(
                     row![
                         icons::get_icon("document-import-symbolic", 21).style(|theme, _status| {
                             let primary_style =
@@ -243,9 +378,11 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
                         text("Import").size(style::font_size::MEDIUM)
                     ]
                     .spacing(style::spacing::TINY)
-                    .align_y(Alignment::Center)
+                    .align_y(Alignment::Center),
+                    ImportType::ALL,
+                    ImportType::to_string
                 )
-                .on_press(Message::OpenImportDialog)
+                .on_select(Message::OpenImportDialog)
                 .padding(12)
                 .width(Length::Fill)
                 .style(style::primary_button),
@@ -336,7 +473,50 @@ fn settings_view<'a>(config: &'a Arc<Mutex<Config>>) -> Element<'a, Message> {
     )
     .width(Length::Fill)
     .height(Length::Fill)
-    .into()
+}
+
+/// The Aegis vault password dialog card
+fn aegis_password_view(import: &AegisImport) -> impl Widget<Message> {
+    let submit = (!import.decrypting).then_some(Message::SubmitAegisImport);
+
+    container(
+        column![
+            text("Aegis Vault Password").size(style::font_size::LARGE),
+            text("Enter the password used to encrypt this vault")
+                .size(style::font_size::SMALL)
+                .style(style::muted_text),
+            text_input("Password", &import.password)
+                .id(AEGIS_PASSWORD_INPUT)
+                .secure(true)
+                .on_input(Message::AegisPasswordChanged)
+                .on_submit(Message::SubmitAegisImport)
+                .padding(8)
+                .style(style::text_input_style),
+            text(import.error.as_deref().unwrap_or(""))
+                .size(style::font_size::SMALL)
+                .style(text::danger),
+            row![
+                space().width(Length::Fill),
+                button(text("Cancel"))
+                    .on_press(Message::CancelAegisImport)
+                    .padding(8)
+                    .style(style::secondary_button),
+                button(text(if import.decrypting {
+                    "Decrypting..."
+                } else {
+                    "Import"
+                }))
+                .on_press_maybe(submit)
+                .padding(8)
+                .style(style::primary_button),
+            ]
+            .spacing(style::spacing::SMALL),
+        ]
+        .spacing(style::spacing::MEDIUM),
+    )
+    .padding(20)
+    .width(Length::Fill.max(420.0))
+    .style(style::card_container)
 }
 
 //
@@ -351,9 +531,7 @@ pub enum Hotkey {
 fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> Option<Message> {
     #[allow(clippy::collapsible_match)]
     match event {
-        event::Event::Keyboard(keyboard::Event::KeyPressed {
-            key, ..
-        }) => match key {
+        event::Event::Keyboard(keyboard::Event::KeyPressed { key, .. }) => match key {
             Key::Named(Named::Escape) => Some(Message::Hotkey(Hotkey::Esc)),
             _ => None,
         },
@@ -376,30 +554,60 @@ const SHORTCUT_SECTIONS: &[(&str, &[Shortcut])] = &[
     (
         "Home Screen",
         &[
-            Shortcut { keys: &[&["Tab"]], description: "Highlight Next Entry" },
-            Shortcut { keys: &[&["Shift", "Tab"]], description: "Highlight Previous Entry" },
-            Shortcut { keys: &[&["Enter"], &["C"]], description: "Copy Highlighted Code" },
-            Shortcut { keys: &[&["E"]], description: "Edit Highlighted Entry" },
-            Shortcut { keys: &[&["S"]], description: "Open Search" },
-            Shortcut { keys: &[&["Esc"]], description: "Close Search or Clear Highlight" },
+            Shortcut {
+                keys: &[&["Tab"]],
+                description: "Highlight Next Entry",
+            },
+            Shortcut {
+                keys: &[&["Shift", "Tab"]],
+                description: "Highlight Previous Entry",
+            },
+            Shortcut {
+                keys: &[&["Enter"], &["C"]],
+                description: "Copy Highlighted Code",
+            },
+            Shortcut {
+                keys: &[&["E"]],
+                description: "Edit Highlighted Entry",
+            },
+            Shortcut {
+                keys: &[&["S"]],
+                description: "Open Search",
+            },
+            Shortcut {
+                keys: &[&["Esc"]],
+                description: "Close Search or Clear Highlight",
+            },
         ],
     ),
     (
         "Add & Edit Entry Screens",
         &[
-            Shortcut { keys: &[&["Tab"]], description: "Next Field" },
-            Shortcut { keys: &[&["Shift", "Tab"]], description: "Previous Field" },
-            Shortcut { keys: &[&["Esc"]], description: "Go Back" },
+            Shortcut {
+                keys: &[&["Tab"]],
+                description: "Next Field",
+            },
+            Shortcut {
+                keys: &[&["Shift", "Tab"]],
+                description: "Previous Field",
+            },
+            Shortcut {
+                keys: &[&["Esc"]],
+                description: "Go Back",
+            },
         ],
     ),
     (
         "Settings Screen",
-        &[Shortcut { keys: &[&["Esc"]], description: "Go Back" }],
+        &[Shortcut {
+            keys: &[&["Esc"]],
+            description: "Go Back",
+        }],
     ),
 ];
 
 /// The keyboard shortcuts dialog card
-fn shortcuts_view<'a>() -> Element<'a, Message> {
+fn shortcuts_view() -> impl Widget<Message> {
     let title = row![
         text("Keyboard Shortcuts")
             .size(style::font_size::LARGE)
@@ -415,21 +623,23 @@ fn shortcuts_view<'a>() -> Element<'a, Message> {
     ]
     .align_y(Alignment::Center);
 
-    let sections = SHORTCUT_SECTIONS.iter().map(|(name, shortcuts)| -> Element<'a, Message> {
-        column![
-            text(*name)
-                .size(style::font_size::SMALL)
-                .font(iced::Font {
-                    weight: iced::font::Weight::Bold,
-                    ..iced::Font::DEFAULT
-                })
-                .style(style::label_text),
-            Column::with_children(shortcuts.iter().map(shortcut_row))
-                .spacing(style::spacing::SMALL),
-        ]
-        .spacing(style::spacing::SMALL)
-        .into()
-    });
+    let sections = SHORTCUT_SECTIONS
+        .iter()
+        .map(|(name, shortcuts)| -> Element<'_, Message> {
+            column![
+                text(*name)
+                    .size(style::font_size::SMALL)
+                    .font(iced::Font {
+                        weight: iced::font::Weight::Bold,
+                        ..iced::Font::DEFAULT
+                    })
+                    .style(style::label_text),
+                Column::with_children(shortcuts.iter().map(shortcut_row))
+                    .spacing(style::spacing::SMALL),
+            ]
+            .spacing(style::spacing::SMALL)
+            .boxed()
+        });
 
     container(
         column![
@@ -441,29 +651,43 @@ fn shortcuts_view<'a>() -> Element<'a, Message> {
     .padding(20)
     .width(Length::Fill.max(420.0))
     .style(style::card_container)
-    .into()
 }
 
 /// One line of the dialog: description on the left, keycaps on the right
 fn shortcut_row<'a>(shortcut: &Shortcut) -> Element<'a, Message> {
-    let mut keys = Row::new()
+    let mut keys: Row<Element<'a, Message>> = Row::new()
         .spacing(style::spacing::TINY)
         .align_y(Alignment::Center);
 
     for (i, combo) in shortcut.keys.iter().enumerate() {
         if i > 0 {
-            keys = keys.push(text("or").size(style::font_size::SMALL).style(style::muted_text));
+            keys = keys.push(
+                text("or")
+                    .size(style::font_size::SMALL)
+                    .style(style::muted_text)
+                    .boxed(),
+            );
         }
 
         for (j, key) in combo.iter().enumerate() {
             if j > 0 {
-                keys = keys.push(text("+").size(style::font_size::SMALL).style(style::muted_text));
+                keys = keys.push(
+                    text("+")
+                        .size(style::font_size::SMALL)
+                        .style(style::muted_text)
+                        .boxed(),
+                );
             }
 
             keys = keys.push(
-                container(text(*key).size(style::font_size::SMALL).font(iced::Font::MONOSPACE))
-                    .padding([2, 8])
-                    .style(style::keycap),
+                container(
+                    text(*key)
+                        .size(style::font_size::SMALL)
+                        .font(iced::Font::MONOSPACE),
+                )
+                .padding([2, 8])
+                .style(style::keycap)
+                .boxed(),
             );
         }
     }
@@ -476,28 +700,33 @@ fn shortcut_row<'a>(shortcut: &Shortcut) -> Element<'a, Message> {
     ]
     .spacing(style::spacing::MEDIUM)
     .align_y(Alignment::Center)
-    .into()
+    .boxed()
 }
 
 /// Shows `content` centered over a dimmed `base`; clicking the backdrop sends `on_blur`
 fn modal<'a>(
-    base: impl Into<Element<'a, Message>>,
-    content: impl Into<Element<'a, Message>>,
+    base: impl Widget<Message> + 'a,
+    content: impl Widget<Message> + 'a,
     on_blur: Message,
-) -> Element<'a, Message> {
+) -> impl Widget<Message> {
     stack![
-        base.into(),
+        base,
         opaque(
             mouse_area(
-                center(opaque(container(content).padding(style::spacing::LARGE))).style(
-                    |_theme| container::Style {
-                        background: Some(Color { a: 0.6, ..Color::BLACK }.into()),
+                center(opaque(container(content).padding(style::spacing::LARGE))).style(|_theme| {
+                    container::Style {
+                        background: Some(
+                            Color {
+                                a: 0.6,
+                                ..Color::BLACK
+                            }
+                            .into(),
+                        ),
                         ..container::Style::default()
                     }
-                )
+                })
             )
             .on_press(on_blur)
         )
     ]
-    .into()
 }

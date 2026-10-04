@@ -9,7 +9,7 @@ use std::{
     sync::{Arc, Mutex},
     time::SystemTime,
 };
-use tracing::{info, warn};
+use tracing::info;
 
 use crate::{
     APP_ID,
@@ -80,7 +80,7 @@ fn save_database_atomic(
 
         // capture the mtime the destination file will have after the rename, tthis is what lets callers recognize (and ignore) filesystem-watcher events caused by this very save.
         f.metadata().and_then(|m| m.modified()).ok()
-    };  // drop file handle
+    }; // drop file handle
 
     // replace the old database with the new one
     if let Err(e) = std::fs::rename(&tmp_path, path) {
@@ -263,6 +263,42 @@ impl ClockodeDatabase {
         .await
     }
 
+    pub async fn add_entries(&self, entries: Vec<ClockodeEntry>) -> Result<(), anywho::Error> {
+        info!("Adding {} database entries", entries.len());
+
+        let lock = self.lock.clone();
+        let path = self.path.clone();
+        let password = self.password.clone();
+        let known_mtime = self.known_mtime.clone();
+
+        smol::unblock(move || {
+            let _guard = lock
+                .lock()
+                .map_err(|e| anywho!("Database lock poisoned: {}", e))?;
+
+            let mut file = std::fs::File::open(&*path)?;
+            let key = DatabaseKey::new().with_password(password.expose_secret());
+            let mut db = Database::open(&mut file, key)?;
+            drop(file);
+
+            let mut root = db.root_mut();
+            let mut target_group = root
+                .group_by_name_mut("Default Group")
+                .ok_or_else(|| anywho!("Default Group not found"))?;
+
+            for entry in entries {
+                let mut keepass_entry = target_group.add_entry();
+                update_clockode_entry_in_keepass(entry, &mut keepass_entry);
+            }
+
+            let mtime = save_database_atomic(&mut db, &path, &password)?;
+            record_known_mtime(&known_mtime, mtime);
+
+            Ok(())
+        })
+        .await
+    }
+
     pub async fn update_entry(&self, entry: ClockodeEntry) -> Result<(), anywho::Error> {
         info!("Updating database entry");
 
@@ -350,49 +386,6 @@ impl ClockodeDatabase {
             Ok(())
         })
         .await
-    }
-
-    // Import the content given in standard totp
-    pub async fn import_content(&self, file_path: PathBuf) -> Result<(), anywho::Error> {
-        info!("Importing content to database");
-
-        // Read the import file
-        let content = std::fs::read_to_string(&file_path)
-            .map_err(|e| anywho!("Failed to read import file: {}", e))?;
-
-        for line in content.lines() {
-            let line = line.trim();
-            if line.is_empty() || line.starts_with('#') {
-                continue;
-            }
-
-            // we use from_url unchecked because of the same reason we can't use TOTP::new
-            // Don't use TOTP::new() because it enforces validation and some secrets (ej: microsoft)
-            // that are xxxx xxxx xxxx xxxx will fail here if we use ::new() with error:
-            // Failed to construct TOTP object: The length of the shared secret MUST be at least 128 bits. 80 bits is not enough
-            match totp_rs::Totp::from_url_unchecked(line) {
-                Ok(totp) => {
-                    let name = if totp.account_name().trim().is_empty() {
-                        "Default".to_string()
-                    } else {
-                        totp.account_name().to_string()
-                    };
-
-                    let entry = ClockodeEntry {
-                        id: None,
-                        name,
-                        totp,
-                    };
-
-                    self.add_entry(entry).await?;
-                }
-                Err(e) => {
-                    warn!("Warning: Failed to parse TOTP URL '{}': {}", line, e);
-                }
-            }
-        }
-
-        Ok(())
     }
 
     // Export content to standard

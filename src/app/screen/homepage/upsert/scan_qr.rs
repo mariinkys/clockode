@@ -8,9 +8,8 @@ use gstreamer::{
 };
 use gstreamer_app as gst_app;
 use iced::{
-    Element,
     Length::{self},
-    Subscription, Task, event,
+    Subscription, Task, Widget, event,
     keyboard::{self, Key, key::Named},
     time::Instant,
     widget::{button, column, container, image, stack, text},
@@ -135,15 +134,15 @@ impl QrScanPage {
         ))
     }
 
-    pub fn view(&self, _now: Instant) -> iced::Element<'_, Message> {
+    pub fn view(&self, _now: Instant) -> impl Widget<Message> {
         let content = match &self.state {
             State::AskingPermission => container(text("Asking for camera permission..."))
                 .center(Length::Fill)
-                .into(),
-            State::Permitted(state) => qr_scan_view(&state.display_frame),
+                .boxed(),
+            State::Permitted(state) => qr_scan_view(&state.display_frame).boxed(),
         };
 
-        container(content).padding(5.).center(Length::Fill).into()
+        container(content).padding(5.).center(Length::Fill)
     }
 
     pub fn update(&mut self, message: Message, _now: Instant) -> Action {
@@ -202,45 +201,45 @@ impl QrScanPage {
     fn init_gstreamer(camera_fd: Arc<OwnedFd>) -> Result<State, QrScanError> {
         let pipeline = gst::Pipeline::new();
 
-            let src = gst::ElementFactory::make("pipewiresrc")
-                .property("fd", camera_fd.as_raw_fd())
-                .property("do-timestamp", true)  // helps with mobile cameras
-                .build()
-                .map_err(|_| QrScanError::ElementCreation("pipewiresrc"))?;
+        let src = gst::ElementFactory::make("pipewiresrc")
+            .property("fd", camera_fd.as_raw_fd())
+            .property("do-timestamp", true) // helps with mobile cameras
+            .build()
+            .map_err(|_| QrScanError::ElementCreation("pipewiresrc"))?;
 
-            let convert = gst::ElementFactory::make("videoconvert")
-                .build()
-                .map_err(|_| QrScanError::ElementCreation("videoconvert"))?;
+        let convert = gst::ElementFactory::make("videoconvert")
+            .build()
+            .map_err(|_| QrScanError::ElementCreation("videoconvert"))?;
 
-            let scale = gst::ElementFactory::make("videoscale")
-                .build()
-                .map_err(|_| QrScanError::ElementCreation("videoscale"))?;
+        let scale = gst::ElementFactory::make("videoscale")
+            .build()
+            .map_err(|_| QrScanError::ElementCreation("videoscale"))?;
 
-            let capsfilter = gst::ElementFactory::make("capsfilter")
-                .property(
-                    "caps",
-                    gst::Caps::builder("video/x-raw")
-                        .field("format", "GRAY8")
-                        .field("width", 640i32)
-                        .field("height", 480i32)
-                        .build(),
-                )
-                .build()
-                .map_err(|_| QrScanError::ElementCreation("capsfilter"))?;
+        let capsfilter = gst::ElementFactory::make("capsfilter")
+            .property(
+                "caps",
+                gst::Caps::builder("video/x-raw")
+                    .field("format", "GRAY8")
+                    .field("width", 640i32)
+                    .field("height", 480i32)
+                    .build(),
+            )
+            .build()
+            .map_err(|_| QrScanError::ElementCreation("capsfilter"))?;
 
-            let sink = gst::ElementFactory::make("appsink")
-                .build()
-                .map_err(|_| QrScanError::ElementCreation("appsink"))?;
+        let sink = gst::ElementFactory::make("appsink")
+            .build()
+            .map_err(|_| QrScanError::ElementCreation("appsink"))?;
 
-            pipeline
-                .add_many([&src, &convert, &scale, &capsfilter, &sink])
-                .map_err(QrScanError::PipelineSetup)?;
-            gst::Element::link_many([&src, &convert, &scale, &capsfilter, &sink])
-                .map_err(QrScanError::PipelineSetup)?;
+        pipeline
+            .add_many([&src, &convert, &scale, &capsfilter, &sink])
+            .map_err(QrScanError::PipelineSetup)?;
+        gst::Element::link_many([&src, &convert, &scale, &capsfilter, &sink])
+            .map_err(QrScanError::PipelineSetup)?;
 
-            let appsink = sink
-                .dynamic_cast::<gst_app::AppSink>()
-                .map_err(|_| QrScanError::ElementCreation("appsink cast failed"))?;
+        let appsink = sink
+            .dynamic_cast::<gst_app::AppSink>()
+            .map_err(|_| QrScanError::ElementCreation("appsink cast failed"))?;
 
         let (frame_tx, frame_rx) = channel::bounded::<FrameData>(1);
         let (display_tx, display_rx) = channel::bounded::<image::Handle>(1);
@@ -406,7 +405,7 @@ impl QrScanPage {
     }
 }
 
-fn qr_scan_view<'a>(display_frame: &'a Option<Box<image::Handle>>) -> Element<'a, Message> {
+fn qr_scan_view(display_frame: &Option<Box<image::Handle>>) -> impl Widget<Message> {
     let camera_display = if let Some(handle) = display_frame {
         container(
             image(handle.as_ref().clone())
@@ -416,6 +415,7 @@ fn qr_scan_view<'a>(display_frame: &'a Option<Box<image::Handle>>) -> Element<'a
         )
         .padding(40.)
         .center(Length::Fill)
+        .boxed()
     } else {
         container(
             column![
@@ -429,6 +429,7 @@ fn qr_scan_view<'a>(display_frame: &'a Option<Box<image::Handle>>) -> Element<'a
             .align_x(iced::Alignment::Center),
         )
         .center(Length::Fill)
+        .boxed()
     };
 
     let camera_with_button = container(stack![
@@ -455,7 +456,7 @@ fn qr_scan_view<'a>(display_frame: &'a Option<Box<image::Handle>>) -> Element<'a
         .padding(10)
         .width(Length::Fill)
         .height(Length::Fill)
-        .into()
+        .boxed()
 }
 
 //
@@ -470,9 +471,7 @@ pub enum Hotkey {
 fn handle_event(event: event::Event, _: event::Status, _: iced::window::Id) -> Option<Message> {
     #[allow(clippy::collapsible_match)]
     match event {
-        event::Event::Keyboard(keyboard::Event::KeyPressed {
-            key, ..
-        }) => match key {
+        event::Event::Keyboard(keyboard::Event::KeyPressed { key, .. }) => match key {
             Key::Named(Named::Escape) => Some(Message::Hotkey(Hotkey::Esc)),
             _ => None,
         },

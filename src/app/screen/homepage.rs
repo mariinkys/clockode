@@ -8,7 +8,7 @@ use std::{
 use iced::{
     Alignment, Element, Event,
     Length::{self},
-    Rectangle, Subscription, Task, event, keyboard,
+    Rectangle, Subscription, Task, Widget, event, keyboard,
     time::Instant,
     widget::{
         Column, button, column, container, operation, row, scrollable, stack, text, text_input,
@@ -221,9 +221,9 @@ impl HomePage {
         )
     }
 
-    pub fn view(&self, now: Instant) -> iced::Element<'_, Message> {
+    pub fn view(&self, now: Instant) -> impl Widget<Message> {
         let content: Element<Message> = match &self.state {
-            State::Loading => text("Loading...").into(),
+            State::Loading => text("Loading...").boxed(),
             State::Ready { subscreen } => match subscreen {
                 SubScreen::Home(home) => {
                     let header = header_view(home.entries.len(), home.search.as_deref());
@@ -237,18 +237,18 @@ impl HomePage {
                         .padding(5.)
                         .width(Length::Fill)
                         .height(Length::Fill)
-                        .into()
+                        .boxed()
                 }
                 SubScreen::UpsertPage(upsert_page) => {
-                    upsert_page.view(now).map(Message::UpsertPage)
+                    upsert_page.view(now).map(Message::UpsertPage).boxed()
                 }
                 SubScreen::SettingsPage(settings_page) => {
-                    settings_page.view(now).map(Message::SettingsPage)
+                    settings_page.view(now).map(Message::SettingsPage).boxed()
                 }
             },
         };
 
-        container(content).center(Length::Fill).into()
+        container(content).center(Length::Fill)
     }
 
     pub fn update(&mut self, message: Message, now: Instant) -> Action {
@@ -362,10 +362,10 @@ impl HomePage {
                     settings::Action::Back => self.update(Message::LoadEntries, now),
                     settings::Action::Run(task) => Action::Run(task.map(Message::SettingsPage)),
                     settings::Action::AddToast(toast) => Action::AddToast(toast),
-                    settings::Action::ImportContent(path_buf) => {
+                    settings::Action::ImportEntries(entries) => {
                         let db_clone = Arc::clone(&self.database);
                         Action::Run(Task::perform(
-                            async move { db_clone.import_content(path_buf).await },
+                            async move { db_clone.add_entries(entries).await },
                             Message::EntryUpserted,
                         ))
                     }
@@ -520,10 +520,7 @@ impl HomePage {
                 self.update(Message::CopyToClipboard(code), now)
             }
             Message::EditSelectedEntry => {
-                let Some(entry) = self
-                    .home()
-                    .and_then(HomeState::highlighted_entry)
-                    .cloned()
+                let Some(entry) = self.home().and_then(HomeState::highlighted_entry).cloned()
                 else {
                     return Action::None;
                 };
@@ -534,8 +531,8 @@ impl HomePage {
     }
 
     pub fn subscription(&self, now: Instant) -> Subscription<Message> {
-        let watcher = watch_database((*self.database.path()).clone())
-            .map(|_| Message::DatabaseChangedOnDisk);
+        let watcher =
+            watch_database((*self.database.path()).clone()).map(|_| Message::DatabaseChangedOnDisk);
 
         let keys = match &self.state {
             State::Ready {
@@ -633,7 +630,7 @@ fn unfocus_search() -> Task<Message> {
 }
 
 /// View of the header of this screen
-fn header_view<'a>(entry_count: usize, search: Option<&'a str>) -> Element<'a, Message> {
+fn header_view<'a>(entry_count: usize, search: Option<&'a str>) -> impl Widget<Message> {
     // While searching, the input replaces the action buttons so nothing gets pushed off-screen
     let actions: Element<'a, Message> = match search {
         None => row![
@@ -651,8 +648,8 @@ fn header_view<'a>(entry_count: usize, search: Option<&'a str>) -> Element<'a, M
                 .style(style::secondary_button),
         ]
         .spacing(style::spacing::SMALL)
-        .into(),
-        Some(query) => search_input_view(query),
+        .boxed(),
+        Some(query) => search_input_view(query).boxed(),
     };
 
     row![
@@ -677,11 +674,13 @@ fn header_view<'a>(entry_count: usize, search: Option<&'a str>) -> Element<'a, M
     .padding(10)
     .align_y(iced::Alignment::Center)
     .width(Length::Fill)
-    .into()
 }
 
 /// Entries matching the current search query (all of them if there's none)
-fn filter_entries<'a>(entries: &'a [ClockodeEntry], search: Option<&str>) -> Vec<&'a ClockodeEntry> {
+fn filter_entries<'a>(
+    entries: &'a [ClockodeEntry],
+    search: Option<&str>,
+) -> Vec<&'a ClockodeEntry> {
     let query = search
         .map(str::trim)
         .filter(|query| !query.is_empty())
@@ -715,7 +714,7 @@ fn content_view<'a>(
             .spacing(style::spacing::MEDIUM),
         )
         .center(Length::Fill)
-        .into()
+        .boxed()
     } else if filtered.is_empty() {
         container(
             text("No entries match your search")
@@ -723,10 +722,10 @@ fn content_view<'a>(
                 .style(style::muted_text),
         )
         .center(Length::Fill)
-        .into()
+        .boxed()
     } else {
         let entries_list = filtered.into_iter().enumerate().fold(
-            Column::new()
+            Column::<Element<'_, Message>>::new()
                 .height(Length::Fill)
                 .spacing(style::spacing::MEDIUM)
                 .padding(10),
@@ -785,19 +784,19 @@ fn content_view<'a>(
                     }
                 });
 
-                col.push(entry_view)
+                col.push(entry_view.boxed())
             },
         );
 
         scrollable(entries_list)
             .height(Length::Fill)
             .id(ENTRIES_SCROLLABLE)
-            .into()
+            .boxed()
     }
 }
 
 /// Search text input with an inline close button, shown in the header while searching
-fn search_input_view(query: &str) -> Element<'_, Message> {
+fn search_input_view(query: &str) -> impl Widget<Message> {
     const CLOSE_ICON_SIZE: u16 = 16;
     const CLOSE_PADDING: f32 = 4.0;
 
@@ -805,16 +804,18 @@ fn search_input_view(query: &str) -> Element<'_, Message> {
         .id(SEARCH_INPUT)
         .on_input(Message::SearchChanged)
         // Extra right padding so typed text never runs under the close button
-        .padding(iced::padding::all(8).right(
-            CLOSE_ICON_SIZE as f32 + CLOSE_PADDING * 2.0 + style::spacing::TINY * 2.0,
-        ))
+        .padding(
+            iced::padding::all(8)
+                .right(CLOSE_ICON_SIZE as f32 + CLOSE_PADDING * 2.0 + style::spacing::TINY * 2.0),
+        )
         .width(Length::Fill.max(200.0))
         .style(style::text_input_style);
 
-    let close = button(icons::get_icon("window-close-symbolic", CLOSE_ICON_SIZE).style(style::icon))
-        .on_press(Message::CloseSearch)
-        .padding(CLOSE_PADDING)
-        .style(style::transparent_button);
+    let close =
+        button(icons::get_icon("window-close-symbolic", CLOSE_ICON_SIZE).style(style::icon))
+            .on_press(Message::CloseSearch)
+            .padding(CLOSE_PADDING)
+            .style(style::transparent_button);
 
     stack![
         input,
@@ -823,7 +824,6 @@ fn search_input_view(query: &str) -> Element<'_, Message> {
             .center_y(Length::Fill)
             .padding(iced::padding::right(style::spacing::TINY)),
     ]
-    .into()
 }
 
 /// Scrolls the entry list just enough to make the entry at `index` fully visible
@@ -872,9 +872,9 @@ fn scroll_to_entry(index: usize) -> Task<Message> {
         if delta == 0.0 {
             Task::none()
         } else {
-            operation::scroll_by(
+            operation::scrollable::scroll_by(
                 ENTRIES_SCROLLABLE,
-                operation::AbsoluteOffset { x: 0.0, y: delta },
+                operation::scrollable::AbsoluteOffset { x: 0.0, y: delta },
                 operation::Animation::Auto,
             )
         }
