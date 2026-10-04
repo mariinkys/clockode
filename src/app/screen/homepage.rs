@@ -11,7 +11,8 @@ use iced::{
     Rectangle, Subscription, Task, Widget, event, keyboard,
     time::Instant,
     widget::{
-        Column, button, column, container, operation, row, scrollable, stack, text, text_input,
+        Column, button, column, container, mouse_area, operation, row, scrollable, stack, text,
+        text_input,
     },
 };
 use tracing::{error, info};
@@ -102,6 +103,22 @@ impl HomeState {
         self.selected_entry = None;
     }
 
+    /// Highlights the entry at `index` and scrolls it into view
+    fn select(&mut self, index: usize) -> Task<Message> {
+        self.selected_entry = Some(index);
+
+        let scroll = scroll_to_entry(index);
+
+        // Highlighting an entry takes over from the search input, so keys like
+        // E and Enter act on the entry instead of being typed
+        if self.search_focused {
+            self.search_focused = false;
+            Task::batch([scroll, unfocus_search()])
+        } else {
+            scroll
+        }
+    }
+
     /// Moves the Tab highlight forwards or backwards (wrapping) and scrolls it into view
     fn move_selection(&mut self, forward: bool) -> Task<Message> {
         let count = self.filtered().len();
@@ -118,18 +135,7 @@ impl HomeState {
             (Some(index), false) => (index + count - 1) % count,
         };
 
-        self.selected_entry = Some(index);
-
-        let scroll = scroll_to_entry(index);
-
-        // Highlighting an entry takes over from the search input, so keys like
-        // E and Enter act on the entry instead of being typed
-        if self.search_focused {
-            self.search_focused = false;
-            Task::batch([scroll, unfocus_search()])
-        } else {
-            scroll
-        }
+        self.select(index)
     }
 }
 
@@ -176,6 +182,8 @@ pub enum Message {
     /// Result of checking whether the search input is focused
     SearchFocusChanged(bool),
 
+    /// Click: highlight the entry at this index (in the filtered list)
+    SelectEntry(usize),
     /// Tab: highlight the next entry
     SelectNextEntry,
     /// Shift+Tab: highlight the previous entry
@@ -502,6 +510,17 @@ impl HomePage {
                 Action::None
             }
 
+            Message::SelectEntry(index) => {
+                let Some(home) = self.home_mut() else {
+                    return Action::None;
+                };
+
+                if index >= home.filtered().len() {
+                    return Action::None;
+                }
+
+                Action::Run(home.select(index))
+            }
             Message::SelectNextEntry => self
                 .home_mut()
                 .map_or(Action::None, |home| Action::Run(home.move_selection(true))),
@@ -784,7 +803,12 @@ fn content_view<'a>(
                     }
                 });
 
-                col.push(entry_view.boxed())
+                col.push(
+                    mouse_area(entry_view)
+                        .on_press(Message::SelectEntry(index))
+                        .interaction(iced::mouse::Interaction::Pointer)
+                        .boxed(),
+                )
             },
         );
 
