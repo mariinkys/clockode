@@ -21,9 +21,12 @@ use iced::advanced::{Layout, Shell, Widget};
 use iced::overlay::menu::{self, Menu};
 use iced::widget::button::{self, Status, Style};
 use iced::{
-    Background, Border, Color, Event, Length, Padding, Pixels, Rectangle, Size, Theme, Vector,
-    alignment, mouse, touch, window,
+    Background, Border, Color, Event, Length, Padding, Pixels, Point, Rectangle, Size, Theme,
+    Vector, alignment, mouse, touch, window,
 };
+
+/// Gap between the content and the arrow.
+const ARROW_SPACING: f32 = 8.0;
 
 /// Creates a new [`MenuButton`] with the given content and options.
 pub fn menu_button<'a, T, Message, W>(
@@ -198,10 +201,11 @@ where
     }
 
     fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
+        let text_size = self.text_size.unwrap_or_else(|| renderer.text_size());
+
         {
             let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
 
-            let text_size = self.text_size.unwrap_or_else(|| renderer.text_size());
             let line_height = renderer.line_height();
 
             state
@@ -227,12 +231,18 @@ where
             }
         }
 
+        // Reserve room on the right for the arrow.
+        let padding = Padding {
+            right: self.padding.right + text_size.0 + ARROW_SPACING,
+            ..self.padding
+        };
+
         layout::padded(
             tree,
             limits,
             self.width,
             self.height,
-            self.padding,
+            padding,
             |tree, limits| {
                 self.content.layout(tree, renderer, limits);
 
@@ -357,6 +367,33 @@ where
             layout,
             cursor,
             viewport,
+        );
+
+        // The arrow, right-aligned inside the padding reserved in `layout`.
+        let size = self.text_size.unwrap_or_else(|| renderer.text_size());
+        let line_height = renderer.line_height();
+        let hint_factor = renderer.hint_factor();
+
+        renderer.fill_text(
+            Text {
+                content: Renderer::ARROW_DOWN_ICON.to_string(),
+                bounds: Size::new(bounds.width, f32::from(line_height.to_absolute(size))),
+                size,
+                line_height,
+                font: Renderer::ICON_FONT,
+                align_x: text::Alignment::Right,
+                align_y: alignment::Vertical::Center,
+                shaping: text::Shaping::Basic,
+                wrapping: text::Wrapping::None,
+                ellipsis: text::Ellipsis::None,
+                hint_factor,
+            },
+            Point::new(
+                bounds.x + bounds.width - self.padding.right,
+                bounds.center_y(),
+            ),
+            style.text_color,
+            *viewport,
         );
     }
 
