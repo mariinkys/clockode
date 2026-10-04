@@ -369,13 +369,6 @@ impl HomePage {
                             Message::EntryUpserted,
                         ))
                     }
-                    settings::Action::ImportContent(path_buf) => {
-                        let db_clone = Arc::clone(&self.database);
-                        Action::Run(Task::perform(
-                            async move { db_clone.import_content(path_buf).await },
-                            Message::EntryUpserted,
-                        ))
-                    }
                     settings::Action::ExportContent(path_buf) => {
                         let db_clone = Arc::clone(&self.database);
                         Action::Run(Task::perform(

@@ -11,7 +11,7 @@ use serde::Deserialize;
 use std::path::PathBuf;
 use tracing::warn;
 
-use crate::app::core::entry::ClockodeEntry;
+use crate::app::core::entry::{ClockodeEntry, import_display_name};
 
 #[derive(Deserialize)]
 struct Vault {
@@ -196,12 +196,7 @@ fn to_entry(entry: Entry) -> Option<ClockodeEntry> {
         }
     };
 
-    let name = match (issuer.trim(), entry.name.trim()) {
-        ("", "") => "Default".to_string(),
-        ("", name) => name.to_string(),
-        (issuer, "") => issuer.to_string(),
-        (issuer, name) => format!("{issuer} ({name})"),
-    };
+    let name = import_display_name(&issuer, &entry.name);
 
     Some(ClockodeEntry {
         id: None,

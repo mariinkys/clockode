@@ -19,6 +19,17 @@ pub struct ClockodeEntry {
     pub totp: Totp,
 }
 
+/// Display name for an imported entry: "Issuer (account)", falling back to
+/// whichever part is present, or "Default" if neither is.
+pub fn import_display_name(issuer: &str, account: &str) -> String {
+    match (issuer.trim(), account.trim()) {
+        ("", "") => "Default".to_string(),
+        ("", account) => account.to_string(),
+        (issuer, "") => issuer.to_string(),
+        (issuer, account) => format!("{issuer} ({account})"),
+    }
+}
+
 impl TryFrom<Entry> for ClockodeEntry {
     type Error = anywho::Error;
 

@@ -9,7 +9,7 @@ use std::{
     sync::{Arc, Mutex},
     time::SystemTime,
 };
-use tracing::{info, warn};
+use tracing::info;
 
 use crate::{
     APP_ID,
@@ -386,49 +386,6 @@ impl ClockodeDatabase {
             Ok(())
         })
         .await
-    }
-
-    // Import the content given in standard totp
-    pub async fn import_content(&self, file_path: PathBuf) -> Result<(), anywho::Error> {
-        info!("Importing content to database");
-
-        // Read the import file
-        let content = std::fs::read_to_string(&file_path)
-            .map_err(|e| anywho!("Failed to read import file: {}", e))?;
-
-        for line in content.lines() {
-            let line = line.trim();
-            if line.is_empty() || line.starts_with('#') {
-                continue;
-            }
-
-            // we use from_url unchecked because of the same reason we can't use TOTP::new
-            // Don't use TOTP::new() because it enforces validation and some secrets (ej: microsoft)
-            // that are xxxx xxxx xxxx xxxx will fail here if we use ::new() with error:
-            // Failed to construct TOTP object: The length of the shared secret MUST be at least 128 bits. 80 bits is not enough
-            match totp_rs::Totp::from_url_unchecked(line) {
-                Ok(totp) => {
-                    let name = if totp.account_name().trim().is_empty() {
-                        "Default".to_string()
-                    } else {
-                        totp.account_name().to_string()
-                    };
-
-                    let entry = ClockodeEntry {
-                        id: None,
-                        name,
-                        totp,
-                    };
-
-                    self.add_entry(entry).await?;
-                }
-                Err(e) => {
-                    warn!("Warning: Failed to parse TOTP URL '{}': {}", line, e);
-                }
-            }
-        }
-
-        Ok(())
     }
 
     // Export content to standard

@@ -23,7 +23,10 @@ use tracing::error;
 use crate::{
     APP_ID,
     app::{
-        core::{ClockodeEntry, specific_impl::aegis},
+        core::{
+            ClockodeEntry,
+            specific_impl::{aegis, otpauth},
+        },
         utils::{ImportType, style},
         widgets::{Toast, menu_button::menu_button},
     },
@@ -80,6 +83,8 @@ pub enum Message {
     CancelAegisImport,
     /// Result after trying to decrypt the aegis import
     AegisDecrypted(Result<Vec<ClockodeEntry>, anywho::Error>),
+    /// Callback after parsing a standard import file
+    ImportParsed(Result<Vec<ClockodeEntry>, anywho::Error>),
 }
 
 pub enum Action {
@@ -91,8 +96,6 @@ pub enum Action {
     Run(Task<Message>),
     /// Add a new [`Toast`] to show
     AddToast(Toast),
-    /// Ask parent to import some content from the given filepath
-    ImportContent(PathBuf),
     /// Ask parent to import some entries
     ImportEntries(Vec<ClockodeEntry>),
     /// Ask parent to export the context to the given filepath
@@ -202,10 +205,14 @@ impl SettingsPage {
                 Message::ExportPathSelected,
             )),
             Message::ImportPathSelected(handle) => {
-                if let Some(file_handle) = handle {
-                    return Action::ImportContent(file_handle.path().to_path_buf());
-                }
-                Action::None
+                let Some(handle) = handle else {
+                    return Action::None;
+                };
+
+                Action::Run(Task::perform(
+                    otpauth::import(handle.path().to_path_buf()),
+                    Message::ImportParsed,
+                ))
             }
             Message::ExportPathSelected(handle) => {
                 if let Some(file_handle) = handle {
@@ -288,6 +295,13 @@ impl SettingsPage {
                 self.aegis_import = None;
                 Action::None
             }
+            Message::ImportParsed(result) => match result {
+                Ok(entries) => Action::ImportEntries(entries),
+                Err(err) => {
+                    error!("{err}");
+                    Action::AddToast(Toast::error_toast(err))
+                }
+            },
         }
     }
 
