@@ -18,8 +18,10 @@ pub async fn import(path: PathBuf) -> Result<Vec<ClockodeEntry>, anywho::Error> 
             .filter(|line| !line.is_empty() && !line.starts_with('#'))
             .enumerate()
             .filter_map(|(index, line)| {
-                // we use from_url unchecked because some secrets (ej: microsoft) are
-                // shorter than the 128 bits the checked constructors enforce
+                // we use from_url unchecked because of the same reason we can't use TOTP::new
+                // Don't use TOTP::new() because it enforces validation and some secrets (ej: microsoft)
+                // that are xxxx xxxx xxxx xxxx will fail here if we use ::new() with error:
+                // Failed to construct TOTP object: The length of the shared secret MUST be at least 128 bits. 80 bits is not enough
                 match totp_rs::Totp::from_url_unchecked(line) {
                     Ok(totp) => {
                         let name = import_display_name(
