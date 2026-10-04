@@ -83,7 +83,15 @@
     </keywords>
 
     <releases>
-        <release version="0.3.0" date="2026-08-27">
+        <release version="0.3.1" date="2026-10-04">
+            <description>
+                <p>Added the ability to import aegis encrypted vaults (JSON)</p>
+                <p
+                >You can now select entries with the mouse (not only with the keyboard)</p>
+                <p>Updated dependencies</p>
+            </description>
+        </release>
+        <release version="0.3.0" date="2026-09-27">
             <description>
                 <p>Added search feature</p>
                 <p>Added new keyboard navigation features to the home screen</p>
@@ -94,20 +102,24 @@
         </release>
         <release version="0.2.9" date="2026-08-20">
             <description>
-                <p>Fixed issue that prevented the clipboard from working in some Wayland environments</p>
+                <p
+                >Fixed issue that prevented the clipboard from working in some Wayland environments</p>
                 <p>Updated dependencies</p>
             </description>
         </release>
         <release version="0.2.8" date="2026-08-19">
             <description>
-                <p>Fixed issue that prevented the clipboard from working in some Wayland environments</p>
+                <p
+                >Fixed issue that prevented the clipboard from working in some Wayland environments</p>
                 <p>Updated dependencies</p>
             </description>
         </release>
         <release version="0.2.7" date="2026-07-12">
             <description>
-                <p>Improved DB saving logic to ensure data stays valid and safe</p>
-                <p>Watch for database changes on another process and refresh accordingly</p>
+                <p
+                >Improved DB saving logic to ensure data stays valid and safe</p>
+                <p
+                >Watch for database changes on another process and refresh accordingly</p>
                 <p>Updated dependencies</p>
             </description>
         </release>
