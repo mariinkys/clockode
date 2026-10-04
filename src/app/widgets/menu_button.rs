@@ -25,6 +25,8 @@ use iced::{
     Vector, alignment, mouse, touch, window,
 };
 
+use std::rc::Rc;
+
 /// Gap between the content and the arrow.
 const ARROW_SPACING: f32 = 8.0;
 
@@ -51,7 +53,8 @@ pub struct MenuButton<'a, T, Message, W> {
     padding: Padding,
     text_size: Option<Pixels>,
     class: button::StyleFn<'a, Theme>,
-    menu_class: menu::StyleFn<'a, Theme>,
+    menu_class: Rc<dyn Fn(&Theme) -> menu::Style + 'a>,
+    open_menu_class: menu::StyleFn<'a, Theme>,
     status: Option<Status>,
 }
 
@@ -75,7 +78,8 @@ where
             padding: button::DEFAULT_PADDING,
             text_size: None,
             class: Box::new(button::primary),
-            menu_class: Box::new(|theme| menu_style(theme, &button::primary)),
+            menu_class: Rc::new(|theme: &Theme| menu_style(theme, &button::primary)),
+            open_menu_class: Box::new(menu::default),
             status: None,
         }
     }
@@ -119,14 +123,14 @@ where
         let button = style.clone();
 
         self.class = Box::new(style);
-        self.menu_class = Box::new(move |theme| menu_style(theme, &button));
+        self.menu_class = Rc::new(move |theme: &Theme| menu_style(theme, &button));
         self
     }
 
     /// Overrides the style of the menu.
     #[must_use]
     pub fn menu_style(mut self, style: impl Fn(&Theme) -> menu::Style + 'a) -> Self {
-        self.menu_class = Box::new(style);
+        self.menu_class = Rc::new(style);
         self
     }
 }
@@ -158,6 +162,8 @@ fn menu_style(theme: &Theme, button: &impl Fn(&Theme, Status) -> Style) -> menu:
 struct State<P: text::Paragraph> {
     menu: menu::State,
     is_open: bool,
+    /// Whether the menu opens above the button instead of below it.
+    opens_above: bool,
     hovered_option: Option<usize>,
     /// Measured option labels, so the menu can be wide enough for all of them.
     options: Vec<paragraph::Plain<P>>,
@@ -180,6 +186,7 @@ where
         tree::State::new(State::<Renderer::Paragraph> {
             menu: menu::State::default(),
             is_open: false,
+            opens_above: false,
             hovered_option: None,
             options: Vec::new(),
         })
@@ -340,8 +347,20 @@ where
         viewport: &Rectangle,
     ) {
         let bounds = layout.bounds();
+        let state = tree.state.downcast_ref::<State<Renderer::Paragraph>>();
         let (layout, tree) = layout.iter(&tree.children).next().unwrap();
-        let style = (self.class)(theme, self.status.unwrap_or(Status::Disabled));
+        let mut style = (self.class)(theme, self.status.unwrap_or(Status::Disabled));
+
+        // Square the corners that touch the open menu.
+        if state.is_open {
+            if state.opens_above {
+                style.border.radius.top_left = 0.0;
+                style.border.radius.top_right = 0.0;
+            } else {
+                style.border.radius.bottom_left = 0.0;
+                style.border.radius.bottom_right = 0.0;
+            }
+        }
 
         if style.background.is_some() || style.border.width > 0.0 || style.shadow.color.a > 0.0 {
             renderer.fill_quad(
@@ -442,6 +461,28 @@ where
         let bounds = layout.bounds();
         let position = layout.position() + translation;
 
+        // Same rule the menu overlay uses to pick its side: below the button
+        // only if there is more room there than above.
+        let space_below = window.height - (position.y + bounds.height);
+        let opens_above = space_below <= position.y;
+        state.opens_above = opens_above;
+
+        // Square the menu corners that touch the button.
+        let menu_class = Rc::clone(&self.menu_class);
+        self.open_menu_class = Box::new(move |theme: &Theme| {
+            let mut style = menu_class(theme);
+
+            if opens_above {
+                style.border.radius.bottom_left = 0.0;
+                style.border.radius.bottom_right = 0.0;
+            } else {
+                style.border.radius.top_left = 0.0;
+                style.border.radius.top_right = 0.0;
+            }
+
+            style
+        });
+
         // At least as wide as the button, wider if an option needs it.
         let widest_option = state.options.iter().fold(0.0, |width, paragraph| {
             f32::max(width, paragraph.min_width())
@@ -459,7 +500,7 @@ where
                 (on_select)(option)
             },
             None,
-            &self.menu_class,
+            &self.open_menu_class,
         )
         .width(width)
         .padding(self.padding)
