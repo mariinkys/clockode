@@ -479,44 +479,63 @@ fn settings_view(config: &Arc<Mutex<Config>>) -> impl Widget<Message> {
 fn aegis_password_view(import: &AegisImport) -> impl Widget<Message> {
     let submit = (!import.decrypting).then_some(Message::SubmitAegisImport);
 
-    container(
-        column![
-            text("Aegis Vault Password").size(style::font_size::LARGE),
+    let mut content: Column<Element<'_, Message>> = Column::new()
+        .spacing(style::spacing::MEDIUM)
+        .push(
+            text("Aegis Vault Password")
+                .size(style::font_size::LARGE)
+                .boxed(),
+        )
+        .push(
             text("Enter the password used to encrypt this vault")
                 .size(style::font_size::SMALL)
-                .style(style::muted_text),
+                .style(style::muted_text)
+                .boxed(),
+        )
+        .push(
             text_input("Password", &import.password)
                 .id(AEGIS_PASSWORD_INPUT)
                 .secure(true)
                 .on_input(Message::AegisPasswordChanged)
                 .on_submit(Message::SubmitAegisImport)
                 .padding(8)
-                .style(style::text_input_style),
-            text(import.error.as_deref().unwrap_or(""))
+                .style(style::text_input_style)
+                .boxed(),
+        );
+
+    if let Some(error) = &import.error {
+        content = content.push(
+            text(error)
                 .size(style::font_size::SMALL)
-                .style(text::danger),
-            row![
-                space().width(Length::Fill),
-                button(text("Cancel"))
-                    .on_press(Message::CancelAegisImport)
-                    .padding(8)
-                    .style(style::secondary_button),
-                button(text(if import.decrypting {
-                    "Decrypting..."
-                } else {
-                    "Import"
-                }))
-                .on_press_maybe(submit)
+                .style(text::danger)
+                .boxed(),
+        );
+    }
+
+    content = content.push(
+        row![
+            space().width(Length::Fill),
+            button(text("Cancel"))
+                .on_press(Message::CancelAegisImport)
                 .padding(8)
-                .style(style::primary_button),
-            ]
-            .spacing(style::spacing::SMALL),
+                .style(style::secondary_button),
+            button(text(if import.decrypting {
+                "Decrypting..."
+            } else {
+                "Import"
+            }))
+            .on_press_maybe(submit)
+            .padding(8)
+            .style(style::primary_button),
         ]
-        .spacing(style::spacing::MEDIUM),
-    )
-    .padding(20)
-    .width(Length::Fill.max(420.0))
-    .style(style::card_container)
+        .spacing(style::spacing::SMALL)
+        .boxed(),
+    );
+
+    container(content)
+        .padding(20)
+        .width(Length::Fill.max(420.0))
+        .style(style::card_container)
 }
 
 //
