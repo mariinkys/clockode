@@ -1,0 +1,138 @@
+name: Testing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  TAG: testing
+
+jobs:
+  linux:
+    name: Linux (.deb + .rpm)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            pkg-config clang libclang-dev libv4l-dev \
+            libxkbcommon-dev libwayland-dev \
+            libx11-dev libxcursor-dev libxrandr-dev libxi-dev
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deb,cargo-generate-rpm
+
+      - name: Build
+        run: cargo build --release --locked
+
+      - name: Package .deb
+        run: cargo deb --no-build
+
+      - name: Package .rpm
+        run: cargo generate-rpm
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: clockode-${{ env.TAG }}-linux
+          path: |
+            target/debian/*.deb
+            target/generate-rpm/*.rpm
+          if-no-files-found: error
+          retention-days: 14
+
+  windows:
+    name: Windows (x86_64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release --locked
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path target/release/clockode.exe `
+            -DestinationPath "dist/clockode-$env:TAG-windows-x86_64.zip"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: clockode-${{ env.TAG }}-windows-x86_64
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  macos:
+    name: macOS (Apple Silicon)
+    runs-on: macos-14 # arm64 runner
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release --locked
+
+      - name: Bundle .app and .dmg
+        run: |
+          # "testing" isn't a valid bundle version, so use the one from Cargo.toml
+          VERSION="$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)"
+          APP="dist/Clockode.app"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          cp target/release/clockode "$APP/Contents/MacOS/clockode"
+
+          # Generate the .icns from the existing PNG icon
+          PNG=resources/icons/hicolor/256x256/apps/icon.png
+          ICONSET=clockode.iconset
+          mkdir -p "$ICONSET"
+          for s in 16 32 128 256; do
+            sips -z $s $s "$PNG" --out "$ICONSET/icon_${s}x${s}.png" >/dev/null
+          done
+          sips -z 64 64   "$PNG" --out "$ICONSET/icon_32x32@2x.png"   >/dev/null
+          sips -z 256 256 "$PNG" --out "$ICONSET/icon_128x128@2x.png" >/dev/null
+          iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/clockode.icns"
+
+          cat > "$APP/Contents/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>Clockode</string>
+            <key>CFBundleDisplayName</key><string>Clockode</string>
+            <key>CFBundleIdentifier</key><string>dev.mariinkys.Clockode</string>
+            <key>CFBundleExecutable</key><string>clockode</string>
+            <key>CFBundleIconFile</key><string>clockode</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleVersion</key><string>${VERSION}</string>
+            <key>CFBundleShortVersionString</key><string>${VERSION}</string>
+            <key>LSMinimumSystemVersion</key><string>11.0</string>
+            <key>NSHighResolutionCapable</key><true/>
+            <key>NSCameraUsageDescription</key><string>Clockode uses the camera to scan QR codes.</string>
+          </dict>
+          </plist>
+          EOF
+
+          # Ad-hoc sign so the bundle (incl. Info.plist) has a valid signature
+          codesign --force --deep --sign - "$APP"
+
+          hdiutil create -volname Clockode -srcfolder "$APP" -ov -format UDZO \
+            "dist/clockode-${TAG}-macos-aarch64.dmg"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: clockode-${{ env.TAG }}-macos-aarch64
+          path: dist/*.dmg
+          if-no-files-found: error
+          retention-days: 14
