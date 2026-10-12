@@ -2,7 +2,7 @@ app-id: dev.mariinkys.Clockode
 # Note: No additional GStreamer plugins needed - app uses pipewiresrc which is
 # included in org.freedesktop.Platform via PipeWire's gst-plugin-pipewire
 runtime: org.freedesktop.Platform
-runtime-version: '26.08'
+runtime-version: "26.08"
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
@@ -22,7 +22,7 @@ modules:
         CARGO_HOME: /run/build/clockode/cargo
     build-commands:
       - cargo --offline fetch --manifest-path Cargo.toml --verbose
-      - cargo --offline build --release --verbose
+      - cargo --offline build --release --verbose --no-default-features --features flatpak-camera
       - install -Dm0755 ./target/release/clockode /app/bin/clockode
       - install -Dm0644 ./resources/dev.mariinkys.Clockode.desktop /app/share/applications/dev.mariinkys.Clockode.desktop
       - install -Dm0644 ./resources/dev.mariinkys.Clockode.metainfo.xml /app/share/metainfo/dev.mariinkys.Clockode.metainfo.xml

@@ -7,6 +7,25 @@ edition = "2024"
 license = "GPL-3.0"
 repository = "https://github.com/mariinkys/clockode"
 
+[features]
+default = ["default-camera"]
+
+# marker only feature, some camera backend is enabled
+camera = []
+
+# default implementation for non-Flatpak builds
+default-camera = ["camera", "dep:nokhwa"]
+
+# linux Flatpak implementation
+flatpak-camera = [
+    "camera",
+    "dep:gstreamer",
+    "dep:gstreamer-app",
+    "dep:gstreamer-video",
+    "dep:ashpd",
+]
+
+
 [dependencies]
 iced = { git = "https://github.com/iced-rs/iced", default-features = true, features = [
     "tokio",
@@ -17,7 +36,7 @@ iced = { git = "https://github.com/iced-rs/iced", default-features = true, featu
 anywho = "0.1.2"
 dirs = "7.0.0"
 smol = "2.0.2"
-keepass = { version = "0.15.0", features = [
+keepass = { version = "0.15.2", features = [
     "save_kdbx4",
 ] } # KeePass DB Management
 rqrr = "0.11.0" # QR Detection
@@ -27,7 +46,7 @@ totp-rs = { version = "6.0.0", features = [
 ] } # TOTP Generation ...
 rfd = "0.17.2" # File System Dialogs
 secrecy = "0.10.3" # Provides us with SecretString
-uuid = "1.27.0" # Allows us to identify entries
+uuid = "1.28.0" # Allows us to identify entries
 serde = { version = "1.0.229", features = [
     "derive",
 ] } # Needed for config serializing and deserializing
@@ -47,19 +66,18 @@ raw-window-handle = "0.6.2" # also needed for clipboard
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 
-serde_json = "1.0.151" # needed for aegis import (vault parsing)
+serde_json = "1.0.154" # needed for aegis import (vault parsing)
 aes-gcm = "0.11.1" # aegis vault decryption
 scrypt = { version = "0.12.0", default-features = false } # aegis key derivation
 base64 = "0.23.1" # aegis vault payload
-
-[target.'cfg(unix)'.dependencies] # gstreamer dependencies for qr detection with camera (Unix-like systems)
-gstreamer = "0.25.4"
-gstreamer-app = "0.25.2"
-gstreamer-video = "0.25.4"
-ashpd = { version = "0.13.13", default-features = false, features = ["tokio", "camera"] }
+nokhwa = { version = "0.10.11", optional = true, features = ["input-native"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-smithay-clipboard = "0.7.3" # for wayland clipboard
+gstreamer = { version = "0.25.4", optional = true }
+gstreamer-app = { version = "0.25.2", optional = true }
+gstreamer-video = { version = "0.25.4", optional = true }
+ashpd = { version = "0.13.13", default-features = false, features = ["tokio", "camera"], optional = true }
+smithay-clipboard = { version = "0.7.3" } # for wayland clipboard (does not depend on flatpak feature)
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]
