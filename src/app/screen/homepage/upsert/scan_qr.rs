@@ -11,7 +11,8 @@ use nokhwa::{
     Camera,
     pixel_format::RgbFormat,
     utils::{
-        CameraFormat, CameraIndex, FrameFormat, RequestedFormat, RequestedFormatType, Resolution,
+        CameraFormat, CameraIndex, ControlValueDescription, ControlValueSetter, FrameFormat,
+        KnownCameraControl, RequestedFormat, RequestedFormatType, Resolution,
     },
 };
 use smol::channel;
@@ -164,11 +165,25 @@ impl QrScanPage {
         Self::request_macos_camera_permission()?;
 
         let format = RequestedFormat::new::<RgbFormat>(RequestedFormatType::Closest(
-            CameraFormat::new(Resolution::new(640, 480), FrameFormat::MJPEG, 30),
+            CameraFormat::new(Resolution::new(1280, 720), FrameFormat::MJPEG, 30),
         ));
         let mut camera = Camera::new(CameraIndex::Index(0), format)?;
         camera.open_stream()?;
         tracing::info!("camera format: {}", camera.camera_format());
+
+        #[allow(clippy::collapsible_if)]
+        if let Ok(ctrl) = camera.camera_control(KnownCameraControl::Exposure) {
+            if let ControlValueDescription::IntegerRange { min, value, .. } = ctrl.description() {
+                let (min, value) = (*min, *value);
+                let target = value - (value - min) / 3;
+                if let Err(e) = camera.set_camera_control(
+                    KnownCameraControl::Exposure,
+                    ControlValueSetter::Integer(target),
+                ) {
+                    tracing::debug!("could not lower exposure: {e}");
+                }
+            }
+        }
 
         const MAX_CONSECUTIVE_ERRORS: u32 = 50; // ~2.5s at 50ms backoff
         let mut consecutive_errors = 0;
@@ -200,15 +215,25 @@ impl QrScanPage {
                 continue; // malformed frame: skip it rather than flash
             }
 
-            let mut rgba = Vec::with_capacity((w * h * 4) as usize);
-            let mut gray = Vec::with_capacity((w * h) as usize);
-            for px in pixels.as_chunks::<3>().0 {
-                let (r, g, b) = (px[0], px[1], px[2]);
-                rgba.extend_from_slice(&[r, g, b, 255]);
-                gray.push(((r as u32 * 77 + g as u32 * 150 + b as u32 * 29) >> 8) as u8);
+            let gray: Vec<u8> = pixels
+                .as_chunks::<3>()
+                .0
+                .iter()
+                .map(|p| ((p[0] as u32 * 77 + p[1] as u32 * 150 + p[2] as u32 * 29) >> 8) as u8)
+                .collect();
+
+            // Half-resolution preview: 4x less to upload every frame
+            let (pw, ph) = (w / 2, h / 2);
+            let mut rgba = Vec::with_capacity((pw * ph * 4) as usize);
+            for y in 0..ph {
+                let row = (y * 2 * w) as usize * 3;
+                for x in 0..pw {
+                    let i = row + (x * 2) as usize * 3;
+                    rgba.extend_from_slice(&[pixels[i], pixels[i + 1], pixels[i + 2], 255]);
+                }
             }
 
-            let _ = display_tx.try_send(image::Handle::from_rgba(w, h, rgba));
+            let _ = display_tx.try_send(image::Handle::from_rgba(pw, ph, rgba));
             let _ = frame_tx.try_send(FrameData {
                 width: w,
                 height: h,
@@ -324,6 +349,7 @@ impl QrScanPage {
 
                     while let Ok(frame) = frame_rx.recv().await {
                         if last_check.elapsed() >= interval {
+                            last_check = std::time::Instant::now();
                             let frame_to_decode = frame.clone();
 
                             let res = smol::unblock(move || Self::decode_qr(frame_to_decode)).await;
@@ -342,16 +368,22 @@ impl QrScanPage {
     }
 
     fn decode_qr(frame: FrameData) -> Option<String> {
-        let mut img = rqrr::PreparedImage::prepare_from_greyscale(
-            frame.width as usize,
-            frame.height as usize,
-            |x, y| frame.data[y * frame.width as usize + x],
-        );
+        let (w, h) = (frame.width as usize, frame.height as usize);
 
-        img.detect_grids()
-            .first()
-            .and_then(|grid| grid.decode().ok())
-            .map(|(_, content)| content)
+        const GAMMAS: [f32; 3] = [1.0, 2.5, 5.0];
+
+        GAMMAS.iter().find_map(|&gamma| {
+            let lut: [u8; 256] =
+                std::array::from_fn(|i| ((i as f32 / 255.0).powf(gamma) * 255.0).round() as u8);
+
+            let mut img = rqrr::PreparedImage::prepare_from_greyscale(w, h, |x, y| {
+                lut[frame.data[y * w + x] as usize]
+            });
+
+            img.detect_grids()
+                .into_iter()
+                .find_map(|grid| grid.decode().ok().map(|(_, content)| content))
+        })
     }
 }
 
@@ -392,10 +424,18 @@ fn qr_scan_view(display_frame: &Option<Box<image::Handle>>) -> impl Widget<Messa
         )
         .align_x(iced::alignment::Horizontal::Left)
         .align_y(iced::alignment::Vertical::Top),
-        container(text("Point camera at QR code").size(style::font_size::TITLE))
-            .width(Length::Fill)
-            .align_x(iced::alignment::Horizontal::Center)
-            .align_y(iced::alignment::Vertical::Top)
+        container(
+            column![
+                text("Point camera at QR code").size(style::font_size::TITLE),
+                text("Scanning from a phone? Lower its screen brightness")
+                    .size(style::font_size::BODY)
+                    .style(style::muted_text),
+            ]
+            .align_x(iced::Alignment::Center)
+        )
+        .width(Length::Fill)
+        .align_x(iced::alignment::Horizontal::Center)
+        .align_y(iced::alignment::Vertical::Top)
     ])
     .width(Length::Fill)
     .height(Length::Fill)

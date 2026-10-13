@@ -21,6 +21,7 @@ use std::{
     os::fd::{AsRawFd, OwnedFd},
     sync::Arc,
 };
+use tracing::info;
 
 use crate::{
     app::{
@@ -394,16 +395,22 @@ impl QrScanPage {
     }
 
     fn decode_qr(frame: FrameData) -> Option<String> {
-        let mut img = rqrr::PreparedImage::prepare_from_greyscale(
-            frame.width as usize,
-            frame.height as usize,
-            |x, y| frame.data[y * frame.width as usize + x],
-        );
+        let (w, h) = (frame.width as usize, frame.height as usize);
 
-        img.detect_grids()
-            .first()
-            .and_then(|grid| grid.decode().ok())
-            .map(|(_, content)| content)
+        const GAMMAS: [f32; 3] = [1.0, 2.5, 5.0];
+
+        GAMMAS.iter().find_map(|&gamma| {
+            let lut: [u8; 256] =
+                std::array::from_fn(|i| ((i as f32 / 255.0).powf(gamma) * 255.0).round() as u8);
+
+            let mut img = rqrr::PreparedImage::prepare_from_greyscale(w, h, |x, y| {
+                lut[frame.data[y * w + x] as usize]
+            });
+
+            img.detect_grids()
+                .into_iter()
+                .find_map(|grid| grid.decode().ok().map(|(_, content)| content))
+        })
     }
 }
 
@@ -444,10 +451,18 @@ fn qr_scan_view(display_frame: &Option<Box<image::Handle>>) -> impl Widget<Messa
         )
         .align_x(iced::alignment::Horizontal::Left)
         .align_y(iced::alignment::Vertical::Top),
-        container(text("Point camera at QR code").size(style::font_size::TITLE))
-            .width(Length::Fill)
-            .align_x(iced::alignment::Horizontal::Center)
-            .align_y(iced::alignment::Vertical::Top)
+        container(
+            column![
+                text("Point camera at QR code").size(style::font_size::TITLE),
+                text("Scanning from a phone? Lower its screen brightness")
+                    .size(style::font_size::BODY)
+                    .style(style::muted_text),
+            ]
+            .align_x(iced::Alignment::Center)
+        )
+        .width(Length::Fill)
+        .align_x(iced::alignment::Horizontal::Center)
+        .align_y(iced::alignment::Vertical::Top)
     ])
     .width(Length::Fill)
     .height(Length::Fill)
