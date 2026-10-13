@@ -25,6 +25,8 @@ flatpak-camera = [
     "dep:ashpd",
 ]
 
+[build-dependencies]
+winresource = "0.1"
 
 [dependencies]
 iced = { git = "https://github.com/iced-rs/iced", default-features = true, features = [

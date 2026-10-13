@@ -45,9 +45,11 @@ fn main() -> iced::Result {
     icons::ICON_CACHE.get_or_init(|| std::sync::Mutex::new(icons::IconCache::new()));
 
     let app_icon = iced::window::icon::from_file_data(
-        include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg"),
+        include_bytes!("../resources/icons/hicolor/256x256/apps/icon.png"),
         None,
-    );
+    )
+    .inspect_err(|e| tracing::warn!("failed to load window icon: {e}"))
+    .ok();
 
     let platform_settings = {
         #[cfg(target_os = "linux")]
@@ -81,7 +83,7 @@ fn main() -> iced::Result {
             width: 360.,
             height: 500.,
         }),
-        icon: app_icon.ok(),
+        icon: app_icon,
         platform_specific: platform_settings,
         ..Default::default()
     })

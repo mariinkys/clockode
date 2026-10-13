@@ -271,9 +271,17 @@ impl UpsertPage {
                         self.subscreen = SubScreen::UpsertPage;
                         Action::None
                     }
-                    scan_qr::Action::AddToast(toast) => Action::AddToast(toast),
+                    scan_qr::Action::AddToast(toast) => {
+                        if toast.status == crate::app::widgets::toast::Status::Danger {
+                            error!(toast.body);
+                        }
+                        Action::AddToast(toast)
+                    }
                     scan_qr::Action::AddToastAndBack(toast) => {
                         self.subscreen = SubScreen::UpsertPage;
+                        if toast.status == crate::app::widgets::toast::Status::Danger {
+                            error!(toast.body);
+                        }
                         Action::AddToast(toast)
                     }
                     scan_qr::Action::EntryDetected(entry) => {
