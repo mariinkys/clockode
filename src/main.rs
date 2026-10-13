@@ -8,7 +8,7 @@ mod config;
 mod icons;
 
 const APP_ID: &str = "dev.mariinkys.Clockode";
-const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/256x256/apps/icon.png");
+const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg");
 
 /// SEE: https://github.com/pop-os/cosmic-bg/pull/73
 /// Access glibc malloc tunables.
@@ -44,9 +44,12 @@ fn main() -> iced::Result {
     // Init the icon cache
     icons::ICON_CACHE.get_or_init(|| std::sync::Mutex::new(icons::IconCache::new()));
 
-    let app_icon = iced::window::icon::from_file_data(APP_ICON, None)
-        .inspect_err(|e| tracing::warn!("failed to load window icon: {e}"))
-        .ok();
+    let app_icon = iced::window::icon::from_file_data(
+        include_bytes!("../resources/icons/hicolor/256x256/apps/icon.png"),
+        None,
+    )
+    .inspect_err(|e| tracing::warn!("failed to load window icon: {e}"))
+    .ok();
 
     let platform_settings = {
         #[cfg(target_os = "linux")]
