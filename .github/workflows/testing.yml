@@ -2,6 +2,19 @@ name: Testing
 
 on:
   workflow_dispatch:
+    inputs:
+      linux:
+        description: "Build Linux (.deb + .rpm)"
+        type: boolean
+        default: true
+      windows:
+        description: "Build Windows (x86_64 .exe)"
+        type: boolean
+        default: true
+      macos:
+        description: "Build macOS (Apple Silicon .dmg)"
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -13,6 +26,7 @@ env:
 jobs:
   linux:
     name: Linux (.deb + .rpm)
+    if: ${{ inputs.linux }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v5
@@ -34,23 +48,32 @@ jobs:
       - name: Build
         run: cargo build --release --locked
 
-      - name: Package .deb
-        run: cargo deb --no-build
+      - name: Package .deb and .rpm
+        run: |
+          cargo deb --no-build
+          cargo generate-rpm
+          mkdir -p dist
+          cp target/debian/*.deb       "dist/clockode-${TAG}-x86_64.deb"
+          cp target/generate-rpm/*.rpm "dist/clockode-${TAG}-x86_64.rpm"
 
-      - name: Package .rpm
-        run: cargo generate-rpm
-
-      - uses: actions/upload-artifact@v5
+      # archive: false uploads the file as-is (no .zip); one file per upload
+      - uses: actions/upload-artifact@v7
         with:
-          name: clockode-${{ env.TAG }}-linux
-          path: |
-            target/debian/*.deb
-            target/generate-rpm/*.rpm
+          path: dist/clockode-${{ env.TAG }}-x86_64.deb
+          archive: false
+          if-no-files-found: error
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v7
+        with:
+          path: dist/clockode-${{ env.TAG }}-x86_64.rpm
+          archive: false
           if-no-files-found: error
           retention-days: 14
 
   windows:
     name: Windows (x86_64)
+    if: ${{ inputs.windows }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
@@ -60,22 +83,22 @@ jobs:
       - name: Build
         run: cargo build --release --locked
 
-      - name: Package
+      - name: Rename executable
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          Compress-Archive -Path target/release/clockode.exe `
-            -DestinationPath "dist/clockode-$env:TAG-windows-x86_64.zip"
+          Copy-Item target/release/clockode.exe "dist/clockode-$env:TAG-windows-x86_64.exe"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
-          name: clockode-${{ env.TAG }}-windows-x86_64
-          path: dist/*
+          path: dist/clockode-${{ env.TAG }}-windows-x86_64.exe
+          archive: false
           if-no-files-found: error
           retention-days: 14
 
   macos:
     name: macOS (Apple Silicon)
+    if: ${{ inputs.macos }}
     runs-on: macos-14 # arm64 runner
     steps:
       - uses: actions/checkout@v5
@@ -130,9 +153,9 @@ jobs:
           hdiutil create -volname Clockode -srcfolder "$APP" -ov -format UDZO \
             "dist/clockode-${TAG}-macos-aarch64.dmg"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
-          name: clockode-${{ env.TAG }}-macos-aarch64
-          path: dist/*.dmg
+          path: dist/clockode-${{ env.TAG }}-macos-aarch64.dmg
+          archive: false
           if-no-files-found: error
           retention-days: 14

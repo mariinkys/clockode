@@ -17,6 +17,7 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
+  # Passed through env (not inlined in scripts) so input text can't inject shell code
   TAG: ${{ inputs.tag_name }}
   RELEASE_NAME: ${{ inputs.release_name }}
 
@@ -37,6 +38,7 @@ jobs:
   linux:
     name: Linux (.deb + .rpm)
     needs: check
+    # Oldest supported Ubuntu = oldest glibc = binary runs on more distros
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v5
@@ -58,18 +60,18 @@ jobs:
       - name: Build
         run: cargo build --release --locked
 
-      - name: Package .deb
-        run: cargo deb --no-build
-
-      - name: Package .rpm
-        run: cargo generate-rpm
+      - name: Package .deb and .rpm
+        run: |
+          cargo deb --no-build
+          cargo generate-rpm
+          mkdir -p dist
+          cp target/debian/*.deb       "dist/clockode-${TAG}-x86_64.deb"
+          cp target/generate-rpm/*.rpm "dist/clockode-${TAG}-x86_64.rpm"
 
       - uses: actions/upload-artifact@v5
         with:
           name: linux
-          path: |
-            target/debian/*.deb
-            target/generate-rpm/*.rpm
+          path: dist/*
           if-no-files-found: error
 
   windows:
@@ -84,12 +86,11 @@ jobs:
       - name: Build
         run: cargo build --release --locked
 
-      - name: Package
+      - name: Rename executable
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          Compress-Archive -Path target/release/clockode.exe `
-            -DestinationPath "dist/clockode-$env:TAG-windows-x86_64.zip"
+          Copy-Item target/release/clockode.exe "dist/clockode-$env:TAG-windows-x86_64.exe"
 
       - uses: actions/upload-artifact@v5
         with:
