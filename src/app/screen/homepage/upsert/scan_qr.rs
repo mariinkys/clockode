@@ -9,11 +9,14 @@ use iced::{
 };
 use nokhwa::{
     Camera,
-    pixel_format::LumaFormat,
-    utils::{CameraIndex, RequestedFormat, RequestedFormatType, Resolution},
+    pixel_format::RgbFormat,
+    utils::{
+        CameraFormat, CameraIndex, FrameFormat, RequestedFormat, RequestedFormatType, Resolution,
+    },
 };
 use smol::channel;
 use std::{sync::Arc, time::Duration};
+use tracing::info;
 
 use crate::{
     app::{
@@ -80,6 +83,8 @@ pub enum Action {
 
 impl QrScanPage {
     pub fn new() -> Result<(Self, Task<Message>), std::convert::Infallible> {
+        info!("Using nokhwa camera backend");
+
         let (frame_tx, frame_rx) = channel::bounded::<FrameData>(1);
         let (display_tx, display_rx) = channel::bounded::<image::Handle>(1);
 
@@ -158,52 +163,56 @@ impl QrScanPage {
         #[cfg(target_os = "macos")]
         Self::request_macos_camera_permission()?;
 
-        let format =
-            RequestedFormat::new::<LumaFormat>(RequestedFormatType::AbsoluteHighestResolution);
+        let format = RequestedFormat::new::<RgbFormat>(RequestedFormatType::Closest(
+            CameraFormat::new(Resolution::new(640, 480), FrameFormat::MJPEG, 30),
+        ));
         let mut camera = Camera::new(CameraIndex::Index(0), format)?;
-        let _ = camera.set_resolution(Resolution::new(640, 480));
         camera.open_stream()?;
+        tracing::info!("camera format: {}", camera.camera_format());
 
         const MAX_CONSECUTIVE_ERRORS: u32 = 50; // ~2.5s at 50ms backoff
         let mut consecutive_errors = 0;
 
         let result = loop {
-            // Checked first, so every path through the loop sees it.
             if display_tx.is_closed() || frame_tx.is_closed() {
                 break Ok(());
             }
 
-            let gray = camera.frame().and_then(|f| {
-                let res = f.resolution();
-                f.decode_image::<LumaFormat>()
-                    .map(|img| (res.width(), res.height(), img.into_raw()))
-            });
-
-            let (w, h, gray_bytes) = match gray {
-                Ok(v) => {
+            let rgb = match camera.frame().and_then(|f| f.decode_image::<RgbFormat>()) {
+                Ok(img) => {
                     consecutive_errors = 0;
-                    v
+                    img
                 }
                 Err(e) => {
                     consecutive_errors += 1;
                     if consecutive_errors >= MAX_CONSECUTIVE_ERRORS {
-                        break Err(e); // surfaces as a toast via CameraReady
+                        break Err(e);
                     }
                     std::thread::sleep(Duration::from_millis(50));
                     continue;
                 }
             };
 
+            // Dimensions from the decoded image, not the negotiated format
+            let (w, h) = rgb.dimensions();
+            let pixels = rgb.as_raw();
+            if pixels.len() != (w * h * 3) as usize {
+                continue; // malformed frame: skip it rather than flash
+            }
+
             let mut rgba = Vec::with_capacity((w * h * 4) as usize);
-            for &g in &gray_bytes {
-                rgba.extend_from_slice(&[g, g, g, 255]);
+            let mut gray = Vec::with_capacity((w * h) as usize);
+            for px in pixels.as_chunks::<3>().0 {
+                let (r, g, b) = (px[0], px[1], px[2]);
+                rgba.extend_from_slice(&[r, g, b, 255]);
+                gray.push(((r as u32 * 77 + g as u32 * 150 + b as u32 * 29) >> 8) as u8);
             }
 
             let _ = display_tx.try_send(image::Handle::from_rgba(w, h, rgba));
             let _ = frame_tx.try_send(FrameData {
                 width: w,
                 height: h,
-                data: gray_bytes,
+                data: gray,
             });
         };
 

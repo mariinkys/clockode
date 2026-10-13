@@ -112,6 +112,8 @@ impl Error for QrScanError {}
 
 impl QrScanPage {
     pub fn new() -> Result<(Self, Task<Message>), QrScanError> {
+        info!("Using Flatpak camera backend");
+
         gst::init().map_err(QrScanError::GStreamerInit)?;
 
         Ok((
