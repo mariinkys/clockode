@@ -164,10 +164,7 @@ impl QrScanPage {
         #[cfg(target_os = "macos")]
         Self::request_macos_camera_permission()?;
 
-        let format = RequestedFormat::new::<RgbFormat>(RequestedFormatType::Closest(
-            CameraFormat::new(Resolution::new(1280, 720), FrameFormat::MJPEG, 30),
-        ));
-        let mut camera = Camera::new(CameraIndex::Index(0), format)?;
+        let mut camera = Self::open_camera()?;
         camera.open_stream()?;
         tracing::info!("camera format: {}", camera.camera_format());
 
@@ -243,6 +240,59 @@ impl QrScanPage {
 
         let _ = camera.stop_stream();
         result
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn open_camera() -> Result<Camera, nokhwa::NokhwaError> {
+        let format = RequestedFormat::new::<RgbFormat>(RequestedFormatType::Closest(
+            CameraFormat::new(Resolution::new(1280, 720), FrameFormat::MJPEG, 30),
+        ));
+        Camera::new(CameraIndex::Index(0), format)
+    }
+
+    /// Windows: Media Foundation rejects some requests, so try several.
+    /// Each candidate is test-streamed, then stopped before the camera is returned.
+    #[cfg(target_os = "windows")]
+    fn open_camera() -> Result<Camera, nokhwa::NokhwaError> {
+        let wanted = Resolution::new(1280, 720);
+        let attempts = [
+            RequestedFormatType::Closest(CameraFormat::new(wanted, FrameFormat::MJPEG, 30)),
+            RequestedFormatType::Closest(CameraFormat::new(wanted, FrameFormat::NV12, 30)),
+            RequestedFormatType::Closest(CameraFormat::new(wanted, FrameFormat::YUYV, 30)),
+            RequestedFormatType::AbsoluteHighestFrameRate,
+            RequestedFormatType::AbsoluteHighestResolution,
+        ];
+
+        let mut last_err = None;
+        for request in attempts {
+            let label = format!("{request:?}");
+            let mut camera = match Camera::new(
+                CameraIndex::Index(0),
+                RequestedFormat::new::<RgbFormat>(request),
+            ) {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::debug!("camera request {label} failed: {e}");
+                    last_err = Some(e);
+                    continue;
+                }
+            };
+
+            // Test-stream in place, then stop before the camera is moved out.
+            match camera.open_stream() {
+                Ok(()) => {
+                    let _ = camera.stop_stream();
+                    tracing::info!("camera format chosen with {label}");
+                    return Ok(camera);
+                }
+                Err(e) => {
+                    tracing::debug!("camera request {label} failed to stream: {e}");
+                    last_err = Some(e);
+                }
+            }
+        }
+
+        Err(last_err.expect("attempts is not empty"))
     }
 
     #[cfg(target_os = "macos")]
