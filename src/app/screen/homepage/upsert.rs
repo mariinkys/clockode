@@ -25,7 +25,12 @@ use crate::{
     icons,
 };
 
-#[cfg(unix)]
+#[cfg(feature = "flatpak-camera")]
+mod scan_qr_flatpak;
+#[cfg(feature = "flatpak-camera")]
+use scan_qr_flatpak as scan_qr;
+
+#[cfg(all(feature = "default-camera", not(feature = "flatpak-camera")))]
 mod scan_qr;
 
 pub struct UpsertPage {
@@ -40,7 +45,7 @@ pub struct UpsertPage {
 
 pub enum SubScreen {
     UpsertPage,
-    #[cfg(unix)]
+    #[cfg(feature = "camera")]
     ScanQrPage(scan_qr::QrScanPage),
 }
 
@@ -67,11 +72,11 @@ pub enum Message {
     ToggleShowQRCode,
 
     /// Messages of the [`ScanQrPage`]
-    #[cfg(unix)]
+    #[cfg(feature = "camera")]
     ScanQrPage(scan_qr::Message),
 
     /// Ask to open the [`ScanQrPage`]
-    #[cfg(unix)]
+    #[cfg(feature = "camera")]
     OpenScanQrPage,
 }
 
@@ -141,7 +146,7 @@ impl UpsertPage {
                 .center(Length::Fill)
                 .boxed()
             }
-            #[cfg(unix)]
+            #[cfg(feature = "camera")]
             SubScreen::ScanQrPage(qr_scan_page) => {
                 qr_scan_page.view(now).map(Message::ScanQrPage).boxed()
             }
@@ -254,7 +259,7 @@ impl UpsertPage {
                 Action::None
             }
 
-            #[cfg(unix)]
+            #[cfg(feature = "camera")]
             Message::ScanQrPage(message) => {
                 let SubScreen::ScanQrPage(scan_qr_page) = &mut self.subscreen else {
                     return Action::None;
@@ -281,7 +286,7 @@ impl UpsertPage {
                     }
                 }
             }
-            #[cfg(unix)]
+            #[cfg(feature = "camera")]
             Message::OpenScanQrPage => match scan_qr::QrScanPage::new() {
                 Ok((scan_qr_page, task)) => {
                     self.subscreen = SubScreen::ScanQrPage(scan_qr_page);
@@ -298,7 +303,7 @@ impl UpsertPage {
     pub fn subscription(&self, now: Instant) -> Subscription<Message> {
         match &self.subscreen {
             SubScreen::UpsertPage => event::listen_with(handle_event),
-            #[cfg(unix)]
+            #[cfg(feature = "camera")]
             SubScreen::ScanQrPage(qr_scan_page) => {
                 qr_scan_page.subscription(now).map(Message::ScanQrPage)
             }
@@ -357,7 +362,7 @@ fn header_view(entry: &InputableClockodeEntry) -> impl Widget<Message> {
                 .boxed(),
             );
 
-            #[cfg(unix)]
+            #[cfg(feature = "camera")]
             buttons.push(
                 button(
                     row![

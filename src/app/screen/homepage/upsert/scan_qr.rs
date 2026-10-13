@@ -1,12 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-use anywho::anywho;
-use gstreamer::{
-    self as gst,
-    glib::{self, object::Cast},
-    prelude::{ElementExt, GstBinExtManual},
-};
-use gstreamer_app as gst_app;
 use iced::{
     Length::{self},
     Subscription, Task, Widget, event,
@@ -14,13 +7,17 @@ use iced::{
     time::Instant,
     widget::{button, column, container, image, stack, text},
 };
-use smol::channel;
-use std::{
-    error::Error,
-    fmt,
-    os::fd::{AsRawFd, OwnedFd},
-    sync::Arc,
+use nokhwa::{
+    Camera,
+    pixel_format::RgbFormat,
+    utils::{
+        CameraFormat, CameraIndex, ControlValueDescription, ControlValueSetter, FrameFormat,
+        KnownCameraControl, RequestedFormat, RequestedFormatType, Resolution,
+    },
 };
+use smol::channel;
+use std::{sync::Arc, time::Duration};
+use tracing::info;
 
 use crate::{
     app::{
@@ -35,23 +32,19 @@ pub struct QrScanPage {
 }
 
 enum State {
-    AskingPermission,
     Permitted(Box<PermittedState>),
 }
 
 pub struct PermittedState {
     display_frame: Option<Box<image::Handle>>,
-    pipeline: gst::Pipeline,
     frame_rx: channel::Receiver<FrameData>,
     display_rx: channel::Receiver<image::Handle>,
-    _camera_fd: Option<Arc<OwnedFd>>, // we need to keep fd alive
 }
 
 impl Drop for QrScanPage {
     fn drop(&mut self) {
-        if let State::Permitted(state) = &mut self.state {
-            let _ = state.pipeline.set_state(gst::State::Null);
-        }
+        // nokhwa Camera is dropped automatically when PermittedState is dropped;
+        // the capture thread will exit when its channel senders are dropped.
     }
 }
 
@@ -68,8 +61,8 @@ pub enum Message {
     Back,
     /// Callback after pressing a [`Hotkey`] of this page
     Hotkey(Hotkey),
-    /// Callback after asking for camera permission
-    PermissionCallback(Result<Arc<OwnedFd>, anywho::Error>),
+    /// Callback after opening the camera
+    CameraReady(Result<(), Arc<nokhwa::NokhwaError>>),
     /// Callback after a QR is detected with the QR contents
     QrDetected(String),
     /// Updates the frame to be displayed
@@ -89,56 +82,36 @@ pub enum Action {
     EntryDetected(InputableClockodeEntry),
 }
 
-#[derive(Debug)]
-pub enum QrScanError {
-    GStreamerInit(glib::Error),
-    ElementCreation(&'static str),
-    PipelineSetup(glib::BoolError),
-    StateChange(gst::StateChangeError),
-}
-
-impl fmt::Display for QrScanError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            QrScanError::GStreamerInit(e) => write!(f, "Failed to initialize GStreamer: {}", e),
-            QrScanError::ElementCreation(name) => write!(f, "Failed to create element: {}", name),
-            QrScanError::PipelineSetup(e) => write!(f, "Failed to setup pipeline: {}", e),
-            QrScanError::StateChange(e) => write!(f, "Failed to start pipeline: {}", e),
-        }
-    }
-}
-
-impl Error for QrScanError {}
-
 impl QrScanPage {
-    pub fn new() -> Result<(Self, Task<Message>), QrScanError> {
-        gst::init().map_err(QrScanError::GStreamerInit)?;
+    pub fn new() -> Result<(Self, Task<Message>), std::convert::Infallible> {
+        info!("Using nokhwa camera backend");
+
+        let (frame_tx, frame_rx) = channel::bounded::<FrameData>(1);
+        let (display_tx, display_rx) = channel::bounded::<image::Handle>(1);
+
+        let task = Task::perform(
+            async move {
+                smol::unblock(move || Self::open_camera_and_capture(frame_tx, display_tx))
+                    .await
+                    .map_err(Arc::new)
+            },
+            Message::CameraReady,
+        );
 
         Ok((
             Self {
-                state: State::AskingPermission,
+                state: State::Permitted(Box::new(PermittedState {
+                    display_frame: None,
+                    frame_rx,
+                    display_rx,
+                })),
             },
-            Task::perform(
-                async {
-                    smol::future::or(
-                        async { Self::request_camera_access().await.map(Arc::new) },
-                        async {
-                            smol::Timer::after(std::time::Duration::from_secs(30)).await;
-                            Err(anywho!("Permission request timed out"))
-                        },
-                    )
-                    .await
-                },
-                Message::PermissionCallback,
-            ),
+            task,
         ))
     }
 
     pub fn view(&self, _now: Instant) -> impl Widget<Message> {
         let content = match &self.state {
-            State::AskingPermission => container(text("Asking for camera permission..."))
-                .center(Length::Fill)
-                .boxed(),
             State::Permitted(state) => qr_scan_view(&state.display_frame).boxed(),
         };
 
@@ -151,14 +124,8 @@ impl QrScanPage {
             Message::Hotkey(hotkey) => match hotkey {
                 Hotkey::Esc => Action::Back,
             },
-            Message::PermissionCallback(res) => match res {
-                Ok(fd) => match Self::init_gstreamer(fd) {
-                    Ok(state) => {
-                        self.state = state;
-                        Action::None
-                    }
-                    Err(err) => Action::AddToastAndBack(Toast::error_toast(err)),
-                },
+            Message::CameraReady(res) => match res {
+                Ok(()) => Action::None,
                 Err(err) => Action::AddToastAndBack(Toast::error_toast(err)),
             },
             Message::QrDetected(data) => match InputableClockodeEntry::try_from(data) {
@@ -168,7 +135,8 @@ impl QrScanPage {
                 )),
             },
             Message::UpdateDisplayFrame(handle) => {
-                if let State::Permitted(state) = &mut self.state {
+                let State::Permitted(state) = &mut self.state;
+                {
                     state.display_frame = Some(handle);
                 }
                 Action::None
@@ -178,7 +146,6 @@ impl QrScanPage {
 
     pub fn subscription(&self, _now: Instant) -> Subscription<Message> {
         match &self.state {
-            State::AskingPermission => Subscription::none(),
             State::Permitted(state) => Subscription::batch([
                 Self::qr_detection(state.frame_rx.clone()),
                 Self::update_camera_feed(state.display_rx.clone()),
@@ -187,109 +154,121 @@ impl QrScanPage {
         }
     }
 
-    /// Request camera access through the XDG Camera portal
-    async fn request_camera_access() -> Result<OwnedFd, anywho::Error> {
-        use ashpd::desktop::camera::{Camera, CameraAccessOptions, OpenPipeWireRemoteOptions};
+    /// Opens the camera and spawns a blocking capture loop.
+    /// Sends grayscale frames to `frame_tx` and RGBA display handles to `display_tx`.
+    /// Returns when the channel receivers are dropped (i.e. the page is gone).
+    fn open_camera_and_capture(
+        frame_tx: channel::Sender<FrameData>,
+        display_tx: channel::Sender<image::Handle>,
+    ) -> Result<(), nokhwa::NokhwaError> {
+        #[cfg(target_os = "macos")]
+        Self::request_macos_camera_permission()?;
 
-        let proxy = Camera::new().await?;
-        proxy.request_access(CameraAccessOptions::default()).await?;
-        Ok(proxy
-            .open_pipe_wire_remote(OpenPipeWireRemoteOptions::default())
-            .await?)
+        let format = RequestedFormat::new::<RgbFormat>(RequestedFormatType::Closest(
+            CameraFormat::new(Resolution::new(1280, 720), FrameFormat::MJPEG, 30),
+        ));
+        let mut camera = Camera::new(CameraIndex::Index(0), format)?;
+        camera.open_stream()?;
+        tracing::info!("camera format: {}", camera.camera_format());
+
+        #[allow(clippy::collapsible_if)]
+        if let Ok(ctrl) = camera.camera_control(KnownCameraControl::Exposure) {
+            if let ControlValueDescription::IntegerRange { min, value, .. } = ctrl.description() {
+                let (min, value) = (*min, *value);
+                let target = value - (value - min) / 3;
+                if let Err(e) = camera.set_camera_control(
+                    KnownCameraControl::Exposure,
+                    ControlValueSetter::Integer(target),
+                ) {
+                    tracing::debug!("could not lower exposure: {e}");
+                }
+            }
+        }
+
+        const MAX_CONSECUTIVE_ERRORS: u32 = 50; // ~2.5s at 50ms backoff
+        let mut consecutive_errors = 0;
+
+        let result = loop {
+            if display_tx.is_closed() || frame_tx.is_closed() {
+                break Ok(());
+            }
+
+            let rgb = match camera.frame().and_then(|f| f.decode_image::<RgbFormat>()) {
+                Ok(img) => {
+                    consecutive_errors = 0;
+                    img
+                }
+                Err(e) => {
+                    consecutive_errors += 1;
+                    if consecutive_errors >= MAX_CONSECUTIVE_ERRORS {
+                        break Err(e);
+                    }
+                    std::thread::sleep(Duration::from_millis(50));
+                    continue;
+                }
+            };
+
+            // Dimensions from the decoded image, not the negotiated format
+            let (w, h) = rgb.dimensions();
+            let pixels = rgb.as_raw();
+            if pixels.len() != (w * h * 3) as usize {
+                continue; // malformed frame: skip it rather than flash
+            }
+
+            let gray: Vec<u8> = pixels
+                .as_chunks::<3>()
+                .0
+                .iter()
+                .map(|p| ((p[0] as u32 * 77 + p[1] as u32 * 150 + p[2] as u32 * 29) >> 8) as u8)
+                .collect();
+
+            // Half-resolution preview: 4x less to upload every frame
+            let (pw, ph) = (w / 2, h / 2);
+            let mut rgba = Vec::with_capacity((pw * ph * 4) as usize);
+            for y in 0..ph {
+                let row = (y * 2 * w) as usize * 3;
+                for x in 0..pw {
+                    let i = row + (x * 2) as usize * 3;
+                    rgba.extend_from_slice(&[pixels[i], pixels[i + 1], pixels[i + 2], 255]);
+                }
+            }
+
+            let _ = display_tx.try_send(image::Handle::from_rgba(pw, ph, rgba));
+            let _ = frame_tx.try_send(FrameData {
+                width: w,
+                height: h,
+                data: gray,
+            });
+        };
+
+        let _ = camera.stop_stream();
+        result
     }
 
-    fn init_gstreamer(camera_fd: Arc<OwnedFd>) -> Result<State, QrScanError> {
-        let pipeline = gst::Pipeline::new();
+    #[cfg(target_os = "macos")]
+    fn request_macos_camera_permission() -> Result<(), nokhwa::NokhwaError> {
+        use nokhwa::{NokhwaError, nokhwa_check, nokhwa_initialize};
+        use std::sync::mpsc;
 
-        let src = gst::ElementFactory::make("pipewiresrc")
-            .property("fd", camera_fd.as_raw_fd())
-            .property("do-timestamp", true) // helps with mobile cameras
-            .build()
-            .map_err(|_| QrScanError::ElementCreation("pipewiresrc"))?;
+        if nokhwa_check() {
+            return Ok(()); // already authorized
+        }
 
-        let convert = gst::ElementFactory::make("videoconvert")
-            .build()
-            .map_err(|_| QrScanError::ElementCreation("videoconvert"))?;
+        let (tx, rx) = mpsc::channel();
+        nokhwa_initialize(move |granted| {
+            let _ = tx.send(granted);
+        });
 
-        let scale = gst::ElementFactory::make("videoscale")
-            .build()
-            .map_err(|_| QrScanError::ElementCreation("videoscale"))?;
-
-        let capsfilter = gst::ElementFactory::make("capsfilter")
-            .property(
-                "caps",
-                gst::Caps::builder("video/x-raw")
-                    .field("format", "GRAY8")
-                    .field("width", 640i32)
-                    .field("height", 480i32)
-                    .build(),
-            )
-            .build()
-            .map_err(|_| QrScanError::ElementCreation("capsfilter"))?;
-
-        let sink = gst::ElementFactory::make("appsink")
-            .build()
-            .map_err(|_| QrScanError::ElementCreation("appsink"))?;
-
-        pipeline
-            .add_many([&src, &convert, &scale, &capsfilter, &sink])
-            .map_err(QrScanError::PipelineSetup)?;
-        gst::Element::link_many([&src, &convert, &scale, &capsfilter, &sink])
-            .map_err(QrScanError::PipelineSetup)?;
-
-        let appsink = sink
-            .dynamic_cast::<gst_app::AppSink>()
-            .map_err(|_| QrScanError::ElementCreation("appsink cast failed"))?;
-
-        let (frame_tx, frame_rx) = channel::bounded::<FrameData>(1);
-        let (display_tx, display_rx) = channel::bounded::<image::Handle>(1);
-
-        appsink.set_callbacks(
-            gst_app::AppSinkCallbacks::builder()
-                .new_sample(move |sink| {
-                    let sample = sink.pull_sample().map_err(|_| gst::FlowError::Error)?;
-                    let buffer = sample.buffer().ok_or(gst::FlowError::Error)?;
-                    let map = buffer.map_readable().map_err(|_| gst::FlowError::Error)?;
-                    let caps = sample.caps().ok_or(gst::FlowError::Error)?;
-                    let s = caps.structure(0).ok_or(gst::FlowError::Error)?;
-                    let (w, h) = (
-                        s.get::<i32>("width").map_err(|_| gst::FlowError::Error)? as u32,
-                        s.get::<i32>("height").map_err(|_| gst::FlowError::Error)? as u32,
-                    );
-
-                    let data = map.to_vec();
-
-                    // Update display frame
-                    let mut rgba = Vec::with_capacity((w * h * 4) as usize);
-                    for &gray in &data {
-                        rgba.extend_from_slice(&[gray, gray, gray, 255]);
-                    }
-                    let handle = image::Handle::from_rgba(w, h, rgba);
-                    let _ = display_tx.try_send(handle);
-
-                    // Send grayscale data to QR decoder
-                    let _ = frame_tx.try_send(FrameData {
-                        width: w,
-                        height: h,
-                        data,
-                    });
-
-                    Ok(gst::FlowSuccess::Ok)
-                })
-                .build(),
-        );
-
-        pipeline
-            .set_state(gst::State::Playing)
-            .map_err(QrScanError::StateChange)?;
-
-        Ok(State::Permitted(Box::new(PermittedState {
-            display_frame: None,
-            pipeline,
-            frame_rx,
-            display_rx,
-            _camera_fd: Some(camera_fd),
-        })))
+        // Give the user time to respond to the system prompt.
+        match rx.recv_timeout(Duration::from_secs(60)) {
+            Ok(true) => Ok(()),
+            Ok(false) => Err(NokhwaError::GeneralError(
+                "Camera permission denied. You can allow it in System Settings → Privacy & Security → Camera.".into(),
+            )),
+            Err(_) => Err(NokhwaError::GeneralError(
+                "Timed out waiting for camera permission".into(),
+            )),
+        }
     }
 
     fn update_camera_feed(display_rx: channel::Receiver<image::Handle>) -> Subscription<Message> {
@@ -306,8 +285,6 @@ impl QrScanPage {
 
         impl std::hash::Hash for DisplayData {
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                // We only hash the ID. We ignore the Receiver because
-                // the identity of the subscription is tied to this ID.
                 self.id.hash(state);
             }
         }
@@ -352,8 +329,6 @@ impl QrScanPage {
 
         impl std::hash::Hash for ScannerData {
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                // We only hash the ID. We ignore the Receiver because
-                // the identity of the subscription is tied to this ID.
                 self.id.hash(state);
             }
         }
@@ -374,6 +349,7 @@ impl QrScanPage {
 
                     while let Ok(frame) = frame_rx.recv().await {
                         if last_check.elapsed() >= interval {
+                            last_check = std::time::Instant::now();
                             let frame_to_decode = frame.clone();
 
                             let res = smol::unblock(move || Self::decode_qr(frame_to_decode)).await;
@@ -392,16 +368,22 @@ impl QrScanPage {
     }
 
     fn decode_qr(frame: FrameData) -> Option<String> {
-        let mut img = rqrr::PreparedImage::prepare_from_greyscale(
-            frame.width as usize,
-            frame.height as usize,
-            |x, y| frame.data[y * frame.width as usize + x],
-        );
+        let (w, h) = (frame.width as usize, frame.height as usize);
 
-        img.detect_grids()
-            .first()
-            .and_then(|grid| grid.decode().ok())
-            .map(|(_, content)| content)
+        const GAMMAS: [f32; 3] = [1.0, 2.5, 5.0];
+
+        GAMMAS.iter().find_map(|&gamma| {
+            let lut: [u8; 256] =
+                std::array::from_fn(|i| ((i as f32 / 255.0).powf(gamma) * 255.0).round() as u8);
+
+            let mut img = rqrr::PreparedImage::prepare_from_greyscale(w, h, |x, y| {
+                lut[frame.data[y * w + x] as usize]
+            });
+
+            img.detect_grids()
+                .into_iter()
+                .find_map(|grid| grid.decode().ok().map(|(_, content)| content))
+        })
     }
 }
 
@@ -442,10 +424,18 @@ fn qr_scan_view(display_frame: &Option<Box<image::Handle>>) -> impl Widget<Messa
         )
         .align_x(iced::alignment::Horizontal::Left)
         .align_y(iced::alignment::Vertical::Top),
-        container(text("Point camera at QR code").size(style::font_size::TITLE))
-            .width(Length::Fill)
-            .align_x(iced::alignment::Horizontal::Center)
-            .align_y(iced::alignment::Vertical::Top)
+        container(
+            column![
+                text("Point camera at QR code").size(style::font_size::TITLE),
+                text("Scanning from a phone? Lower its screen brightness")
+                    .size(style::font_size::BODY)
+                    .style(style::muted_text),
+            ]
+            .align_x(iced::Alignment::Center)
+        )
+        .width(Length::Fill)
+        .align_x(iced::alignment::Horizontal::Center)
+        .align_y(iced::alignment::Vertical::Top)
     ])
     .width(Length::Fill)
     .height(Length::Fill)
