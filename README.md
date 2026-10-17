@@ -50,14 +50,16 @@ cargo build --release
 sudo just install
 ```
 
-<!--### Windows (x64)
+Note: `.deb` and `.rpm` packages are also provided in the [releases page](https://github.com/mariinkys/clockode/releases) but are not recommended, the only official and recommended installation method for Linux is Flatpak.
 
-Go to the [release page](https://github.com/mariinkys/clockode/releases) and download the latest .exe.
+### Windows (x64)
+
+Go to the [releases page](https://github.com/mariinkys/clockode/releases) and download the latest `.exe`.
 
 ### MacOS (Apple Silicon)
 
-Go to the [release page](https://github.com/mariinkys/clockode/releases) and download the latest .dmg.
-Note: MacOS support is EXPERIMENTAL, as I don't have a Mac to test, but it's theoretically supported by the camera backend.-->
+Go to the [releases page](https://github.com/mariinkys/clockode/releases) and download the latest `.dmg`.
+Note: MacOS support is EXPERIMENTAL, as I don't have a Mac to test, but it's theoretically supported by the camera backend.
 
 ## Attributions
 

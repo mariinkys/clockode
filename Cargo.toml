@@ -2,7 +2,7 @@
 name = "clockode"
 description = "Simple TOTP client (2FA codes) with KeePass storage"
 authors = ["mariinkys <kysdev.owjga@aleeas.com>"]
-version = "0.3.1"
+version = "0.4.0"
 edition = "2024"
 license = "GPL-3.0"
 repository = "https://github.com/mariinkys/clockode"
@@ -38,7 +38,7 @@ iced = { git = "https://github.com/iced-rs/iced", default-features = true, featu
 anywho = "0.1.2"
 dirs = "7.0.0"
 smol = "2.0.2"
-keepass = { version = "0.15.2", features = [
+keepass = { version = "0.15.3", features = [
     "save_kdbx4",
 ] } # KeePass DB Management
 rqrr = "0.11.0" # QR Detection
