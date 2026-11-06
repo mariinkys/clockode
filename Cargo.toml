@@ -35,7 +35,7 @@ iced = { git = "https://github.com/iced-rs/iced", default-features = true, featu
     "advanced",
     "svg",
 ] }
-anywho = "0.1.2"
+anywho = "0.1.3"
 dirs = "7.0.0"
 smol = "2.0.2"
 keepass = { version = "0.17.0", features = [
@@ -52,7 +52,7 @@ uuid = "1.29.0" # Allows us to identify entries
 serde = { version = "1.0.229", features = [
     "derive",
 ] } # Needed for config serializing and deserializing
-ron = "0.12.2" # Needed for config serializing and deserializing
+ron = "0.12.3" # Needed for config serializing and deserializing
 image = { version = "0.25.10", default-features = false, features = [
     "jpeg",
     "png",
@@ -62,7 +62,7 @@ image = { version = "0.25.10", default-features = false, features = [
 open = "5.4.5" # needed for opening the default browser
 notify-debouncer-full = "0.7.0"
 futures = "0.3.34"
-arboard = { version = "3.6.1" } # for x11 clipboard
+arboard = { version = "3.7.0" } # for x11 clipboard
 raw-window-handle = "0.6.2" # also needed for clipboard
 
 tracing = "0.1.44"
@@ -80,7 +80,7 @@ nokhwa = { version = "0.10.11", optional = true, features = ["input-native"] }
 gstreamer = { version = "0.25.4", optional = true }
 gstreamer-app = { version = "0.25.2", optional = true }
 gstreamer-video = { version = "0.25.4", optional = true }
-ashpd = { version = "0.13.13", default-features = false, features = ["tokio", "camera"], optional = true }
+ashpd = { version = "0.14.0", default-features = false, features = ["tokio", "camera"], optional = true }
 smithay-clipboard = { version = "0.7.3" } # for wayland clipboard (does not depend on flatpak feature)
 
 
